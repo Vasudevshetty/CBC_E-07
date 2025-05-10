@@ -1,17 +1,19 @@
 import SideBar from "../components/SideBar";
 
-function Dashboard() {
+function Profile() {
   return (
     <div className="min-h-screen flex w-full">
-      {/* Sidebar takes 30% */}
+      {/* Sidebar - 30% */}
       <div className="w-[20%] bg-gray-900">
         <SideBar />
       </div>
 
-      {/* Main content takes 70% */}
-      <div className="w-[80%]">dashboard</div>
+      {/* Main Content - 70% */}
+      <div className="w-[80%] ">
+        Profile Page
+      </div>
     </div>
   );
 }
 
-export default Dashboard;
+export default Profile;
