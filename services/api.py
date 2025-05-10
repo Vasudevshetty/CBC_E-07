@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-
-api = FastAPI()
-
-
-=======
 from fastapi import FastAPI, HTTPException, UploadFile, File
 import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,7 +20,6 @@ api = FastAPI()
 groq_api_key1 = os.getenv("GROQ_API_KEY1")
 groq_api_key2 = os.getenv("GROQ_API_kEY2")
 client = Groq(api_key=groq_api_key1)
->>>>>>> f483e2ee68accd43d3c77104df7467299473339a
 
 api.add_middleware(
     CORSMiddleware,
