@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader # Updated import
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from utils.bot import initialize_retriver, initialize_rag_chain, get_model, extract_video_id
@@ -14,7 +14,6 @@ from groq import Groq
 import json
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
-
 
 load_dotenv()
 
@@ -70,7 +69,6 @@ def get_sessions():
     except HTTPException as e:
         raise e 
     except Exception as e:
-        # Log the exception e for debugging purposes if you have a logger setup
         raise HTTPException(status_code=500, detail=f"An error occurred while fetching session IDs: {str(e)}")
 
 @api.post("/recommendations")
@@ -519,3 +517,55 @@ JSON Output:
     except Exception as e:
         print(f"An unexpected error occurred in mental_ability_questions: {type(e).__name__} - {str(e)}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred while generating mental ability questions: {str(e)}")
+
+@api.post("/assessment")
+def assess_learner_type(video_correct: int, aptitude_correct: int):
+    try:
+        prompt = f"""You are an expert student assessor. Based on the following performance metrics, classify the student as a 'slow', 'medium', or 'fast' learner.
+
+Aptitude Test Performance:
+- Correct Answers: {aptitude_correct} out of 5
+
+Video Comprehension Performance:
+- Correct Answers: {video_correct} out of 5
+
+Consider that 'fast' learners grasp concepts quickly and perform very well (e.g., high scores like 4 aptitude and 4 video correct),
+'medium' learners show steady understanding (e.g., moderate scores),
+and 'slow' learners might need more time and support (e.g., lower scores like 0-1 correct).
+
+Provide your classification as a single word: 'slow', 'medium', or 'fast'.
+
+Classification:"""
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that classifies learners based on performance data. Respond with a single word: 'slow', 'medium', or 'fast'."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,  # Lower temperature for more deterministic classification
+            max_tokens=10     # Expecting a short response
+        )
+        
+        classification = response.choices[0].message.content.strip().lower()
+        
+        allowed_classifications = ["slow", "medium", "fast"]
+        if classification not in allowed_classifications:
+            # Fallback or attempt to find the keyword if the LLM adds minor extra text
+            for allowed_class in allowed_classifications:
+                if allowed_class in classification:
+                    classification = allowed_class
+                    break
+            else: # no break
+                print(f"Unexpected classification from LLM: {classification}")
+                raise HTTPException(status_code=500, detail=f"Received unexpected classification from LLM: {response.choices[0].message.content.strip()}")
+
+        return {"learner_type_assessment": classification}
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"An unexpected error occurred in assess_learner_type: {type(e).__name__} - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during learner assessment: {str(e)}")
+
+
