@@ -1,32 +1,41 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
-import { loginUser, clearError } from "../store/slices/authSlice";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import {
+  resetPassword,
+  clearError,
+  clearMessage,
+} from "../store/slices/authSlice";
 
-function Login() {
+function ResetPassword() {
   const [formData, setFormData] = useState({
-    email: "",
     password: "",
+    confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
+  const { token } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoading, error, isAuthenticated } = useSelector(
+  const { isLoading, error, success, message } = useSelector(
     (state) => state.auth
   );
 
   useEffect(() => {
-    // Clear errors when component mounts
+    // Clear errors and messages when component mounts
     dispatch(clearError());
+    dispatch(clearMessage());
   }, [dispatch]);
 
   useEffect(() => {
-    // Redirect if already authenticated
-    if (isAuthenticated) {
-      navigate("/dashboard");
+    if (success) {
+      // Redirect to login page after successful password reset
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
     }
-  }, [isAuthenticated, navigate]);
+  }, [success, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,18 +43,41 @@ function Login() {
       ...prevState,
       [name]: value,
     }));
+
+    // Clear password error when typing
+    if (name === "password" || name === "confirmPassword") {
+      setPasswordError("");
+    }
+  };
+
+  const validateForm = () => {
+    // Password validation
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return false;
+    }
+
+    if (formData.password.length < 8) {
+      setPasswordError("Password must be at least 8 characters long");
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(loginUser(formData));
+
+    if (validateForm()) {
+      dispatch(resetPassword({ token, password: formData.password }));
+    }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Login to Your Account
+          Reset Password
         </h2>
 
         {error && (
@@ -54,41 +86,20 @@ function Login() {
           </div>
         )}
 
+        {success && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            {message} Redirecting to login...
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="password"
               className="block text-gray-700 font-semibold mb-1"
             >
-              Email Address
+              New Password
             </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label
-                htmlFor="password"
-                className="block text-gray-700 font-semibold"
-              >
-                Password
-              </label>
-              <Link
-                to="/forgot-password"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Forgot Password?
-              </Link>
-            </div>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -96,7 +107,7 @@ function Login() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Enter your password"
+                placeholder="Create a new password"
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -136,6 +147,31 @@ function Login() {
                 )}
               </button>
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Password must be at least 8 characters long
+            </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-gray-700 font-semibold mb-1"
+            >
+              Confirm New Password
+            </label>
+            <input
+              type={showPassword ? "text" : "password"}
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your new password"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {passwordError && (
+              <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+            )}
           </div>
 
           <button
@@ -143,15 +179,15 @@ function Login() {
             disabled={isLoading}
             className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70"
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? "Resetting..." : "Reset Password"}
           </button>
         </form>
 
         <div className="text-center mt-4">
           <p className="text-gray-600">
-            Don&apos;t have an account?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
-              Register here
+            Remember your password?{" "}
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Back to Login
             </Link>
           </p>
         </div>
@@ -160,4 +196,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default ResetPassword;
