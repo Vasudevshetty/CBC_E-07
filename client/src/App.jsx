@@ -11,7 +11,7 @@ import { ClipLoader } from "react-spinners";
 import { fetchCurrentUser } from "./store/slices/authSlice";
 import DashboardLayout from "./components/DashboardLayout";
 import Assessment from "./pages/Assessment";
-import Quiz from "./pages/Quiz";
+// import Quiz from "./pages/Quiz";
 
 // Lazy loading components for better performance
 const Login = lazy(() => import("./pages/Login"));
@@ -118,16 +118,6 @@ function App() {
               <Route path="/revise" element={<Revise />} />
             </Route>
             <Route path="/assessment" element={<Assessment />} />
-            <Route path="/assessment/:id" element={<Assessment />} />
-
-            {/* <Route
-              element={
-                <ProtectedRoute>
-                  <Quiz />
-                </ProtectedRoute>
-              }
-              path="/quiz"
-            /> */}
 
             {/* Redirect for unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
