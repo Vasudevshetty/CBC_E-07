@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import { fetchCurrentUser } from "./store/slices/authSlice";
+import QuizPanel from "./pages/QuizPanel";
+import DashboardLayout from "./components/DashboardLayout";
 
 // Lazy loading components for better performance
 const Login = lazy(() => import("./pages/Login"));
@@ -101,47 +103,20 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-            {/* Protected Routes */}
             <Route
-              path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <DashboardLayout />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/ai-asst"
-              element={
-                <ProtectedRoute>
-                  <AiAsst />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/career"
-              element={
-                <ProtectedRoute>
-                  <CareerPath />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/revise"
-              element={
-                <ProtectedRoute>
-                  <Revise />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/ai-asst" element={<AiAsst />} />
+              <Route path="/career" element={<CareerPath />} />
+              <Route path="/revise" element={<Revise />} />
+              <Route path="/quiz-panel" element={<QuizPanel />} />
+            </Route>
 
             {/* Redirect for unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
