@@ -1,7 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
+import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
-import os
+from langchain.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
 from utils.bot import initialize_retriver, initialize_rag_chain, get_model
 from utils.database import insert_application_logs, get_chat_history
 from typing import Optional
@@ -26,8 +29,6 @@ llm = ChatGroq(model= "llama-3.3-70b", api_key=groq_api_key2)
 os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
 model,embeddings = get_model()
 
-
-
 @api.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -51,8 +52,33 @@ def personnle_assistant(session_id: Optional[str] = None, user_query: str = "", 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
 
+@api.post("/upload_textbook/")
+async def upload_textbook(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
 
-    
+    rag_dir = os.path.join(os.getcwd(), "RAG")
+    os.makedirs(rag_dir, exist_ok=True)
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
+
+    loader = PyPDFLoader(tmp_path)
+    docs = loader.load()
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=250)
+    chunks = splitter.split_documents(docs)
+
+
+    _, embeddings = get_model()
+
+    vector_db = FAISS.from_documents(chunks, embeddings)
+    book_name = os.path.splitext(file.filename)[0]
+    save_path = os.path.join(rag_dir, book_name)
+    vector_db.save_local(save_path)
+
+    os.remove(tmp_path)
+    return {"message": f"FAISS index saved for {book_name} at {save_path}"}
 
 @api.post("/revision")
 def revision_assistant():
