@@ -27,6 +27,7 @@ function Profile() {
 
   const [passwordError, setPasswordError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile"); // "profile" or "password"
 
   // Use Redux loading states instead of local state
   const isLoading = loadingStates.fetchUser;
@@ -157,6 +158,7 @@ function Profile() {
     // Dispatch the Redux action to upload profile image
     dispatch(uploadProfileImage(formData));
   };
+
   // Show loading spinner when user data is being fetched
   if (isLoading || !user) {
     return (
@@ -168,254 +170,282 @@ function Profile() {
       </div>
     );
   }
+
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
 
-      <h1 className="text-2xl font-semibold mb-6 text-white">My Profile</h1>
+      <div className="flex flex-col h-full max-h-screen">
+        <h1 className="text-2xl font-semibold mb-4 text-white">My Profile</h1>
 
-      <div className="bg-black bg-opacity-40 rounded-lg shadow-lg shadow-[#B200FF]/20 text-white">
-        <div className="p-6 border-b border-[#B200FF]/30">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">
-              Profile Information
-            </h2>
+        {/* Main content container with fixed height to prevent scrolling */}
+        <div className="bg-black bg-opacity-40 rounded-lg shadow-lg shadow-[#B200FF]/20 text-white flex-1 flex flex-col max-h-[calc(100vh-120px)]">
+          {/* Profile header with image - always visible */}
+          <div className="p-4 border-b border-[#B200FF]/30 flex justify-between items-center">
+            <div className="flex items-center">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-gray-800 overflow-hidden border-2 border-[#B200FF]/50">
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full bg-gray-900 text-[#B200FF]">
+                      <span className="text-2xl font-bold">
+                        {user.name?.charAt(0)?.toUpperCase() || "U"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload overlay */}
+                <label className="absolute bottom-0 right-0 bg-[#B200FF] rounded-full p-2 cursor-pointer hover:bg-[#9900DD] transition-colors">
+                  {isUploadingImage ? (
+                    <ClipLoader size={16} color={"#ffffff"} />
+                  ) : (
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  )}
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={isUploadingImage}
+                  />
+                </label>
+              </div>
+
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-white">{user.name}</h3>
+                <p className="text-gray-300">{user.email}</p>
+              </div>
+            </div>
+
+            {/* Profile edit button moved here */}
+            {activeTab === "profile" && (
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className={`px-3 py-1.5 rounded-md transition text-sm ${
+                  isEditing
+                    ? "bg-gray-700 text-white hover:bg-gray-800"
+                    : "bg-[#B200FF] text-white hover:bg-[#9900DD]"
+                }`}
+              >
+                {isEditing ? "Cancel" : "Edit Profile"}
+              </button>
+            )}
+          </div>
+
+          {/* Tab navigation */}
+          <div className="flex border-b border-[#B200FF]/30">
             <button
-              onClick={() => setIsEditing(!isEditing)}
-              className={`px-4 py-2 rounded-md transition ${
-                isEditing
-                  ? "bg-gray-700 text-white hover:bg-gray-800"
-                  : "bg-[#B200FF] text-white hover:bg-[#9900DD]"
+              onClick={() => setActiveTab("profile")}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === "profile"
+                  ? "border-b-2 border-[#B200FF] text-[#B200FF]"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
-              {isEditing ? "Cancel" : "Edit Profile"}
+              Profile Information
             </button>
-          </div>{" "}
-          {/* Profile Image Section */}
-          <div className="flex items-center mb-6">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gray-800 overflow-hidden border-2 border-[#B200FF]/50">
-                {user.profileImage ? (
-                  <img
-                    src={user.profileImage}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
+            <button
+              onClick={() => setActiveTab("password")}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === "password"
+                  ? "border-b-2 border-[#B200FF] text-[#B200FF]"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Change Password
+            </button>
+          </div>
+
+          {/* Content section with fixed height */}
+          <div className="p-4 overflow-auto flex-1">
+            {/* Profile Information Tab */}
+            {activeTab === "profile" && (
+              <form onSubmit={handleProfileUpdate} className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-200"
+                  >
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={!isEditing || isSaving}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-gray-800 text-white"
                   />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-900 text-[#B200FF]">
-                    <span className="text-2xl font-bold">
-                      {user.name?.charAt(0)?.toUpperCase() || "U"}
-                    </span>
+                </div>
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-200"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled
+                    className="mt-1 block w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-800 text-gray-400"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Email cannot be changed
+                  </p>
+                </div>
+                <div>
+                  <label
+                    htmlFor="bio"
+                    className="block text-sm font-medium text-gray-200"
+                  >
+                    Bio
+                  </label>
+                  <textarea
+                    id="bio"
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleChange}
+                    rows="3"
+                    placeholder="Tell us a little about yourself"
+                    disabled={!isEditing || isSaving}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-gray-800 text-white"
+                  ></textarea>
+                </div>
+                {isEditing && (
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isSaving}
+                      className="px-4 py-2 bg-[#9900DD] text-white rounded-md hover:bg-[#B200FF] transition flex items-center"
+                    >
+                      {isSaving ? (
+                        <>
+                          <ClipLoader
+                            size={16}
+                            color={"#ffffff"}
+                            className="mr-2"
+                          />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </button>
                   </div>
                 )}
-              </div>
+              </form>
+            )}
 
-              {/* Upload overlay */}
-              <label className="absolute bottom-0 right-0 bg-[#B200FF] rounded-full p-2 cursor-pointer hover:bg-[#9900DD] transition-colors">
-                {isUploadingImage ? (
-                  <ClipLoader size={16} color={"#ffffff"} />
-                ) : (
-                  <svg
-                    className="w-4 h-4 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            {/* Password Change Tab */}
+            {activeTab === "password" && (
+              <form onSubmit={handlePasswordChange} className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="currentPassword"
+                    className="block text-sm font-medium text-gray-200"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                )}
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={isUploadingImage}
-                />
-              </label>
-            </div>
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    id="currentPassword"
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    onChange={handleChange}
+                    disabled={isChangingPassword}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
+                    required
+                  />
+                </div>
 
-            <div className="ml-6">
-              <h3 className="text-lg font-semibold text-white">{user.name}</h3>
-              <p className="text-gray-300">{user.email}</p>
-            </div>
-          </div>{" "}
-          {/* Profile Form */}
-          <form onSubmit={handleProfileUpdate}>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-200"
-                >
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={!isEditing || isSaving}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-gray-800 text-white"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-200"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-800 text-gray-400"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Email cannot be changed
-                </p>
-              </div>
-              <div>
-                <label
-                  htmlFor="bio"
-                  className="block text-sm font-medium text-gray-200"
-                >
-                  Bio
-                </label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  rows="3"
-                  placeholder="Tell us a little about yourself"
-                  disabled={!isEditing || isSaving}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-gray-800 text-white"
-                ></textarea>
-              </div>{" "}
-              {isEditing && (
+                <div>
+                  <label
+                    htmlFor="newPassword"
+                    className="block text-sm font-medium text-gray-200"
+                  >
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    id="newPassword"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    disabled={isChangingPassword}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-medium text-gray-200"
+                  >
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    disabled={isChangingPassword}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
+                    required
+                  />
+                </div>
+
+                {passwordError && <p className="text-red-500">{passwordError}</p>}
+
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    disabled={isSaving}
-                    className="px-4 py-2 bg-[#9900DD] text-white rounded-md hover:bg-[#B200FF] transition flex items-center"
+                    disabled={isChangingPassword}
+                    className="px-4 py-2 bg-[#B200FF] text-white rounded-md hover:bg-[#9900DD] transition flex items-center"
                   >
-                    {isSaving ? (
+                    {isChangingPassword ? (
                       <>
-                        <ClipLoader
-                          size={16}
-                          color={"#ffffff"}
-                          className="mr-2"
-                        />
-                        Saving...
+                        <ClipLoader size={16} color={"#ffffff"} className="mr-2" />
+                        Updating...
                       </>
                     ) : (
-                      "Save Changes"
+                      "Change Password"
                     )}
                   </button>
                 </div>
-              )}
-            </div>
-          </form>
-        </div>
-
-        {/* Password Change Form */}
-        <div className="p-6 border-t border-[#B200FF]/30">
-          <h2 className="text-xl font-semibold mb-4 text-white">
-            Change Password
-          </h2>
-          <form onSubmit={handlePasswordChange} className="space-y-4">
-            <div>
-              <label
-                htmlFor="currentPassword"
-                className="block text-sm font-medium text-gray-200"
-              >
-                Current Password
-              </label>
-              <input
-                type="password"
-                id="currentPassword"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                disabled={isChangingPassword}
-                className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-200"
-              >
-                New Password
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleChange}
-                disabled={isChangingPassword}
-                className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-200"
-              >
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                disabled={isChangingPassword}
-                className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
-                required
-              />
-            </div>
-
-            {passwordError && <p className="text-red-500">{passwordError}</p>}
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isChangingPassword}
-                className="px-4 py-2 bg-[#B200FF] text-white rounded-md hover:bg-[#9900DD] transition flex items-center"
-              >
-                {isChangingPassword ? (
-                  <>
-                    <ClipLoader size={16} color={"#ffffff"} className="mr-2" />
-                    Updating...
-                  </>
-                ) : (
-                  "Change Password"
-                )}
-              </button>
-            </div>
-          </form>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </div>

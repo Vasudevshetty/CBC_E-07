@@ -110,9 +110,10 @@ function App() {
                 </ProtectedRoute>
               }
             >
+              {" "}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/ai-study" element={<AiAsst />} />
+              <Route path="/ai-study-assistant/:id?" element={<AiAsst />} />
               <Route path="/career" element={<CareerPath />} />
               <Route path="/revise" element={<Revise />} />
             </Route>

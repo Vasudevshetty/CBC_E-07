@@ -7,12 +7,11 @@ function SideBar() {
   const [isVisible, setIsVisible] = useState(false);
   const sidebarRef = useRef(null);
   const touchStartX = useRef(null);
-
   const links = [
     { name: "Dashboard", link: "/dashboard" },
     { name: "Career Path", link: "/career" },
     { name: "Revison Assistant", link: "/revise" },
-    { name: "Ai Study Assistant", link: "/ai-study" },
+    { name: "Ai Study Assistant", link: "/ai-study-assistant" },
     { name: "Profile", link: "/profile" },
   ];
 
