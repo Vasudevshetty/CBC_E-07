@@ -11,6 +11,7 @@ const mongoose = require("mongoose");
 // Import routes (to be created)
 const authRoutes = require("./src/routes/auth.routes");
 const userRoutes = require("./src/routes/user.routes");
+const loginRoutes = require("./src/routes/login.routes");
 
 // Load environment variables
 dotenv.config();
@@ -35,7 +36,7 @@ app.use(helmet());
 // Enable CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // Adjust to your client's URL
+    origin: [process.env.CLIENT_URL, "http://localhost:5173"], // Adjust to your client's URL
     credentials: true, // Allow cookies to be sent with requests
   })
 );
@@ -61,6 +62,7 @@ app.use(
 // Set up API routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/login", loginRoutes);
 
 // Health check route
 app.get("/api/v1/health", (req, res) => {

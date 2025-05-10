@@ -60,7 +60,7 @@ function Quiz() {
 
   const handleSubmitQuiz = () => {
     console.log("Quiz submitted with answers:", answers);
-    navigate("/quiz-results", { state: { answers } });
+    navigate("/dashboard", { state: { answers } });
   };
 
   return (
