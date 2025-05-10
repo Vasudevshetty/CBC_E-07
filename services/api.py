@@ -6,7 +6,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from utils.bot import initialize_retriver, initialize_rag_chain, get_model, extract_video_id
-from utils.database import insert_application_logs, get_chat_history, get_all_session_ids 
+from utils.database import insert_application_logs, get_chat_history, get_all_session_ids, get_sessions_by_user_id, get_chats_by_session_id 
 from typing import Optional, List 
 import uuid
 from dotenv import load_dotenv
@@ -44,7 +44,7 @@ def read_root():
     return {"Hello": "World"}
 
 @api.post("/chat")
-def personal_assistant(session_id: Optional[str] = None, user_query: str = "", subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
+def personal_assistant(session_id: Optional[str] = None, user_id: str = "anonymous", user_query: str = "", subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
     _, retriever = initialize_retriver(model, embeddings, subject)
     rag_chain = initialize_rag_chain(model, retriever, subject, learner_type)
     if not session_id:
@@ -54,14 +54,13 @@ def personal_assistant(session_id: Optional[str] = None, user_query: str = "", s
         response = rag_chain.invoke({
         "input": user_query, "chat_history": chat_history, "subject":subject})['answer']
 
-        insert_application_logs(session_id, user_query, response)
+        insert_application_logs(session_id, user_id, user_query, response)
         return {"session_id": session_id, "response": response}
     except KeyError as e:
-        raise HTTPException(status_code=500, detail =f"Error Processing th eresponse :{e}")
+        raise HTTPException(status_code=500, detail=f"Error Processing the response: {e}")
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
-    
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
 
 @api.get("/sessions", response_model=List[str])
 def get_sessions():
@@ -74,6 +73,26 @@ def get_sessions():
         raise e 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred while fetching session IDs: {str(e)}")
+
+@api.get("/sessions_by_user")
+def get_user_sessions(user_id: str):
+    try:
+        session_ids = get_sessions_by_user_id(user_id)
+        if session_ids is None:
+            raise HTTPException(status_code=501, detail="Failed to retrieve sessions for the user")
+        return {"user_id": user_id, "sessions": session_ids}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while fetching user sessions: {str(e)}")
+
+@api.get("/chat_history")
+def get_session_chat_history(session_id: str):
+    try:
+        chats = get_chats_by_session_id(session_id)
+        if chats is None:
+            raise HTTPException(status_code=404, detail="No chat history found for this session")
+        return {"session_id": session_id, "chats": chats}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while fetching chat history: {str(e)}")
 
 @api.post("/recommendations")
 def get_recommendations(subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
@@ -185,6 +204,8 @@ For each strategy:
 - Suggest how to track progress
 - Explain why this technique works well for fast learners
 
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
+
 Format your response as structured, actionable advice with clear headings and bullet points."""
 
         elif learner_type == 'medium':
@@ -292,6 +313,8 @@ For each component:
 - Suggest how to leverage existing qualifications in {current_qualificaion}
 - Explain how this approach maximizes their fast learning potential
 
+Throughout your response, use relevant emojis to highlight key points, milestones, and important concepts.
+
 Format your response as a professional career development plan with clear sections, timelines, and action items."""
 
         elif learner_type == 'medium':
@@ -314,7 +337,6 @@ For each component:
 - Balance skill acquisition with practical experience
 - Suggest how to leverage existing qualifications in {current_qualificaion}
 - Include regular progress assessment points
-
 Format your response as a professional career development plan with clear sections, timelines, and action items."""
 
         elif learner_type == "slow":

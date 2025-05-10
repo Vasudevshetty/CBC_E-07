@@ -12,15 +12,16 @@ def create_application_logs():
     conn.execute('''CREATE TABLE IF NOT EXISTS application_logs
     (id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT,
+    user_id TEXT,
     user_query TEXT,
     model_response TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     conn.close()
 
-def insert_application_logs(session_id, user_query, model_response):
+def insert_application_logs(session_id, user_id, user_query, model_response):
     conn = get_db_connection()
-    conn.execute('INSERT INTO application_logs (session_id, user_query, model_response) VALUES (?, ?, ?)',
-                 (session_id, user_query, model_response, ))
+    conn.execute('INSERT INTO application_logs (session_id, user_id, user_query, model_response) VALUES (?, ?, ?, ?)',
+                 (session_id, user_id, user_query, model_response, ))
     conn.commit()
     conn.close()
 
@@ -44,5 +45,29 @@ def get_all_session_ids():
     session_ids = [row['session_id'] for row in cursor.fetchall()]
     conn.close()
     return session_ids
+
+def get_sessions_by_user_id(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT session_id FROM application_logs WHERE user_id = ?', (user_id,))
+    session_ids = [row['session_id'] for row in cursor.fetchall()]
+    conn.close()
+    return session_ids
+
+def get_chats_by_session_id(session_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT user_query, model_response, created_at FROM application_logs WHERE session_id = ? ORDER BY created_at', (session_id,))
+    
+    chats = []
+    for row in cursor.fetchall():
+        chats.append({
+            "user_query": row['user_query'],
+            "model_response": row['model_response'],
+            "created_at": row['created_at']
+        })
+    
+    conn.close()
+    return chats
 
 create_application_logs()
