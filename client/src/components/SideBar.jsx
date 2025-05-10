@@ -9,10 +9,11 @@ function SideBar() {
 
   const links = [
     { name: "Dashboard", link: "/dashboard" },
-    {name:"Careers Path" ,link:"/career"},
+    { name: "Careers Path", link: "/career" },
     { name: "Revise", link: "/revise" },
     { name: "Profile", link: "/profile" },
-    {name:"Ai Asst" ,link:'/ai-asst'}
+    { name: "Ai Asst", link: "/ai-asst" },
+    { name: "Quiz", link: "/quiz-panel" },
   ];
 
   const handleLogout = () => {
@@ -22,7 +23,11 @@ function SideBar() {
   // Outside click to close
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (isOpen && sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+      if (
+        isOpen &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -65,14 +70,17 @@ function SideBar() {
         ref={sidebarRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-900 text-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out
+        className={`fixed top-0 left-0 h-full  w-64 bg-gray-900 text-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         md:translate-x-0 md:relative md:flex`}
       >
         <div className="flex flex-col w-full justify-between h-full">
           <div className="p-6">
-            <Link to="/" className=" text-3xl tracking-wider font-bold flex justify-center items-center text-blue-400">
-                  StudySyncs
+            <Link
+              to="/"
+              className=" text-3xl tracking-wider font-bold flex justify-center items-center text-blue-400"
+            >
+              StudySyncs
             </Link>
             <ul className="flex flex-col gap-4 mt-4 ">
               {links.map((link, index) => (
