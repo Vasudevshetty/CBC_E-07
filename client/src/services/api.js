@@ -4,7 +4,7 @@ import axios from "axios";
 const api = axios.create({
   baseURL:
     import.meta.env.VITE_APP_ENV === "development"
-      ? import.meta.env.VITE_APP_BACKEND_URL
+      ? import.meta.env.VITE_APP_BACKEND_URL_PROD
       : import.meta.env.VITE_APP_BACKEND_URL_PROD,
   headers: {
     "Content-Type": "application/json",
