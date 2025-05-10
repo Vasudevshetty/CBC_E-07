@@ -10,10 +10,10 @@ function SideBar() {
 
   const links = [
     { name: "Dashboard", link: "/dashboard" },
-    { name: "Careers Path", link: "/career" },
-    { name: "Revise", link: "/revise" },
+    { name: "Career Path", link: "/career" },
+    { name: "Revison Assistant", link: "/revise" },
+    { name: "Ai Study Assistant", link: "/ai-study" },
     { name: "Profile", link: "/profile" },
-    { name: "Ai Study Assistant", link: "/ai-study-assistant" },
   ];
 
   const handleLogout = () => {

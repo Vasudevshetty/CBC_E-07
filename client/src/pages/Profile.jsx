@@ -157,45 +157,44 @@ function Profile() {
     // Dispatch the Redux action to upload profile image
     dispatch(uploadProfileImage(formData));
   };
-
   // Show loading spinner when user data is being fetched
   if (isLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex items-center justify-center min-h-full bg-transparent">
         <div className="text-center">
-          <ClipLoader size={50} color={"#3B82F6"} />
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
+          <ClipLoader size={50} color={"#B200FF"} />
+          <p className="mt-4 text-white">Loading your profile...</p>
         </div>
       </div>
     );
   }
-
   return (
-    <div className="w-full p-6">
+    <div className="w-full">
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
 
-      <h1 className="text-2xl font-semibold mb-6">My Profile</h1>
+      <h1 className="text-2xl font-semibold mb-6 text-white">My Profile</h1>
 
-      <div className="bg-white rounded-lg shadow-md">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-black bg-opacity-40 rounded-lg shadow-lg shadow-[#B200FF]/20 text-white">
+        <div className="p-6 border-b border-[#B200FF]/30">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Profile Information</h2>
+            <h2 className="text-xl font-semibold text-white">
+              Profile Information
+            </h2>
             <button
               onClick={() => setIsEditing(!isEditing)}
               className={`px-4 py-2 rounded-md transition ${
                 isEditing
-                  ? "bg-gray-400 text-white hover:bg-gray-500"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+                  ? "bg-gray-700 text-white hover:bg-gray-800"
+                  : "bg-[#B200FF] text-white hover:bg-[#9900DD]"
               }`}
             >
               {isEditing ? "Cancel" : "Edit Profile"}
             </button>
-          </div>
-
+          </div>{" "}
           {/* Profile Image Section */}
           <div className="flex items-center mb-6">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gray-300 overflow-hidden">
+              <div className="w-24 h-24 rounded-full bg-gray-800 overflow-hidden border-2 border-[#B200FF]/50">
                 {user.profileImage ? (
                   <img
                     src={user.profileImage}
@@ -203,7 +202,7 @@ function Profile() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-blue-100 text-blue-500">
+                  <div className="flex items-center justify-center w-full h-full bg-gray-900 text-[#B200FF]">
                     <span className="text-2xl font-bold">
                       {user.name?.charAt(0)?.toUpperCase() || "U"}
                     </span>
@@ -212,7 +211,7 @@ function Profile() {
               </div>
 
               {/* Upload overlay */}
-              <label className="absolute bottom-0 right-0 bg-gray-800 rounded-full p-2 cursor-pointer">
+              <label className="absolute bottom-0 right-0 bg-[#B200FF] rounded-full p-2 cursor-pointer hover:bg-[#9900DD] transition-colors">
                 {isUploadingImage ? (
                   <ClipLoader size={16} color={"#ffffff"} />
                 ) : (
@@ -247,18 +246,17 @@ function Profile() {
             </div>
 
             <div className="ml-6">
-              <h3 className="text-lg font-semibold">{user.name}</h3>
-              <p className="text-gray-500">{user.email}</p>
+              <h3 className="text-lg font-semibold text-white">{user.name}</h3>
+              <p className="text-gray-300">{user.email}</p>
             </div>
-          </div>
-
+          </div>{" "}
           {/* Profile Form */}
           <form onSubmit={handleProfileUpdate}>
             <div className="space-y-4">
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-200"
                 >
                   Full Name
                 </label>
@@ -269,14 +267,13 @@ function Profile() {
                   value={formData.name}
                   onChange={handleChange}
                   disabled={!isEditing || isSaving}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-gray-800 text-white"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-200"
                 >
                   Email Address
                 </label>
@@ -287,17 +284,16 @@ function Profile() {
                   value={formData.email}
                   onChange={handleChange}
                   disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-800 text-gray-400"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   Email cannot be changed
                 </p>
               </div>
-
               <div>
                 <label
                   htmlFor="bio"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-200"
                 >
                   Bio
                 </label>
@@ -309,16 +305,15 @@ function Profile() {
                   rows="3"
                   placeholder="Tell us a little about yourself"
                   disabled={!isEditing || isSaving}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-gray-800 text-white"
                 ></textarea>
-              </div>
-
+              </div>{" "}
               {isEditing && (
                 <div className="flex justify-end">
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center"
+                    className="px-4 py-2 bg-[#9900DD] text-white rounded-md hover:bg-[#B200FF] transition flex items-center"
                   >
                     {isSaving ? (
                       <>
@@ -340,13 +335,15 @@ function Profile() {
         </div>
 
         {/* Password Change Form */}
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+        <div className="p-6 border-t border-[#B200FF]/30">
+          <h2 className="text-xl font-semibold mb-4 text-white">
+            Change Password
+          </h2>
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div>
               <label
                 htmlFor="currentPassword"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-200"
               >
                 Current Password
               </label>
@@ -357,7 +354,7 @@ function Profile() {
                 value={formData.currentPassword}
                 onChange={handleChange}
                 disabled={isChangingPassword}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
                 required
               />
             </div>
@@ -365,7 +362,7 @@ function Profile() {
             <div>
               <label
                 htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-200"
               >
                 New Password
               </label>
@@ -376,7 +373,7 @@ function Profile() {
                 value={formData.newPassword}
                 onChange={handleChange}
                 disabled={isChangingPassword}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
                 required
               />
             </div>
@@ -384,7 +381,7 @@ function Profile() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-200"
               >
                 Confirm New Password
               </label>
@@ -395,7 +392,7 @@ function Profile() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 disabled={isChangingPassword}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-gray-700 bg-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] text-white"
                 required
               />
             </div>
@@ -406,7 +403,7 @@ function Profile() {
               <button
                 type="submit"
                 disabled={isChangingPassword}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center"
+                className="px-4 py-2 bg-[#B200FF] text-white rounded-md hover:bg-[#9900DD] transition flex items-center"
               >
                 {isChangingPassword ? (
                   <>
