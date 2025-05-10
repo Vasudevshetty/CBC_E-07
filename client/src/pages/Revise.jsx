@@ -426,12 +426,14 @@ function Revise() {
                       {revisionData.overview}
                     </span>
                   </h2>
-                ) : selectedTopic && (
-                  <h2 className="ml-4 text-lg font-medium">
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
-                      {selectedTopic}
-                    </span>
-                  </h2>
+                ) : (
+                  selectedTopic && (
+                    <h2 className="ml-4 text-lg font-medium">
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+                        {selectedTopic}
+                      </span>
+                    </h2>
+                  )
                 )}
               </div>
               <div className="flex space-x-2">
