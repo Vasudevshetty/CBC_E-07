@@ -1,17 +1,3 @@
-<<<<<<< HEAD
-import Footer from "../components/Footer";
-import Features from "../components/Home/Features";
-import Hero from "../components/Home/Hero";
-import Navbar from "../components/Navbar";
-
-function Home() {
-  return (
-    <div className="bg-[radial-gradient(circle_at_top,_#B200FF,_black)] ">
-      <Navbar />
-      <Hero />
-      <Features />
-      <Footer />
-=======
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -129,7 +115,6 @@ function Home() {
           </div>
         )}
       </div>
->>>>>>> 5db0bc4dce7de6d7f05ca1f4869a469e3db6d661
     </div>
   );
 }
