@@ -1,10 +1,14 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
+import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
-from langchain.chains import RetrievalQA
-from langchain.vectorstores import Chroma
-import os
-import json
+from langchain.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from utils.bot import initialize_retriver, initialize_rag_chain, get_model
+from utils.database import insert_application_logs, get_chat_history
+from typing import Optional
+import uuid
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -22,46 +26,59 @@ api.add_middleware(
 )
 
 llm = ChatGroq(model= "llama-3.3-70b", api_key=groq_api_key2)
+os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
+model,embeddings = get_model()
 
 @api.get("/")
 def read_root():
     return {"Hello": "World"}
 
 @api.post("/chat")
-def personal_assistant(query:str):
-  try:
-        # init LLM
-        llm = ChatGroq(
-            groq_api_key=groq_api_key1,
-            model_name="llama-3.3-70b-versatile",
-            streaming=False
-        )
+def personnle_assistant(session_id: Optional[str] = None, user_query: str = "", subject: str = "Data Communication", sem: int = 4):
+    _, retriever = initialize_retriver(model, embeddings, subject, sem)
+    rag_chain = initialize_rag_chain(model, retriever)
+    if not session_id:
+        session_id = str(uuid.uuid4())
+    try:
+        chat_history = get_chat_history(session_id)
+        response = rag_chain.invoke({
+        "input": user_query, "chat_history": chat_history, "subject":subject})['answer']
 
-        embeddings = OpenAIEmbeddings()
-        vectordb = Chroma(persist_directory="path/to/chroma", embedding_function=embeddings)
-        retriever = vectordb.as_retriever(search_kwargs={"k": 5})
-
-        # build and run RAG chain
-        rag = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=retriever,
-        )
-        answer = rag.run(query)
-
-        # optional summary & title
-        summary = llm.invoke(f"Summarize this in one sentence: {answer}").content
-        title = llm.invoke(f"Give a 5–8 word title for this: {answer}").content
-
-        return {
-            "user_query": query,
-            "answer": answer,
-            "summary": summary,
-            "title": title
-        }
+        insert_application_logs(session_id, user_query, response)
+        return {"session_id": session_id, "response": response}
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail =f"Error Processing th eresponse :{e}")
+    
     except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=f"{e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
+
+@api.post("/upload_textbook/")
+async def upload_textbook(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+
+    rag_dir = os.path.join(os.getcwd(), "RAG")
+    os.makedirs(rag_dir, exist_ok=True)
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
+
+    loader = PyPDFLoader(tmp_path)
+    docs = loader.load()
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=250)
+    chunks = splitter.split_documents(docs)
+
+
+    _, embeddings = get_model()
+
+    vector_db = FAISS.from_documents(chunks, embeddings)
+    book_name = os.path.splitext(file.filename)[0]
+    save_path = os.path.join(rag_dir, book_name)
+    vector_db.save_local(save_path)
+
+    os.remove(tmp_path)
+    return {"message": f"FAISS index saved for {book_name} at {save_path}"}
 
 @api.post("/revision")
 def revision_assistant():
@@ -70,43 +87,3 @@ def revision_assistant():
 @api.post("/carreer")
 def carreer_path():
     return {"message": "This is a career path assistant API"}
-
-# new RAG‐based chat handler
-def chat_db( query: str):
-    """
-    Replaces SQL‐agent with a simple RAG chain over a Chroma vectorstore.
-    """
-    try:
-        # init LLM
-        llm = ChatGroq(
-            groq_api_key=groq_api_key1,
-            model_name="llama-3.3-70b-versatile",
-            streaming=False
-        )
-
-        # embeddings + vectorstore
-        embeddings = OpenAIEmbeddings()
-        vectordb = Chroma(persist_directory="path/to/chroma", embedding_function=embeddings)
-        retriever = vectordb.as_retriever(search_kwargs={"k": 5})
-
-        # build and run RAG chain
-        rag = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=retriever,
-        )
-        answer = rag.run(query)
-
-        # optional summary & title
-        summary = llm.invoke(f"Summarize this in one sentence: {answer}").content
-        title = llm.invoke(f"Give a 5–8 word title for this: {answer}").content
-
-        return {
-            "user_query": query,
-            "answer": answer,
-            "summary": summary,
-            "title": title
-        }
-    except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=f"{e}\n{traceback.format_exc()}")
