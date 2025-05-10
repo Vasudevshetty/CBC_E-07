@@ -2,13 +2,22 @@ import { Link } from "react-router-dom";
 
 function Hero() {
   return (
-    <div className="flex flex-col md:flex-row min-h-[600px] w-full px-6 md:px-16 lg:px-32 py-10 items-center justify-center gap-10 md:gap-12">
+    <div className="flex flex-col relative md:flex-row min-h-[600px] w-full px-6 md:px-16 lg:px-32 py-10 items-center justify-center gap-10 md:gap-12 mb-18">
+      <img src="./Home/hline.png" alt="" className="absolute top-0" />
+      <img src="./Home/hline.png" alt="" className="absolute bottom-0" />
+      <img src="./Home/vline.png" alt="" className="absolute left-10" />
+      <img src="./Home/vline.png" alt="" className="absolute right-10" />
       {/* Text Section */}
       <div className="w-full md:w-1/2 flex flex-col gap-8 md:gap-10 justify-center">
         <div>
           <p className="text-4xl sm:text-5xl lg:text-6xl text-white leading-tight">
             Unlock Smarter Learning with{" "}
-            <span className="text-[#B200FF] font-bold">AI</span>
+            <span
+              className="text-[#B200FF] font-bold "
+              style={{ WebkitTextStroke: "1px white" }}
+            >
+              AI
+            </span>
           </p>
           <p className="text-white mt-4 text-sm sm:text-base">
             Our intelligent learning platform adapts to your pace, style, and
