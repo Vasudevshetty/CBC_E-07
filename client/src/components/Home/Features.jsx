@@ -24,8 +24,8 @@ function Features() {
               alt=""
               className="absolute top-0 right-0 w-32 h-auto"
             />
-            <h3 className="text-2xl font-normal mb-2">{feature.title}</h3>
-            <p className="text-sm">{feature.desc}</p>
+            <h3 className="text-2xl font-normal mb-2 z-10">{feature.title}</h3>
+            <p className="text-sm z-10">{feature.desc}</p>
           </div>
         ))}
       </div>

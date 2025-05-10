@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import Revise from "./pages/Revise";
 import CareerPath from "./pages/CareerPath";
 import AiAsst from "./pages/AiAsst";
+import Quiz from "./pages/Quiz";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/career" element={<CareerPath />} />
           <Route path="/revise" element={<Revise />} />
           <Route path="/ai-asst" element={<AiAsst />} />
+          <Route path="/quiz" element={<Quiz />} />
         </Routes>
       </div>
     </Router>
