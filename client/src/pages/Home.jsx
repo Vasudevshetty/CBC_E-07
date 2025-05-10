@@ -1,4 +1,5 @@
 import Features from "../components/Home/Features";
+import Footer from "../components/Home/Footer";
 import Hero from "../components/Home/Hero";
 import Navbar from "../components/Navbar";
 
@@ -8,6 +9,7 @@ function Home() {
       <Navbar />
       <Hero />
       <Features />
+      <Footer />
     </div>
   );
 }
