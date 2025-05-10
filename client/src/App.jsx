@@ -9,8 +9,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import { fetchCurrentUser } from "./store/slices/authSlice";
-import QuizPanel from "./pages/QuizPanel";
 import DashboardLayout from "./components/DashboardLayout";
+import Assessment from "./pages/Assessment";
+import Quiz from "./pages/Quiz";
 
 // Lazy loading components for better performance
 const Login = lazy(() => import("./pages/Login"));
@@ -39,7 +40,7 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
-
+  console.log(isAuthenticated);
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
@@ -117,14 +118,16 @@ function App() {
               <Route path="/career" element={<CareerPath />} />
               <Route path="/revise" element={<Revise />} />
             </Route>
+            <Route path="/assessment" element={<Assessment />} />
+            <Route path="/assessment/:id" element={<Assessment />} />
 
             <Route
               element={
                 <ProtectedRoute>
-                  <QuizPanel />
+                  <Quiz />
                 </ProtectedRoute>
               }
-              path="/quiz/:id"
+              path="/quiz"
             />
 
             {/* Redirect for unknown routes */}

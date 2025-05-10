@@ -227,6 +227,21 @@
 
 .text-silver {
   color: #c0c0c0;
+  @keyframes typewriter {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  .typewriter {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typewriter 4s steps(40, end);
+  }
 }
 
 /* Animation for gradient backgrounds */
