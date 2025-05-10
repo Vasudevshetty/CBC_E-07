@@ -443,3 +443,79 @@ JSON Output:
        
         print(f"An unexpected error occurred: {type(e).__name__} - {str(e)}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+@api.get("/aptitude")
+def get_aptitude_questions():
+    try:
+        prompt = f"""Generate 5 multiple-choice aptitude questions.
+The questions should be of moderate difficulty, suitable for a general audience.
+Each question must have 4 options, and only one option should be the correct answer.
+Provide the output as a JSON list of objects. Each object should have the following keys:
+- "question": (string) The question text.
+- "options": (list of 4 strings) The multiple choice options.
+- "correct_answer": (string) The text of the correct option.
+
+JSON Output:
+"""
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile", 
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that generates multiple-choice mental ability questions, formatted as a JSON list of objects."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.6, 
+            max_tokens=1500,
+            response_format={"type": "json_object"}
+        )
+        
+        questions_str = response.choices[0].message.content.strip()
+        
+        try:
+            # Attempt to clean up potential markdown code block formatting
+            if questions_str.startswith("```json"):
+                questions_str = questions_str.split("```json")[1].split("```")[0].strip()
+            elif questions_str.startswith("```"): 
+                questions_str = questions_str.split("```")[1].strip()
+
+            parsed_response = json.loads(questions_str)
+
+            # Standardize access to the list of questions
+            questions_data = []
+            if isinstance(parsed_response, dict) and "questions" in parsed_response and isinstance(parsed_response["questions"], list):
+                questions_data = parsed_response["questions"]
+            elif isinstance(parsed_response, list):
+                questions_data = parsed_response
+            else: # Try to find a list of questions if the structure is slightly different
+                if isinstance(parsed_response, dict):
+                    for key, value in parsed_response.items():
+                        if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and "question" in value[0]:
+                            questions_data = value
+                            break
+                    else: # no break
+                        raise ValueError("JSON does not contain a list of questions in the expected format.")
+                else:
+                    raise ValueError("JSON response is not a list or a dictionary containing a list of questions.")
+
+            if not questions_data or len(questions_data) == 0:
+                 raise ValueError("LLM returned an empty list of questions.")
+            if len(questions_data) > 5:
+                questions_data = questions_data[:5]
+
+
+        except json.JSONDecodeError as e:
+            print(f"JSONDecodeError for mental ability questions: {e}")
+            print(f"Problematic JSON string: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"Error parsing JSON from LLM for mental ability questions: {str(e)}. Response: {questions_str}")
+        except ValueError as e:
+            print(f"ValueError for mental ability questions: {e}")
+            print(f"Problematic JSON structure: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"LLM response format error for mental ability questions: {str(e)}. Response: {questions_str}")
+
+        return {"questions": questions_data}
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"An unexpected error occurred in mental_ability_questions: {type(e).__name__} - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while generating mental ability questions: {str(e)}")
