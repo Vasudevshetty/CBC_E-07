@@ -18,7 +18,7 @@ load_dotenv()
 api = FastAPI()
 
 groq_api_key1 = os.getenv("GROQ_API_KEY1")
-groq_api_key2 = os.getenv("GROQ_API_kEY2")
+groq_api_key2 = os.getenv("GROQ_API_KEY2")
 client = Groq(api_key=groq_api_key1)
 
 api.add_middleware(

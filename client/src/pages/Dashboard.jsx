@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import SideBar from "../components/SideBar";
-import NavBar from "../components/NavBar";
 
 function Dashboard() {
   const dispatch = useDispatch();
@@ -92,9 +91,6 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col w-full">
-      {/* Navigation Bar */}
-      <NavBar />
-
       <div className="flex flex-1">
         {/* Sidebar takes 20% */}
         <div className="w-[20%] bg-gray-900">

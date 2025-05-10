@@ -1,8 +1,10 @@
+import { RiAccountCircleLine } from "react-icons/ri";
+import { IoLogOutOutline } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../store/slices/authSlice";
 
-function NavBar() {
+function Navbar() {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -12,91 +14,60 @@ function NavBar() {
     navigate("/");
   };
 
+  const handleProfileClick = () => {
+    navigate("/dashboard");
+  };
+
   return (
-    <nav className="bg-white shadow-md w-full">
-      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold text-blue-600">
-          CareerBuilder
+    <nav className="flex items-center justify-between px-2 md:px-14 h-16 bg-transparent">
+      {/* Left Side: StudySyncs Icon */}
+      <div>
+        <Link to="/" className="text-2xl font-bold text-white">
+          StudySyncs
         </Link>
+      </div>
 
-        <div className="hidden md:flex space-x-6">
-          <Link to="/dashboard" className="text-gray-700 hover:text-blue-600">
-            Dashboard
-          </Link>
-          <Link to="/career" className="text-gray-700 hover:text-blue-600">
-            Career Path
-          </Link>
-          <Link to="/revise" className="text-gray-700 hover:text-blue-600">
-            Revise
-          </Link>
-          <Link to="/ai-asst" className="text-gray-700 hover:text-blue-600">
-            AI Assistant
-          </Link>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <div className="relative group">
-            <button className="flex items-center space-x-1 focus:outline-none">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                {user?.name ? (
-                  <span className="text-blue-600 font-semibold">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
-                ) : (
-                  <span className="text-blue-600 font-semibold">U</span>
-                )}
-              </div>
-              <span className="hidden md:block">{user?.name || "User"}</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-500"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
-              <Link
-                to="/profile"
-                className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                Profile Settings
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-
-          <button className="md:hidden focus:outline-none" aria-label="menu">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-gray-700"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+      {/* Right Side */}
+      <div className="flex space-x-4 items-center">
+        {user ? (
+          <>
+            <button
+              onClick={handleProfileClick}
+              className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16m-7 6h7"
+              <img
+                src={user?.profileImage}
+                alt=""
+                className="rounded-full cursor-pointer w-full h-full"
               />
-            </svg>
-          </button>
-        </div>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-white hover:text-red-400 cursor-pointer transition"
+              title="Logout"
+            >
+              <IoLogOutOutline size={26} />
+            </button>
+          </>
+        ) : (
+          <div className="flex gap-2">
+            <Link
+              to="/login"
+              className="text-sm md:text-lg bg-white text-black border-2 border-white w-18 md:w-24 px-2 rounded-full flex justify-center items-center"
+            >
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="text-sm md:text-lg bg-transparent text-white border-2 border-white w-18 md:w-24 px-2 rounded-full flex justify-center items-center"
+            >
+              Sign Up
+            </Link>
+          </div>
+        )}
       </div>
     </nav>
   );
 }
 
-export default NavBar;
+export default Navbar;

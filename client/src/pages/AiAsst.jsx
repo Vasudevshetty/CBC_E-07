@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import NavBar from "../components/NavBar";
 import SideBar from "../components/SideBar";
 
 function AiAsst() {
@@ -39,9 +38,6 @@ function AiAsst() {
 
   return (
     <div className="min-h-screen flex flex-col w-full">
-      {/* Navigation Bar */}
-      <NavBar />
-
       <div className="flex flex-1">
         {/* Sidebar - 20% */}
         <div className="w-[20%] bg-gray-900">
