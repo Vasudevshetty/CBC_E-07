@@ -43,7 +43,9 @@ function CircularProgress({ percentage }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-white text-lg font-bold">{animatedPercentage}%</span>
+        <span className="text-white text-lg font-bold">
+          {animatedPercentage}%
+        </span>
       </div>
     </div>
   );
