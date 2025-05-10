@@ -229,7 +229,8 @@ function Assessment() {
   }, []);
 
   const startAssessment = () => {
-    setCurrentPhase("videoQuiz");
+    setShowModal(true);
+    setCurrentPhase("video");
   };
 
   const handleVideoEnd = async () => {
