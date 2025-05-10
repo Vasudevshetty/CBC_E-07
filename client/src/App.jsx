@@ -3,16 +3,26 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Revise from "./pages/Revise";
+import CareerPath from "./pages/CareerPath";
+import AiAsst from "./pages/AiAsst";
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/career" element={<CareerPath />} />
+          <Route path="/revise" element={<Revise />} />
+          <Route path="/ai-asst" element={<AiAsst />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
