@@ -34,9 +34,9 @@ def read_root():
     return {"Hello": "World"}
 
 @api.post("/chat")
-def personnle_assistant(session_id: Optional[str] = None, user_query: str = "", subject: str = "Data Communication", sem: int = 4):
-    _, retriever = initialize_retriver(model, embeddings, subject, sem)
-    rag_chain = initialize_rag_chain(model, retriever)
+def personal_assistant(session_id: Optional[str] = None, user_query: str = "", subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
+    _, retriever = initialize_retriver(model, embeddings, subject)
+    rag_chain = initialize_rag_chain(model, retriever, subject, learner_type)
     if not session_id:
         session_id = str(uuid.uuid4())
     try:
@@ -51,8 +51,9 @@ def personnle_assistant(session_id: Optional[str] = None, user_query: str = "", 
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
+    
 
-@api.post("/upload_textbook/")
+@api.post("/upload")
 async def upload_textbook(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
