@@ -16,6 +16,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
 import joblib
 import numpy as np
+from utils.assessdb import save_user_assessment, bulk_save_video_questions, bulk_save_aptitude_questions
 
 load_dotenv()
 
@@ -385,7 +386,7 @@ Format your response as a professional career development plan with clear sectio
 
 
 @api.post("/video_questions")
-def get_questions(url: str):
+def get_questions(url: str, user_id: str = "anonymous"):
     try:
         video_id = extract_video_id(url)
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
@@ -423,9 +424,8 @@ JSON Output:
         try:
             if questions_str.startswith("```json"):
                 questions_str = questions_str.split("```json")[1].split("```")[0].strip()
-            elif questions_str.startswith("```"): # Fallback for just ```
+            elif questions_str.startswith("```"):
                 questions_str = questions_str.split("```")[1].strip()
-
 
             parsed_response = json.loads(questions_str)
 
@@ -439,13 +439,32 @@ JSON Output:
                         if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and "question" in value[0]:
                             questions_data = value
                             break
-                    else: # no break
+                    else:
                         raise ValueError("JSON does not contain a list of questions in the expected format.")
                 else:
                     raise ValueError("JSON response is not a list or a dictionary containing a list of questions.")
 
+            # Save the full questions data (with correct answers) to the database
+            questions_to_save = []
+            for q in questions_data:
+                questions_to_save.append({
+                    'question': q['question'],
+                    'correct_answer': q['correct_answer']
+                })
+            
+            bulk_save_video_questions(questions_to_save, video_id)
+            
+            # Create a stripped version without correct answers for the response
+            client_response = []
+            for q in questions_data:
+                client_response.append({
+                    'question': q['question'],
+                    'options': q['options']
+                })
+
+            return {"questions": client_response}
+
         except json.JSONDecodeError as e:
-            # Log the problematic string for debugging
             print(f"JSONDecodeError: {e}")
             print(f"Problematic JSON string: {questions_str}")
             raise HTTPException(status_code=500, detail=f"Error parsing JSON from LLM: {str(e)}. Response: {questions_str}")
@@ -454,8 +473,6 @@ JSON Output:
             print(f"Problematic JSON structure: {questions_str}")
             raise HTTPException(status_code=500, detail=f"LLM response format error: {str(e)}. Response: {questions_str}")
 
-        return {"questions": questions_data}
-
     except TranscriptsDisabled:
         raise HTTPException(status_code=400, detail="Transcripts are disabled for this video.")
     except NoTranscriptFound:
@@ -463,12 +480,11 @@ JSON Output:
     except HTTPException as e: 
         raise e
     except Exception as e:
-       
         print(f"An unexpected error occurred: {type(e).__name__} - {str(e)}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 @api.get("/aptitude")
-def get_aptitude_questions():
+def get_aptitude_questions(user_id: str = "anonymous"):
     try:
         prompt = f"""Generate 5 multiple-choice aptitude questions.
 The questions should be of moderate difficulty, suitable for a general audience.
@@ -495,7 +511,6 @@ JSON Output:
         questions_str = response.choices[0].message.content.strip()
         
         try:
-            # Attempt to clean up potential markdown code block formatting
             if questions_str.startswith("```json"):
                 questions_str = questions_str.split("```json")[1].split("```")[0].strip()
             elif questions_str.startswith("```"): 
@@ -503,28 +518,45 @@ JSON Output:
 
             parsed_response = json.loads(questions_str)
 
-            # Standardize access to the list of questions
-            questions_data = []
             if isinstance(parsed_response, dict) and "questions" in parsed_response and isinstance(parsed_response["questions"], list):
                 questions_data = parsed_response["questions"]
             elif isinstance(parsed_response, list):
                 questions_data = parsed_response
-            else: # Try to find a list of questions if the structure is slightly different
+            else:
                 if isinstance(parsed_response, dict):
                     for key, value in parsed_response.items():
                         if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and "question" in value[0]:
                             questions_data = value
                             break
-                    else: # no break
+                    else:
                         raise ValueError("JSON does not contain a list of questions in the expected format.")
                 else:
                     raise ValueError("JSON response is not a list or a dictionary containing a list of questions.")
 
             if not questions_data or len(questions_data) == 0:
-                 raise ValueError("LLM returned an empty list of questions.")
+                raise ValueError("LLM returned an empty list of questions.")
             if len(questions_data) > 5:
                 questions_data = questions_data[:5]
 
+            # Save the full questions data (with correct answers) to the database
+            questions_to_save = []
+            for q in questions_data:
+                questions_to_save.append({
+                    'question': q['question'],
+                    'correct_answer': q['correct_answer']
+                })
+            
+            bulk_save_aptitude_questions(questions_to_save)
+            
+            # Create a stripped version without correct answers for the response
+            client_response = []
+            for q in questions_data:
+                client_response.append({
+                    'question': q['question'],
+                    'options': q['options']
+                })
+
+            return {"questions": client_response}
 
         except json.JSONDecodeError as e:
             print(f"JSONDecodeError for mental ability questions: {e}")
@@ -534,8 +566,6 @@ JSON Output:
             print(f"ValueError for mental ability questions: {e}")
             print(f"Problematic JSON structure: {questions_str}")
             raise HTTPException(status_code=500, detail=f"LLM response format error for mental ability questions: {str(e)}. Response: {questions_str}")
-
-        return {"questions": questions_data}
 
     except HTTPException as e:
         raise e
@@ -595,7 +625,7 @@ Classification:"""
 
 
 @api.post("/assessment_model")
-def assess_learner_type(video_correct: int, aptitude_correct: int):
+def assess_learner_type(user_id: str = "anonymous", video_correct: int = 0, aptitude_correct: int = 0):
     try:
         features = np.array([[video_correct, aptitude_correct]])
         prediction_int = random_forest.predict(features)[0]
@@ -605,17 +635,21 @@ def assess_learner_type(video_correct: int, aptitude_correct: int):
         
         # Map integer prediction back to string label
         label_map = {0: "slow", 1: "medium", 2: "fast"}
-        classification_label = label_map.get(classification_int, "unknown") # Default to "unknown" if not in map
+        classification_label = label_map.get(classification_int, "unknown")
 
         if classification_label == "unknown":
-            # Handle case where prediction is not 0, 1, or 2, though unlikely with a trained classifier
             print(f"Warning: Unknown classification integer from model: {classification_int}")
-            # You might want to raise an error or return a specific message
-            # For now, we'll return the "unknown" label
+        else:
+            # Save the assessment results to database
+            save_user_assessment(
+                user_id=user_id,
+                video_score=video_correct,
+                aptitude_score=aptitude_correct,
+                learner_type=classification_label
+            )
 
         return {"learner_type_assessment": classification_label}
     except Exception as e:
-        # Log the full error for debugging
         print(f"Error in /assessment_model: {type(e).__name__} - {str(e)}")
         import traceback
         traceback.print_exc()
@@ -634,7 +668,7 @@ def create_new_session(user_id: str = "anonymous"):
 
 @api.delete("/delete_session")
 def remove_session(
-    session_id: str, 
+    session_id: str = Path(..., description="The ID of the session to delete"),
     user_id: Optional[str] = None
 ):
     """
