@@ -1,15 +1,22 @@
-import { useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
+import { subjects, subjectColorMap } from "../data/subjects";
+
+// Redux actions and thunks
 import {
-  subjects,
-  mockSuggestions,
-  autoCompleteMap,
-  mockSessions,
-  getMockResponse,
-  getMockConversationHistory,
-} from "../data/aiAssistantData";
+  sendMessage,
+  getSessions,
+  createSession,
+  deleteSession,
+  getRecommendations,
+  getAutocompleteSuggestions,
+  // setCurrentSession, // Not currently used but might be needed in future
+  // setChatHistory,    // Not currently used but might be needed in future
+  addMessageToHistory,
+  clearChatHistory,
+  updateSessions,
+} from "../store/slices/aiAssistantSlice";
 
 // Icons
 import { FiPlus, FiChevronRight, FiChevronLeft, FiSend } from "react-icons/fi";
@@ -18,32 +25,58 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 function AiAsst() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const {
+    sessions,
+    sessionsLoading,
+    chatHistory,
+    // Use messageLoading in loading indicators
+    messageLoading,
+    recommendations,
+    recommendationsLoading,
+    autocompleteSuggestions,
+    // Use autocompleteLoading in loading indicators
+    autocompleteLoading,
+  } = useSelector((state) => state.aiAssistant);
 
   // Refs
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-
-  // States
+  // Local states
   const [message, setMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(subjects[0].id);
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(true);
-  const [sessions, setSessions] = useState(mockSessions);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
   const [completionText, setCompletionText] = useState("");
   const [showCompletions, setShowCompletions] = useState(false);
-
-  // Effects
+  // Load sessions on component mount
   useEffect(() => {
-    // Initialize or load chat session
+    dispatch(getSessions());
+  }, [dispatch]);
+
+  // Handle session initialization
+  useEffect(() => {
+    // Skip if sessions aren't loaded yet
+    if (sessionsLoading || !sessions || sessions.length === 0) return;
+
     if (id) {
       const session = sessions.find((s) => s.id === id);
       if (session) {
-        setSelectedSubject(session.subject);
-        setChatHistory(getMockConversationHistory(id));
+        // Set subject from existing session
+        setSelectedSubject(session.subject || subjects[0].id);
+
+        // Fetch chat history if not loaded
+        if (!chatHistory || chatHistory.length === 0) {
+          dispatch(
+            sendMessage({
+              sessionId: id,
+              userQuery: "", // Empty query to just get history
+              subject: session.subject || subjects[0].id,
+            })
+          );
+        }
       } else {
         // If session not found, create a new one
         const newSessionId = createNewSession();
@@ -54,20 +87,27 @@ function AiAsst() {
       const newSessionId = createNewSession();
       navigate(`/ai-study-assistant/${newSessionId}`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, navigate]);
+  }, [
+    id,
+    sessions,
+    sessionsLoading,
+    navigate,
+    dispatch,
+    chatHistory,
+    createNewSession,
+  ]);
 
   useEffect(() => {
     // Scroll to bottom when chat history updates
     scrollToBottom();
   }, [chatHistory]);
-
+  // Load recommendations when subject changes
   useEffect(() => {
-    // Set suggestions based on selected subject
-    setSuggestions(mockSuggestions[selectedSubject] || []);
-  }, [selectedSubject]);
-
-  // Auto-completion effect
+    if (selectedSubject) {
+      dispatch(getRecommendations({ subject: selectedSubject }));
+    }
+  }, [selectedSubject, dispatch]);
+  // Auto-completion effect for text input
   useEffect(() => {
     if (!message) {
       setCompletionText("");
@@ -75,115 +115,177 @@ function AiAsst() {
       return;
     }
 
-    // Find potential completions
-    const words = message.trim().split(" ");
-    const firstWord = words[0].toLowerCase();
-
-    if (words.length === 1 && autoCompleteMap[firstWord]) {
-      setCompletionText(
-        autoCompleteMap[firstWord][0].substring(firstWord.length)
+    // Only get suggestions if user has typed enough characters
+    if (message.length > 3) {
+      dispatch(
+        getAutocompleteSuggestions({
+          userQueryPartial: message,
+          subject: selectedSubject,
+        })
       );
-      setShowCompletions(true);
+    }
+
+    // Use any available autocomplete suggestions
+    if (autocompleteSuggestions && autocompleteSuggestions.length > 0) {
+      const userText = message.toLowerCase();
+      // Find a suggestion that starts with the user's text
+      const matchingSuggestion = autocompleteSuggestions.find((suggestion) =>
+        suggestion.toLowerCase().startsWith(userText)
+      );
+
+      if (matchingSuggestion) {
+        setCompletionText(matchingSuggestion.substring(userText.length));
+        setShowCompletions(true);
+      } else {
+        setCompletionText("");
+        setShowCompletions(false);
+      }
     } else {
       setCompletionText("");
       setShowCompletions(false);
     }
-  }, [message]);
-
-  // Functions
+  }, [message, autocompleteSuggestions, dispatch, selectedSubject]);
+  // Message sending handler
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmedMessage = message.trim();
 
-    if (!trimmedMessage) return;
+    if (!trimmedMessage || !id) return;
 
-    // Add user message to chat
+    // Add user message to chat locally
     const userMessage = { role: "user", content: trimmedMessage };
-    setChatHistory([...chatHistory, userMessage]);
+    dispatch(addMessageToHistory(userMessage));
 
     // Clear input field
     setMessage("");
     setCompletionText("");
     setShowCompletions(false);
 
-    // Simulate AI response with loading state
-    setIsLoading(true);
-
+    // Set loading state with steps
     const loadingSteps = [
       "Analyzing question...",
       "Searching knowledge base...",
       "Formulating response...",
     ];
     let stepIndex = 0;
+    setIsLoading(true);
 
     const loadingInterval = setInterval(() => {
       setLoadingText(loadingSteps[stepIndex]);
       stepIndex = (stepIndex + 1) % loadingSteps.length;
     }, 800);
 
-    // Simulate response delay
-    setTimeout(() => {
+    // Send message to API
+    dispatch(
+      sendMessage({
+        sessionId: id,
+        userQuery: trimmedMessage,
+        subject: selectedSubject,
+      })
+    ).then((action) => {
       clearInterval(loadingInterval);
       setIsLoading(false);
       setLoadingText("");
 
-      const aiResponse = {
-        role: "assistant",
-        content: getMockResponse(trimmedMessage, selectedSubject),
-      };
+      if (!action.error) {
+        // Add AI response to chat
+        const aiResponse = {
+          role: "assistant",
+          content: action.payload.response,
+        };
+        dispatch(addMessageToHistory(aiResponse));
 
-      setChatHistory((prevChat) => [...prevChat, aiResponse]);
-
-      // Update session's lastUpdated
-      updateSessionLastUpdated(id);
-    }, 3000);
+        // Update session's lastUpdated time
+        const updatedSessions = sessions.map((session) =>
+          session.id === id
+            ? { ...session, lastUpdated: new Date().toISOString() }
+            : session
+        );
+        dispatch(updateSessions(updatedSessions));
+      }
+    });
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const createNewSession = useCallback(() => {
+    // Create a temporary session ID to return immediately
+    const tempSessionId = `session-${Date.now()}`;
 
-  const createNewSession = () => {
-    const newSessionId = `session-${uuidv4().substring(0, 8)}`;
+    // Create a new temporary session object
     const newSession = {
-      id: newSessionId,
+      id: tempSessionId,
       name: `New Study Session`,
       lastUpdated: new Date().toISOString(),
       subject: selectedSubject,
     };
 
-    setSessions((prev) => [newSession, ...prev]);
-    setChatHistory([
-      {
+    // Update sessions in Redux with temporary session
+    dispatch(updateSessions([newSession, ...(sessions || [])]));
+
+    // Clear and initialize chat history
+    dispatch(clearChatHistory());
+    dispatch(
+      addMessageToHistory({
         role: "assistant",
         content: `Hello ${
           user?.name || "there"
         }! I'm your AI study assistant for ${getSubjectName(
           selectedSubject
         )}. How can I help you today?`,
-      },
-    ]);
-
-    return newSessionId;
-  };
-
-  const updateSessionLastUpdated = (sessionId) => {
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id === sessionId
-          ? { ...session, lastUpdated: new Date().toISOString() }
-          : session
-      )
+      })
     );
-  };
 
+    // Also call the API to create a session and update when response is received
+    dispatch(createSession(user?.id || "anonymous"))
+      .then((action) => {
+        if (action.payload && !action.error) {
+          const apiSessionId = action.payload.id || action.payload.session_id;
+
+          // Update the URL if needed
+          if (apiSessionId && apiSessionId !== tempSessionId) {
+            navigate(`/ai-study-assistant/${apiSessionId}`, { replace: true });
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to create new session:", err);
+        // We already have a temporary session, so no further action needed
+      });
+
+    return tempSessionId;
+  });
+  const updateSessionLastUpdated = (sessionId) => {
+    const updatedSessions = sessions.map((session) =>
+      session.id === sessionId
+        ? { ...session, lastUpdated: new Date().toISOString() }
+        : session
+    );
+    dispatch(updateSessions(updatedSessions));
+  };
   const handleDeleteSession = (sessionId, e) => {
     e.stopPropagation();
 
-    // Remove the session
-    setSessions((prev) => prev.filter((session) => session.id !== sessionId));
+    // Delete the session via API
+    dispatch(deleteSession({ userId: user?.id || "anonymous", sessionId }))
+      .then(() => {
+        // If current session is deleted, create a new one
+        if (id === sessionId) {
+          const newSessionId = createNewSession();
+          navigate(`/ai-study-assistant/${newSessionId}`);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to delete session:", err);
+        // Fallback to local session deletion
+        const updatedSessions = sessions.filter(
+          (session) => session.id !== sessionId
+        );
+        dispatch(updateSessions(updatedSessions));
 
-    // If current session is deleted, create a new one
-    if (id === sessionId) {
-      const newSessionId = createNewSession();
-      navigate(`/ai-study-assistant/${newSessionId}`);
-    }
+        if (id === sessionId) {
+          const newSessionId = createNewSession();
+          navigate(`/ai-study-assistant/${newSessionId}`);
+        }
+      });
   };
 
   const handleNewSession = () => {
@@ -194,54 +296,62 @@ function AiAsst() {
   const handleSessionClick = (sessionId) => {
     navigate(`/ai-study-assistant/${sessionId}`);
   };
-
   const handleSuggestionClick = (suggestion) => {
-    // Add user message to chat
+    if (!id) return;
+
+    // Add user message to chat locally
     const userMessage = { role: "user", content: suggestion };
-    setChatHistory([...chatHistory, userMessage]);
+    dispatch(addMessageToHistory(userMessage));
 
-    // Simulate AI response
-    setIsLoading(true);
-
+    // Set loading state with steps
     const loadingSteps = [
       "Analyzing question...",
       "Searching knowledge base...",
       "Formulating response...",
     ];
     let stepIndex = 0;
+    setIsLoading(true);
 
     const loadingInterval = setInterval(() => {
       setLoadingText(loadingSteps[stepIndex]);
       stepIndex = (stepIndex + 1) % loadingSteps.length;
     }, 800);
 
-    // Simulate response delay
-    setTimeout(() => {
+    // Send message to API
+    dispatch(
+      sendMessage({
+        sessionId: id,
+        userQuery: suggestion,
+        subject: selectedSubject,
+      })
+    ).then((action) => {
       clearInterval(loadingInterval);
       setIsLoading(false);
       setLoadingText("");
 
-      const aiResponse = {
-        role: "assistant",
-        content: getMockResponse(suggestion, selectedSubject),
-      };
+      if (!action.error) {
+        // Add AI response to chat
+        const aiResponse = {
+          role: "assistant",
+          content: action.payload.response,
+        };
+        dispatch(addMessageToHistory(aiResponse));
 
-      setChatHistory((prevChat) => [...prevChat, aiResponse]);
-
-      // Update session's lastUpdated
-      updateSessionLastUpdated(id);
-    }, 3000);
+        // Update session's lastUpdated time
+        updateSessionLastUpdated(id);
+      }
+    });
   };
-
   const handleSubjectChange = (e) => {
-    setSelectedSubject(e.target.value);
-    // Update session's subject
-    if (id) {
-      setSessions((prev) =>
-        prev.map((session) =>
-          session.id === id ? { ...session, subject: e.target.value } : session
-        )
+    const newSubject = e.target.value;
+    setSelectedSubject(newSubject);
+
+    // Update session's subject if we have an active session
+    if (id && sessions) {
+      const updatedSessions = sessions.map((session) =>
+        session.id === id ? { ...session, subject: newSubject } : session
       );
+      dispatch(updateSessions(updatedSessions));
     }
   };
 
@@ -301,61 +411,69 @@ function AiAsst() {
               <span className="ml-2 font-medium">New Session</span>
             )}
           </button>
-        </div>
-
+        </div>{" "}
         {/* Sessions List */}
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#B200FF]/50 scrollbar-track-transparent">
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              onClick={() => handleSessionClick(session.id)}
-              className={`flex items-center justify-between p-3 cursor-pointer transition hover:bg-black hover:bg-opacity-20 ${
-                id === session.id
-                  ? "bg-black bg-opacity-30 border-l-2 border-[#B200FF]"
-                  : ""
-              }`}
-            >
-              <div className="flex items-center overflow-hidden">
-                {/* Subject color indicator */}
-                <div className="flex-shrink-0">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      subjectColorMap[session.subject] || "bg-gray-400"
-                    } shadow-md shadow-[#B200FF]/30 ring-1 ring-white/20`}
-                    style={{
-                      animation:
-                        id === session.id ? "pulse 2s infinite" : "none",
-                      boxShadow:
-                        id === session.id
-                          ? "0 0 5px 2px rgba(178, 0, 255, 0.3)"
-                          : "",
-                    }}
-                  ></div>
-                </div>
-
-                {!isSidebarCollapsed && (
-                  <div className="ml-3 truncate">
-                    <div className="text-white truncate text-sm">
-                      {session.name}
-                    </div>
-                    <div className="text-gray-400 text-xs">
-                      {formatDate(session.lastUpdated)}
-                    </div>
+          {sessionsLoading ? (
+            <div className="flex justify-center items-center h-20 text-gray-400">
+              Loading sessions...
+            </div>
+          ) : sessions && sessions.length > 0 ? (
+            sessions.map((session) => (
+              <div
+                key={session.id}
+                onClick={() => handleSessionClick(session.id)}
+                className={`flex items-center justify-between p-3 cursor-pointer transition hover:bg-black hover:bg-opacity-20 ${
+                  id === session.id
+                    ? "bg-black bg-opacity-30 border-l-2 border-[#B200FF]"
+                    : ""
+                }`}
+              >
+                <div className="flex items-center overflow-hidden">
+                  {/* Subject color indicator */}
+                  <div className="flex-shrink-0">
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        subjectColorMap[session.subject] || "bg-gray-400"
+                      } shadow-md shadow-[#B200FF]/30 ring-1 ring-white/20`}
+                      style={{
+                        animation:
+                          id === session.id ? "pulse 2s infinite" : "none",
+                        boxShadow:
+                          id === session.id
+                            ? "0 0 5px 2px rgba(178, 0, 255, 0.3)"
+                            : "",
+                      }}
+                    ></div>
                   </div>
+
+                  {!isSidebarCollapsed && (
+                    <div className="ml-3 truncate">
+                      <div className="text-white truncate text-sm">
+                        {session.name}
+                      </div>
+                      <div className="text-gray-400 text-xs">
+                        {formatDate(session.lastUpdated)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {!isSidebarCollapsed && (
+                  <button
+                    onClick={(e) => handleDeleteSession(session.id, e)}
+                    className="text-gray-400 hover:text-red-500 transition"
+                  >
+                    <RiDeleteBin6Line />
+                  </button>
                 )}
               </div>
-              {!isSidebarCollapsed && (
-                <button
-                  onClick={(e) => handleDeleteSession(session.id, e)}
-                  className="text-gray-400 hover:text-red-500 transition"
-                >
-                  <RiDeleteBin6Line />
-                </button>
-              )}
+            ))
+          ) : (
+            <div className="flex justify-center items-center h-20 text-gray-400">
+              No sessions found
             </div>
-          ))}
+          )}
         </div>
-
         {/* Sidebar Toggle - aligned with input bar (145px height) */}
         <div
           className="p-3 border-t border-[#B200FF]/20"
@@ -541,7 +659,7 @@ function AiAsst() {
           className="border-t border-[#B200FF]/30 bg-gradient-to-t from-black to-black/80 backdrop-blur-md shadow-lg shadow-black/40"
           style={{ height: "25%", display: "flex", flexDirection: "column" }}
         >
-          {/* Suggestions */}
+          {/* Suggestions */}{" "}
           <div
             className="px-4 pt-3"
             style={{
@@ -550,6 +668,21 @@ function AiAsst() {
               borderTop: "1px solid rgba(178, 0, 255, 0.15)",
             }}
           >
+            {/* Add loading indicator for recommendations */}
+            {recommendationsLoading && (
+              <div className="flex items-center mb-2 text-gray-400">
+                <div className="w-2 h-2 bg-[#B200FF] rounded-full animate-pulse mr-1"></div>
+                <div
+                  className="w-2 h-2 bg-[#B200FF] rounded-full animate-pulse mr-1"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-[#B200FF] rounded-full animate-pulse mr-1"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
+                <span className="ml-2 text-xs">Loading suggestions...</span>
+              </div>
+            )}
             <div className="flex items-center mb-2">
               <div className="flex items-center bg-black/40 px-2 py-1 rounded-full">
                 <svg
@@ -566,18 +699,28 @@ function AiAsst() {
               </div>
             </div>{" "}
             <div className="flex overflow-x-auto space-x-2 pb-3 scrollbar-thin scrollbar-thumb-[#B200FF]/50 scrollbar-track-transparent">
-              {suggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  className="px-3 py-1.5 text-sm bg-gradient-to-r from-black/80 to-[#B200FF]/10 text-gray-200 rounded-md border border-[#B200FF]/30 hover:border-[#B200FF]/70 hover:text-white hover:shadow-lg hover:shadow-[#B200FF]/30 transition-all duration-300 whitespace-nowrap transform hover:translate-y-[-1px]"
-                  style={{
-                    boxShadow: "0 2px 4px rgba(178, 0, 255, 0.1)",
-                  }}
-                >
-                  {suggestion}
-                </button>
-              ))}
+              {recommendationsLoading ? (
+                <div className="px-3 py-1.5 text-sm bg-black/80 text-gray-400 rounded-md border border-[#B200FF]/30">
+                  Loading suggestions...
+                </div>
+              ) : recommendations && recommendations.length > 0 ? (
+                recommendations.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="px-3 py-1.5 text-sm bg-gradient-to-r from-black/80 to-[#B200FF]/10 text-gray-200 rounded-md border border-[#B200FF]/30 hover:border-[#B200FF]/70 hover:text-white hover:shadow-lg hover:shadow-[#B200FF]/30 transition-all duration-300 whitespace-nowrap transform hover:translate-y-[-1px]"
+                    style={{
+                      boxShadow: "0 2px 4px rgba(178, 0, 255, 0.1)",
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-1.5 text-sm bg-black/80 text-gray-400 rounded-md border border-[#B200FF]/30">
+                  No suggestions available
+                </div>
+              )}
             </div>
           </div>{" "}
           {/* Message Input */}
@@ -626,22 +769,36 @@ function AiAsst() {
                       "linear-gradient(to bottom right, rgba(25,0,30,0.9) 0%, rgba(0,0,0,0.95) 100%)",
                     letterSpacing: "0.01em",
                   }}
-                />
-                {showCompletions && (
-                  <>
-                    <span className="absolute left-[8px] top-[10px] text-gray-500 pointer-events-none">
-                      {message}
-                      <span className="text-gray-500">{completionText}</span>
-                    </span>
-                    <span className="absolute right-3 top-[10px] text-xs text-gray-500 pointer-events-none bg-black bg-opacity-70 px-1.5 py-0.5 rounded">
-                      Tab ↹
-                    </span>
-                  </>
+                />{" "}
+                {autocompleteLoading && message.length > 3 ? (
+                  <span className="absolute right-3 top-[10px] text-xs text-gray-400 pointer-events-none bg-black bg-opacity-70 px-2 py-0.5 rounded flex items-center">
+                    <div className="w-1.5 h-1.5 bg-[#B200FF] rounded-full animate-pulse mr-1"></div>
+                    <div
+                      className="w-1.5 h-1.5 bg-[#B200FF] rounded-full animate-pulse mr-1"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="w-1.5 h-1.5 bg-[#B200FF] rounded-full animate-pulse mr-1"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
+                  </span>
+                ) : (
+                  showCompletions && (
+                    <>
+                      <span className="absolute left-[8px] top-[10px] text-gray-500 pointer-events-none">
+                        {message}
+                        <span className="text-gray-500">{completionText}</span>
+                      </span>
+                      <span className="absolute right-3 top-[10px] text-xs text-gray-500 pointer-events-none bg-black bg-opacity-70 px-1.5 py-0.5 rounded">
+                        Tab ↹
+                      </span>
+                    </>
+                  )
                 )}
               </div>{" "}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || messageLoading}
                 className="bg-gradient-to-br from-[#B200FF] to-[#8000CC] text-white p-3 rounded-md hover:from-[#A000E6] hover:to-[#7000B5] transition-all duration-300 disabled:bg-gray-700 hover:shadow-lg hover:shadow-[#B200FF]/40 relative overflow-hidden group glow-effect ml-2"
                 style={{
                   boxShadow: "0 0 20px rgba(178, 0, 255, 0.3)",
@@ -653,7 +810,24 @@ function AiAsst() {
                   borderRadius: "12px",
                 }}
               >
-                <FiSend className="text-lg relative z-10 group-hover:scale-125 transition-transform" />
+                {messageLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div
+                      className="w-1.5 h-1.5 bg-white rounded-full animate-bounce mr-0.5"
+                      style={{ animationDelay: "0s" }}
+                    ></div>
+                    <div
+                      className="w-1.5 h-1.5 bg-white rounded-full animate-bounce mr-0.5"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
+                  </div>
+                ) : (
+                  <FiSend className="text-lg relative z-10 group-hover:scale-125 transition-transform" />
+                )}
                 <span className="absolute inset-0 bg-gradient-to-r from-[#B200FF]/0 via-white/20 to-[#B200FF]/0 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>{" "}
               </button>
             </form>
@@ -664,16 +838,6 @@ function AiAsst() {
   );
 }
 
-// Mapping of subject IDs to colors
-const subjectColorMap = {
-  math: "bg-blue-500",
-  physics: "bg-purple-500",
-  chemistry: "bg-green-500",
-  biology: "bg-red-500",
-  "computer-science": "bg-yellow-500",
-  history: "bg-indigo-500",
-  geography: "bg-pink-500",
-  english: "bg-orange-500",
-};
+// We're using the imported subjectColorMap from "../data/subjects"
 
 export default AiAsst;

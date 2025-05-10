@@ -14,16 +14,18 @@ const Streaks = () => {
       try {
         // Record today's login
         await axios.post(
-          `${import.meta.env.VITE_APP_BACKEND_URL}/login/record/${user._id}`
+          `${import.meta.env.VITE_APP_BACKEND_URL}/api/v1/login/record/${
+            user._id
+          }`
         );
 
         // Fetch login data
         const res = await axios.get(
-          `${import.meta.env.VITE_APP_BACKEND_URL}/login/get/${user._id}`
+          `${import.meta.env.VITE_APP_BACKEND_URL}/api/v1/login/get/${user._id}`
         );
         console.log(res);
 
-        // Extract only dates from the response data
+        // Extract dates from the response data and update loginData
         const dates = res?.data?.map((entry) => entry.date) || [];
         setLoginData(dates);
       } catch (error) {
@@ -32,14 +34,15 @@ const Streaks = () => {
     };
 
     fetchData();
-  }, [user]);
+  }, [user?._id]);
   console.log(loginData);
 
-  // Prepare the GitHubCalendar values
+  // Prepare the calendar values from the fetched login data
   const calendarValues = loginData.reduce((acc, date) => {
-    acc[date] = 1; // You can set any value here, like 1 for each date
+    acc[date] = 1; // Color the days with logins (can use any value like 1 for streak)
     return acc;
   }, {});
+  console.log(calendarValues);
 
   const customTheme = {
     dark: [

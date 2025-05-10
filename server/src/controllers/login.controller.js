@@ -2,10 +2,20 @@ const Login = require("../models/login.model");
 
 exports.recordLogin = async (req, res) => {
   const userId = req.params.userId;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date()
+    .toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+    .split("/")
+    .reverse()
+    .join("-");
+  console.log(today);
 
   try {
     const existing = await Login.findOne({ userId, date: today });
+    console.log(existing);
     if (existing) {
       existing.count += 1;
       await existing.save();
