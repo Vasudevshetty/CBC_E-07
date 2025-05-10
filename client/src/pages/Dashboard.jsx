@@ -3,11 +3,42 @@ import { useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
+import Streaks from "../components/Streaks";
+
+function CircularProgress({ percentage }) {
+  return (
+    <div className="relative w-24 h-24">
+      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+        <path
+          className="text-gray-700"
+          strokeWidth="3"
+          fill="none"
+          d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+        <path
+          className="text-[#B200FF] stroke-current"
+          strokeWidth="3"
+          strokeDasharray={`${percentage}, 100`}
+          fill="none"
+          d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-white text-lg font-bold">{percentage}%</span>
+      </div>
+    </div>
+  );
+}
 
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
   const [loadingData, setLoadingData] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Animation effect when component mounts
   useEffect(() => {
@@ -30,6 +61,18 @@ function Dashboard() {
     };
 
     fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 65) {
+          clearInterval(interval);
+          return 65;
+        }
+        return prev + 1;
+      });
+    }, 20);
   }, []);
 
   // Loading state
@@ -62,9 +105,9 @@ function Dashboard() {
           </p>
         </div>
       </div>
-        <div className="bg-white h-40">
-          
-        </div>
+      <div className="bg-white ">
+        <Streaks />
+      </div>
       {/* Your Assessments Section */}
       <h1 className="text-white text-3xl font-semibold tracking-wide ">
         Your Assessment{" "}
@@ -111,35 +154,24 @@ function Dashboard() {
           <h2 className="text-2xl font-bold text-[#B200FF] mb-4">
             Your Progress
           </h2>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-white">
-                Completed Courses
-              </h3>
-              <div className="w-full bg-gray-700 rounded-full h-3 mt-2">
-                <div
-                  className="bg-gradient-to-r from-[#B200FF] to-[#8A00FF] h-3 rounded-full"
-                  style={{ width: "75%" }}
-                ></div>
+          <div className="flex flex-col items-center space-y-6">
+            <div className="flex justify-evenly w-full">
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  Learner Type
+                </h3>
+                <p className="text-gray-300 mt-2">Consistent Learner</p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  Days Streak
+                </h3>
+                <p className="text-gray-300 mt-2">15 Days</p>
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">In Progress</h3>
-              <div className="w-full bg-gray-700 rounded-full h-3 mt-2">
-                <div
-                  className="bg-gradient-to-r from-[#B200FF] to-[#8A00FF] h-3 rounded-full"
-                  style={{ width: "50%" }}
-                ></div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Achievements</h3>
-              <div className="w-full bg-gray-700 rounded-full h-3 mt-2">
-                <div
-                  className="bg-gradient-to-r from-[#B200FF] to-[#8A00FF] h-3 rounded-full"
-                  style={{ width: "90%" }}
-                ></div>
-              </div>
+              <h3 className="text-lg font-semibold text-white">Progress</h3>
+              <CircularProgress percentage={progress} />
             </div>
           </div>
         </div>
