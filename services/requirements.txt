@@ -9,3 +9,5 @@ python-multipart
 uvicorn
 pypdf
 faiss-cpu
+langchain_huggingface
+python-dotenv

@@ -18,7 +18,7 @@ load_dotenv()
 api = FastAPI()
 
 groq_api_key1 = os.getenv("GROQ_API_KEY1")
-groq_api_key2 = os.getenv("GROQ_API_kEY2")
+groq_api_key2 = os.getenv("GROQ_API_KEY2")
 client = Groq(api_key=groq_api_key1)
 
 api.add_middleware(
@@ -192,5 +192,96 @@ Format your response as structured, actionable advice with clear headings, numbe
         raise HTTPException(status_code=500, detail=f"Error calling Groq API: {str(e)}")
 
 @api.post("/carreer")
-def carreer_path():
-    return {"message": "This is a career path assistant API"}
+def career_path(goal: str, current_qualificaion: str, learner_type: str = "medium"):
+    try:
+        if learner_type not in ["fast", "medium", "slow"]:
+            raise HTTPException(status_code=400, detail="Invalid learner type. Choose from 'fast', 'medium', or 'slow'.")
+        
+        if learner_type == "fast":
+            prompt = f"""You are a professional career counselor advising someone with current qualifications in {current_qualificaion} who wants to pursue a career in {goal}.
+
+This person is a fast learner who:
+- Acquires new skills quickly and effectively
+- Thrives in dynamic, challenging environments
+- Can handle accelerated learning paths and career progression
+- May need consistent intellectual stimulation to stay engaged
+
+Create a comprehensive career roadmap that includes:
+1. A tailored 12-24 month career transition plan leveraging their fast learning abilities
+2. 3-4 specific skill acquisition milestones with recommended resources (courses, certifications, projects)
+3. Strategic networking and professional development opportunities
+4. Recommended accelerated career advancement strategies
+
+For each component:
+- Provide specific, actionable steps
+- Include estimated timeframes that reflect an accelerated pace
+- Suggest how to leverage existing qualifications in {current_qualificaion}
+- Explain how this approach maximizes their fast learning potential
+
+Format your response as a professional career development plan with clear sections, timelines, and action items."""
+
+        elif learner_type == 'medium':
+            prompt = f"""You are a professional career counselor advising someone with current qualifications in {current_qualificaion} who wants to pursue a career in {goal}.
+
+This person is a balanced, steady learner who:
+- Acquires skills at a methodical, consistent pace
+- Benefits from structured learning with clear milestones
+- Values practical application alongside theoretical knowledge
+- Maintains good work-life balance during career transitions
+
+Create a comprehensive career roadmap that includes:
+1. A balanced 18-30 month career transition plan with steady progression
+2. 4-5 essential skill development areas with prioritized learning resources
+3. Strategic networking and experience-building opportunities
+4. A sustainable approach to career advancement
+
+For each component:
+- Provide specific, actionable steps with realistic timeframes
+- Balance skill acquisition with practical experience
+- Suggest how to leverage existing qualifications in {current_qualificaion}
+- Include regular progress assessment points
+
+Format your response as a professional career development plan with clear sections, timelines, and action items."""
+
+        elif learner_type == "slow":
+            prompt = f"""You are a professional career counselor advising someone with current qualifications in {current_qualificaion} who wants to pursue a career in {goal}.
+
+This person is a methodical, thorough learner who:
+- Prefers depth over speed when acquiring new knowledge
+- Excels with comprehensive understanding of fundamentals
+- Builds strong foundations through careful, sequential learning
+- Values mastery and quality over rapid advancement
+
+Create a comprehensive career roadmap that includes:
+1. A thorough 24-36 month career transition plan emphasizing deep skill development
+2. 4-5 core competency areas with detailed learning progressions
+3. Strategic relationship building and portfolio development opportunities
+4. A long-term approach to career stability and expertise development
+
+For each component:
+- Provide detailed, sequential steps with generous timeframes
+- Emphasize thorough understanding and practical application
+- Suggest how to leverage existing qualifications in {current_qualificaion}
+- Include validation checkpoints to ensure mastery before progression
+
+Format your response as a professional career development plan with clear sections, detailed timelines, and measured action items."""
+        
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an expert career counselor specializing in personalized career development plans."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        detailed_response = response.choices[0].message.content
+    
+        
+        return {
+            "response": detailed_response,
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calling Groq API: {str(e)}")

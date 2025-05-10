@@ -12,6 +12,12 @@ const api = axios.create({
   withCredentials: true, // Important for cookies
 });
 
+console.log(
+  import.meta.env.VITE_APP_ENV === "development"
+    ? import.meta.env.VITE_APP_BACKEND_URL
+    : import.meta.env.VITE_APP_BACKEND_URL_PROD
+);
+
 // Response interceptor for handling authentication errors
 api.interceptors.response.use(
   (response) => {
