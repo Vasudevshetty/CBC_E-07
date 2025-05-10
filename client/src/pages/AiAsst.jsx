@@ -86,7 +86,7 @@ function AiAsst() {
     );
 
     // Also call the API to create a session and update when response is received
-    dispatch(createSession(user?.id || "anonymous"))
+    dispatch(createSession(user?._id || "anonymous"))
       .then((action) => {
         if (action.payload && !action.error) {
           const apiSessionId = action.payload.id || action.payload.session_id;
@@ -150,13 +150,15 @@ function AiAsst() {
     // Scroll to bottom when chat history updates
     scrollToBottom();
   }, [chatHistory]);
+
   // Load recommendations when subject changes
   useEffect(() => {
     if (selectedSubject) {
       dispatch(getRecommendations({ subject: selectedSubject }));
     }
   }, [selectedSubject, dispatch]);
-  // Auto-completion effect for text input
+
+  // Auto-completion effect for text input with debouncing
   useEffect(() => {
     if (!message) {
       setCompletionText("");
@@ -164,15 +166,18 @@ function AiAsst() {
       return;
     }
 
-    // Only get suggestions if user has typed enough characters
-    if (message.length > 3) {
-      dispatch(
-        getAutocompleteSuggestions({
-          userQueryPartial: message,
-          subject: selectedSubject,
-        })
-      );
-    }
+    // Create debounced function
+    const debounceTimeout = setTimeout(() => {
+      // Only get suggestions if user has typed enough characters
+      if (message.length > 3) {
+        dispatch(
+          getAutocompleteSuggestions({
+            userQueryPartial: message,
+            subject: selectedSubject,
+          })
+        );
+      }
+    }, 500); // 500ms delay
 
     // Use any available autocomplete suggestions
     if (autocompleteSuggestions && autocompleteSuggestions.length > 0) {
@@ -193,7 +198,11 @@ function AiAsst() {
       setCompletionText("");
       setShowCompletions(false);
     }
+
+    // Cleanup timeout on component unmount or when dependencies change
+    return () => clearTimeout(debounceTimeout);
   }, [message, autocompleteSuggestions, dispatch, selectedSubject]);
+
   // Message sending handler
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -266,7 +275,7 @@ function AiAsst() {
     e.stopPropagation();
 
     // Delete the session via API
-    dispatch(deleteSession({ userId: user?.id || "anonymous", sessionId }))
+    dispatch(deleteSession({ userId: user?._id || "anonymous", session_id: sessionId }))
       .then(() => {
         // If current session is deleted, create a new one
         if (id === sessionId) {
