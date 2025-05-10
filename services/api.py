@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Path
 import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
@@ -6,7 +6,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from utils.bot import initialize_retriver, initialize_rag_chain, get_model, extract_video_id
-from utils.database import insert_application_logs, get_chat_history, get_all_session_ids, get_sessions_by_user_id, get_chats_by_session_id 
+from utils.database import *
 from typing import Optional, List 
 import uuid
 from dotenv import load_dotenv
@@ -620,3 +620,45 @@ def assess_learner_type(video_correct: int, aptitude_correct: int):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error during prediction: {str(e)}")
+
+@api.post("/create_session")
+def create_new_session(user_id: str = "anonymous"):
+    """
+    Create a new session for a user and return the session ID.
+    """
+    try:
+        session_id = create_session(user_id)
+        return {"session_id": session_id, "user_id": user_id, "status": "created"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create session: {str(e)}")
+
+@api.delete("/delete_session")
+def remove_session(
+    session_id: str, 
+    user_id: Optional[str] = None
+):
+    """
+    Delete a session and all its associated records.
+    
+    Parameters:
+    - session_id: ID of the session to delete
+    - user_id: Optional user ID for additional verification
+    """
+    try:
+        deleted_count = delete_session(session_id, user_id)
+        if deleted_count == 0:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Session with ID {session_id} not found" + 
+                       (f" for user {user_id}" if user_id else "")
+            )
+        return {
+            "session_id": session_id, 
+            "user_id": user_id,
+            "deleted_records": deleted_count, 
+            "status": "deleted"
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
