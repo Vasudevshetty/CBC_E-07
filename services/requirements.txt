@@ -7,3 +7,5 @@ pydantic
 pymongo
 python-multipart
 uvicorn
+pypdf
+faiss-cpu
