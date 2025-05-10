@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import Streaks from "../components/Streaks";
+import { Link } from "react-router-dom";
 
 function CircularProgress({ percentage }) {
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
@@ -186,9 +187,12 @@ function Dashboard() {
                     Due Date: {assessment.dueDate}
                   </p>
                 </div>
-                <button className="bg-white text-[#B200FF] px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors duration-300 hover:cursor-pointer">
+                <Link
+                  to={`/assessment/${assessment.id}`}
+                  className="bg-white text-[#B200FF] px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors duration-300 hover:cursor-pointer"
+                >
                   Start
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
