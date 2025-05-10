@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import { useSelector, useDispatch } from "react-redux";
 import { careerGoals, qualificationLevels } from "../data/careerPathData";
 import "katex/dist/katex.min.css";
+import "../utils/animations.css";
 import {
   getCareerPath,
   clearCareerPath,
@@ -122,7 +123,6 @@ function CareerPath() {
           </div>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col p-4 h-[calc(100vh-126px)] overflow-hidden">
         {!showResults ? (
@@ -638,47 +638,62 @@ function CareerPath() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <p className="text-white text-xl mb-3">
-                        Loading career path data...
-                      </p>
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className="w-16 h-16 bg-gradient-to-br from-[#B200FF]/20 to-[#8000CC]/20 rounded-full flex items-center justify-center mb-4 animate-float">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#B200FF]/40 to-[#8000CC]/40 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse"></div>
+                      </div>
                     </div>
+                    <p className="text-white text-center text-lg animate-glow">
+                      Loading career path data...
+                    </p>
+                    <p className="text-gray-400 text-center mt-2 text-sm">
+                      Preparing your personalized suggestions
+                    </p>
                   </div>
                 )}
               </div>
             </div>
           </div>
         )}
-      </div>
-
+      </div>{" "}
       {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-black bg-opacity-80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full animated-gradient">
-            <div className="flex flex-col items-center">
-              <div className="relative w-28 h-28 mb-6">
-                <div className="absolute inset-0 rounded-full border-4 border-[#B200FF]/20"></div>
-                <div className="absolute inset-0 rounded-full border-t-4 border-r-4 border-[#B200FF] animate-spin"></div>
-                <div className="absolute inset-2 rounded-full border-4 border-[#B200FF]/10"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-3xl">
-                    {getGoalEmoji(selectedGoal) || "🎯"}
-                  </div>
-                </div>
-              </div>
+          <div className="bg-gradient-to-b from-black/90 to-[#190023]/80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full shadow-lg shadow-[#B200FF]/20 backdrop-blur-md">
+            <div className="flex items-center justify-center mb-4">
+              <div
+                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse mr-1"
+                style={{ boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)" }}
+              ></div>
+              <div
+                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse mr-1"
+                style={{
+                  animationDelay: "0.2s",
+                  boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)",
+                }}
+              ></div>
+              <div
+                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse"
+                style={{
+                  animationDelay: "0.4s",
+                  boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)",
+                }}
+              ></div>
             </div>
-            <div className="text-white text-center">
-              <div className="text-xl mb-2">{loadingText}</div>
-              <div className="text-sm text-gray-300">
-                Personalized for your {getQualificationName(userQualification)}{" "}
-                qualification
-              </div>
+            <div
+              className="text-white text-center text-xl font-medium tracking-wide animate-glow"
+              style={{ textShadow: "0 0 5px rgba(178, 0, 255, 0.5)" }}
+            >
+              {loadingText}
+            </div>
+            <div className="text-gray-300 text-center text-sm mt-3">
+              Personalized for your {getQualificationName(userQualification)}{" "}
+              qualification
             </div>
           </div>
         </div>
       )}
-
       {/* Apply custom styles */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {

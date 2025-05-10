@@ -57,6 +57,21 @@ export const careerApi = {
     ),
 };
 
+// Revision API calls
+export const revisionApi = {
+  getRevisionStrategies: (topic, learnerType = "medium") =>
+    api.post(
+      "/services/revision",
+      {},
+      {
+        params: {
+          topic,
+          learner_type: learnerType,
+        },
+      }
+    ),
+};
+
 // User API calls
 export const userApi = {
   updateProfile: (userData) =>

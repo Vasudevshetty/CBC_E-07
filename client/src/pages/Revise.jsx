@@ -1,31 +1,41 @@
 import { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  revisionTopics,
-  revisionContent,
-  initialFavorites,
-} from "../data/revisionData";
+  clearRevisionData,
+  getRevisionStrategies,
+} from "../store/slices/revisionSlice";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { FiSearch, FiPrinter, FiCopy, FiCheck } from "react-icons/fi";
-import { AiOutlineStar, AiFillStar } from "react-icons/ai";
 import "../utils/animations.css";
+
+// Example topics for suggestions
+const exampleTopics = [
+  { id: "math-calculus", name: "Calculus" },
+  { id: "physics-mechanics", name: "Mechanics" },
+  { id: "chemistry-organic", name: "Organic Chemistry" },
+  { id: "biology-genetics", name: "Genetics" },
+  { id: "computer-science-algorithms", name: "Algorithms" },
+  { id: "history-world-war", name: "World War II" },
+];
 
 function Revise() {
   // Get user data from localStorage instead of Redux to simplify
   const user = JSON.parse(localStorage.getItem("user")) || { name: "Student" };
+  const dispatch = useDispatch();
+  const { revisionData, loading } = useSelector((state) => state.revision);
+
   const [searchInput, setSearchInput] = useState("");
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [isSearching, setIsSearching] = useState(true);
-  const [favorites, setFavorites] = useState(initialFavorites);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("");
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const searchInputRef = useRef(null);
-
   useEffect(() => {
     // Focus the search input when component mounts
     if (searchInputRef.current && isSearching) {
@@ -33,12 +43,19 @@ function Revise() {
     }
   }, [isSearching]);
 
+  // Clear revision data when component unmounts
+  useEffect(() => {
+    return () => {
+      dispatch(clearRevisionData());
+    };
+  }, [dispatch]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchInput.trim()) return;
 
+    // Start loading animation
     setIsLoading(true);
-
     const loadingSteps = [
       "Finding relevant content...",
       "Organizing material...",
@@ -46,30 +63,32 @@ function Revise() {
     ];
     let stepIndex = 0;
 
-    const loadingInterval = setInterval(() => {
+    // Store interval reference for clearing later
+    let loadingInterval = setInterval(() => {
       setLoadingText(loadingSteps[stepIndex]);
       stepIndex = (stepIndex + 1) % loadingSteps.length;
     }, 800);
 
-    // Simulate loading delay
-    setTimeout(() => {
-      clearInterval(loadingInterval);
-      setIsLoading(false);
-      setLoadingText("");
-
-      // Find a matching topic or use the first topic
-      const matchedTopic =
-        revisionTopics.find((topic) =>
-          topic.name.toLowerCase().includes(searchInput.toLowerCase())
-        ) || revisionTopics[0];
-
-      setSelectedTopic(matchedTopic.id);
-      setIsSearching(false);
-    }, 2000);
+    // Send request to get revision data
+    dispatch(getRevisionStrategies({ topic: searchInput }))
+      .unwrap()
+      .then(() => {
+        clearInterval(loadingInterval);
+        setIsLoading(false);
+        setLoadingText("");
+        setIsSearching(false);
+      })
+      .catch((err) => {
+        clearInterval(loadingInterval);
+        setIsLoading(false);
+        setLoadingText("");
+        console.error("Error loading revision:", err);
+      });
   };
 
-  const handleTopicSelect = (topicId) => {
+  const handleTopicSelect = (topic) => {
     setIsLoading(true);
+    setSelectedTopic(topic);
 
     const loadingSteps = [
       "Loading topic content...",
@@ -83,34 +102,28 @@ function Revise() {
       stepIndex = (stepIndex + 1) % loadingSteps.length;
     }, 800);
 
-    // Simulate loading delay
-    setTimeout(() => {
-      clearInterval(loadingInterval);
-      setIsLoading(false);
-      setLoadingText("");
-
-      setSelectedTopic(topicId);
-      setIsSearching(false);
-    }, 1500);
+    // Send request to get revision data
+    dispatch(getRevisionStrategies({ topic }))
+      .unwrap()
+      .then(() => {
+        clearInterval(loadingInterval);
+        setIsLoading(false);
+        setLoadingText("");
+        setIsSearching(false);
+      })
+      .catch((err) => {
+        clearInterval(loadingInterval);
+        setIsLoading(false);
+        setLoadingText("");
+        console.error("Error loading revision:", err);
+      });
   };
 
   const resetSearch = () => {
     setIsSearching(true);
     setSelectedTopic(null);
     setSearchInput("");
-  };
-
-  const toggleFavorite = (topicId) => {
-    if (favorites.includes(topicId)) {
-      setFavorites(favorites.filter((id) => id !== topicId));
-    } else {
-      setFavorites([...favorites, topicId]);
-    }
-  };
-
-  const getTopicName = (topicId) => {
-    const topic = revisionTopics.find((topic) => topic.id === topicId);
-    return topic ? topic.name : "Unknown Topic";
+    dispatch(clearRevisionData());
   };
 
   const handlePrint = () => {
@@ -118,8 +131,10 @@ function Revise() {
   };
 
   const handleCopy = () => {
+    if (!revisionData?.response) return;
+
     navigator.clipboard
-      .writeText(revisionContent[selectedTopic])
+      .writeText(revisionData.response)
       .then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -129,15 +144,20 @@ function Revise() {
 
   const printContent = () => {
     const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow popups for this site to print revision notes.");
+      setShowPrintModal(false);
+      return;
+    }
 
-    const topicName = getTopicName(selectedTopic);
-    const content = revisionContent[selectedTopic];
+    const title = revisionData?.overview || "Revision Notes";
+    const content = revisionData?.response || "";
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${topicName} - Revision Notes</title>
+          <title>${title} - Revision Notes</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
             
@@ -272,7 +292,7 @@ function Revise() {
         </head>
         <body>
           <div class="header">
-            <h1><span class="logo"></span> ${topicName}</h1>
+            <h1><span class="logo"></span> ${title}</h1>
             <div class="meta">
               <p><strong>CBC Revision Center</strong></p>
               <p>Date: ${new Date().toLocaleDateString()}</p>
@@ -286,7 +306,6 @@ function Revise() {
         </body>
       </html>
     `);
-
     printWindow.document.close();
     printWindow.focus();
     setTimeout(() => {
@@ -372,10 +391,10 @@ function Revise() {
 
               {/* Topic Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {revisionTopics.map((topic) => (
+                {exampleTopics.map((topic) => (
                   <button
                     key={topic.id}
-                    onClick={() => handleTopicSelect(topic.id)}
+                    onClick={() => handleTopicSelect(topic.name)}
                     className="bg-gradient-to-br from-black/80 to-[#190023]/90 border border-[#B200FF]/30 hover:border-[#B200FF]/70 rounded-lg p-4 text-center transition-all text-white flex flex-col items-center justify-center space-y-2 hover:shadow-lg hover:shadow-[#B200FF]/30 transform hover:translate-y-[-1px] duration-300"
                     style={{
                       boxShadow:
@@ -385,58 +404,9 @@ function Revise() {
                     <span className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
                       {topic.name}
                     </span>
-                    {favorites.includes(topic.id) && (
-                      <AiFillStar
-                        className="text-yellow-400 text-lg mt-2"
-                        style={{
-                          filter:
-                            "drop-shadow(0 0 3px rgba(250, 204, 21, 0.7))",
-                        }}
-                      />
-                    )}
                   </button>
                 ))}
               </div>
-
-              {/* Favorites Section */}
-              {favorites.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium mb-4 flex items-center">
-                    <span className="flex items-center bg-black/40 px-2 py-1 rounded-full border border-yellow-400/30">
-                      <AiFillStar
-                        className="text-yellow-400 mr-2"
-                        style={{
-                          filter:
-                            "drop-shadow(0 0 3px rgba(250, 204, 21, 0.7))",
-                        }}
-                      />
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-400">
-                        Your Favorites
-                      </span>
-                    </span>
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {favorites.map((topicId) => (
-                      <button
-                        key={topicId}
-                        onClick={() => handleTopicSelect(topicId)}
-                        className="bg-gradient-to-br from-black/70 to-[#190023]/70 border border-yellow-400/40 hover:border-yellow-400/90 rounded-md px-3 py-1.5 text-white text-sm flex items-center transform hover:translate-y-[-1px] transition-all duration-300 hover:shadow-md hover:shadow-yellow-400/30"
-                      >
-                        <AiFillStar
-                          className="text-yellow-400 mr-1.5 text-xs"
-                          style={{
-                            filter:
-                              "drop-shadow(0 0 2px rgba(250, 204, 21, 0.7))",
-                          }}
-                        />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-100">
-                          {getTopicName(topicId)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         ) : (
@@ -450,16 +420,22 @@ function Revise() {
                 >
                   <span className="mr-1">←</span> Back to Topics
                 </button>
-                {selectedTopic && (
+                {revisionData?.overview ? (
                   <h2 className="ml-4 text-lg font-medium">
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
-                      {getTopicName(selectedTopic)}
+                      {revisionData.overview}
+                    </span>
+                  </h2>
+                ) : selectedTopic && (
+                  <h2 className="ml-4 text-lg font-medium">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+                      {selectedTopic}
                     </span>
                   </h2>
                 )}
               </div>
               <div className="flex space-x-2">
-                {selectedTopic && (
+                {revisionData?.response && (
                   <>
                     <button
                       onClick={handleCopy}
@@ -494,38 +470,6 @@ function Revise() {
                     </button>
                   </>
                 )}
-                <button
-                  onClick={() => toggleFavorite(selectedTopic)}
-                  className={`flex items-center text-white bg-gradient-to-br from-black/80 to-[#190023]/80 hover:bg-opacity-80 border ${
-                    favorites.includes(selectedTopic)
-                      ? "border-yellow-400/70 hover:border-yellow-400"
-                      : "border-[#B200FF]/40 hover:border-[#B200FF]/70"
-                  } rounded-md px-4 py-2 text-sm transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-md ${
-                    favorites.includes(selectedTopic)
-                      ? "hover:shadow-yellow-400/30"
-                      : "hover:shadow-[#B200FF]/30"
-                  }`}
-                >
-                  {favorites.includes(selectedTopic) ? (
-                    <>
-                      <AiFillStar
-                        className="text-yellow-400 mr-1.5"
-                        style={{
-                          filter:
-                            "drop-shadow(0 0 2px rgba(250, 204, 21, 0.7))",
-                        }}
-                      />
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-400">
-                        Favorited
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <AiOutlineStar className="mr-1.5" />
-                      Add to Favorites
-                    </>
-                  )}
-                </button>
               </div>
             </div>
 
@@ -539,8 +483,13 @@ function Revise() {
                   "inset 0 0 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(178, 0, 255, 0.1)",
               }}
             >
-              {selectedTopic && revisionContent[selectedTopic] ? (
+              {revisionData?.response ? (
                 <div className="prose prose-invert max-w-none">
+                  <div className="mb-6">
+                    <span className="inline-block bg-purple-900/50 text-white px-3 py-1 rounded-full text-sm font-medium mb-2 border border-purple-500/30">
+                      Overview: {revisionData.overview}
+                    </span>
+                  </div>
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
@@ -614,7 +563,7 @@ function Revise() {
                       ),
                     }}
                   >
-                    {revisionContent[selectedTopic]}
+                    {revisionData.response}
                   </ReactMarkdown>
                 </div>
               ) : (
@@ -638,7 +587,7 @@ function Revise() {
       </div>
 
       {/* Loading Overlay */}
-      {isLoading && (
+      {(isLoading || loading) && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="bg-gradient-to-b from-black/90 to-[#190023]/80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full shadow-lg shadow-[#B200FF]/20 backdrop-blur-md">
             <div className="flex items-center justify-center mb-4">
@@ -685,7 +634,7 @@ function Revise() {
               This will open your browser&apos;s print dialog to print or save
               the revision notes for{" "}
               <span className="text-[#B200FF]">
-                {getTopicName(selectedTopic)}
+                {revisionData?.overview || "your topic"}
               </span>
               .
             </p>
