@@ -4,7 +4,7 @@ import api from "./api";
 export const aiAssistantApi = {
   // Chat with AI Assistant
   sendMessage: (sessionId, userQuery, subject, learnerType = "medium") =>
-    api.post("/chat", null, {
+    api.post("/services/chat", null, {
       params: {
         session_id: sessionId,
         user_query: userQuery,
@@ -14,10 +14,10 @@ export const aiAssistantApi = {
     }),
 
   // Get all user sessions
-  getSessions: () => api.get("/sessions"),
+  getSessions: () => api.get("/services/sessions"),
   // Create a new session
   createSession: (userId) =>
-    api.post("/session/create", null, {
+    api.post("/services/session/create", null, {
       params: {
         user_id: userId,
       },
@@ -25,7 +25,7 @@ export const aiAssistantApi = {
 
   // Delete a session
   deleteSession: (userId, sessionId) =>
-    api.delete("/session/delete", {
+    api.delete("/services/session/delete", {
       params: {
         user_id: userId,
         session_id: sessionId,
@@ -34,7 +34,7 @@ export const aiAssistantApi = {
 
   // Get suggestions based on subject
   getRecommendations: (subject, learnerType = "medium") =>
-    api.post("/recommendations", null, {
+    api.post("/services/recommendations", null, {
       params: {
         subject: subject,
         learner_type: learnerType,
@@ -43,7 +43,7 @@ export const aiAssistantApi = {
 
   // Get autocomplete suggestions for partial query
   getAutocompleteSuggestions: (userQueryPartial, subject) =>
-    api.post("/autocomplete", null, {
+    api.post("/services/autocomplete", null, {
       params: {
         user_query_partial: userQueryPartial,
         subject: subject,
@@ -54,7 +54,7 @@ export const aiAssistantApi = {
   uploadTextbook: (file) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post("/upload", formData, {
+    return api.post("/services/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
