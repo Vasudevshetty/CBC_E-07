@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser, clearError, clearMessage } from "../store/slices/authSlice";
+import {
+  registerUser,
+  clearError,
+  clearMessage,
+} from "../store/slices/authSlice";
+import toast, { Toaster } from "react-hot-toast";
+import { ClipLoader } from "react-spinners";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -17,15 +23,19 @@ function Register() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoading, error, success, message, isAuthenticated } = useSelector(
-    (state) => state.auth
-  );
+
+  // Use the granular loading states instead of the generic isLoading
+  const { loadingStates, error, success, message, isAuthenticated } =
+    useSelector((state) => state.auth);
+
+  // Use specific loading state for registration
+  const isLoading = loadingStates.register;
 
   useEffect(() => {
     // Clear errors and messages when component mounts
     dispatch(clearError());
     dispatch(clearMessage());
-    
+
     // Cleanup function to clear errors and messages when component unmounts
     return () => {
       dispatch(clearError());
@@ -40,17 +50,21 @@ function Register() {
     }
     // If registration was successful but not yet authenticated
     else if (success) {
+      toast.success(message || "Registration successful!");
       // Show success message briefly then redirect
       setTimeout(() => {
         navigate("/dashboard");
       }, 1500);
     }
-  }, [success, navigate, isAuthenticated]);
+  }, [success, navigate, isAuthenticated, message]);
 
   useEffect(() => {
     // Check if there's an error from the server related to email
     if (error && error.toLowerCase().includes("email")) {
       setEmailError(error);
+      toast.error(error);
+    } else if (error) {
+      toast.error(error);
     }
   }, [error]);
 
@@ -80,38 +94,45 @@ function Register() {
   const validateForm = () => {
     let isValid = true;
     clearErrors();
-    
+
     // Validate name
     if (formData.name.trim().length < 3) {
       setNameError("Name must be at least 3 characters long");
+      toast.error("Name must be at least 3 characters long");
       isValid = false;
     }
-    
+
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
       setEmailError("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
       isValid = false;
     }
-    
+
     // Validate passwords
     const password = formData.password.trim();
     const confirmPassword = formData.confirmPassword.trim();
-    
+
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
+      toast.error("Passwords do not match");
       isValid = false;
     }
 
     if (password.length < 8) {
       setPasswordError("Password must be at least 8 characters long");
+      toast.error("Password must be at least 8 characters long");
       isValid = false;
     }
-    
+
     // Check if password has at least one uppercase letter, one lowercase letter, and one number
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
     if (!passwordRegex.test(password)) {
-      setPasswordError("Password must contain at least one uppercase letter, one lowercase letter, and one number");
+      setPasswordError(
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+      );
+      toast.error("Password must meet all requirements");
       isValid = false;
     }
 
@@ -124,33 +145,24 @@ function Register() {
     if (validateForm()) {
       const { name, email, password, confirmPassword } = formData;
       // Send trimmed values to prevent whitespace issues
-      dispatch(registerUser({ 
-        name: name.trim(), 
-        email: email.trim(), 
-        password: password.trim(),
-        confirmPassword: confirmPassword.trim() 
-      }));
+      dispatch(
+        registerUser({
+          name: name.trim(),
+          email: email.trim(),
+          password: password.trim(),
+          confirmPassword: confirmPassword.trim(),
+        })
+      );
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Create an Account
         </h2>
-
-        {error && !emailError && !passwordError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {message} Redirecting to dashboard...
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -296,9 +308,16 @@ function Register() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70"
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70 flex justify-center items-center"
           >
-            {isLoading ? "Creating Account..." : "Register"}
+            {isLoading ? (
+              <>
+                <ClipLoader size={20} color={"#ffffff"} className="mr-2" />
+                <span>Creating Account...</span>
+              </>
+            ) : (
+              "Register"
+            )}
           </button>
         </form>
 

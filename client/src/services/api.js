@@ -15,8 +15,11 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // Don't automatically redirect - just return the error
-    // We'll handle the redirect in React components when needed
+    // Handle 401 errors (unauthorized) which may indicate expired cookie
+    if (error.response && error.response.status === 401) {
+      // We'll let the components handle redirect based on the auth state
+      console.log("Authentication error detected");
+    }
     return Promise.reject(error);
   }
 );
