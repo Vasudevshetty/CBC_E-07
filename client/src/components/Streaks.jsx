@@ -55,19 +55,16 @@ const Streaks = () => {
     <div className="bg-gradient-to-r h-full from-gray-800 to-gray-900 border border-[#B200FF]/20  p-4 shadow-lg">
       <h2 className="text-2xl font-bold text-[#B200FF] mb-4">Your Streaks</h2>
       <div className="flex flex-col items-center space-y-6">
-        {Object.keys(calendarValues).length > 0 ? (
-          <GitHubCalendar
-            values={calendarValues}
-            blockSize={13}
-            blockMargin={3}
-            fontSize={12}
-            showWeekdayLabels
-            theme={customTheme} // Apply custom theme
-            className="rounded-lg bg-gray-900 p-4 shadow-md"
-          />
-        ) : (
-          <p className="text-gray-300">Loading streaks...</p>
-        )}
+        <GitHubCalendar
+          values={calendarValues}
+          blockSize={13}
+          blockMargin={3}
+          fontSize={12}
+          showWeekdayLabels
+          theme={customTheme} // Apply custom theme
+          className="rounded-lg bg-gray-900  p-4 shadow-md"
+          style={{ color: "white" }}
+        />
       </div>
     </div>
   );
