@@ -11,7 +11,7 @@ function SideBar() {
     { name: "Dashboard", link: "/dashboard" },
     { name: "Career Path", link: "/career" },
     { name: "Revison Assistant", link: "/revise" },
-    { name: "Ai Study Assistant", link: "/ai-study-assistant" },
+    { name: "AI Study Assistant", link: "/ai-study-assistant" },
     { name: "Profile", link: "/profile" },
   ];
 
