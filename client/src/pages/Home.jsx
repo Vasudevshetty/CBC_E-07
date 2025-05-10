@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-function Home() {
-  return <div>Home</div>;
-=======
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -121,7 +117,6 @@ function Home() {
       </div>
     </div>
   );
->>>>>>> f483e2ee68accd43d3c77104df7467299473339a
 }
 
 export default Home;

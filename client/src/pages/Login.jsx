@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-function Login() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-2">Login Page</h1>
-=======
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -204,7 +198,6 @@ function Login() {
           </p>
         </div>
       </div>
->>>>>>> f483e2ee68accd43d3c77104df7467299473339a
     </div>
   );
 }
