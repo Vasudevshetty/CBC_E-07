@@ -1,64 +1,102 @@
 import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   resetPassword,
   clearError,
   clearMessage,
 } from "../store/slices/authSlice";
+import toast, { Toaster } from "react-hot-toast";
+import { ClipLoader } from "react-spinners";
 
 function ResetPassword() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Use granular loading states from Redux
+  const { loadingStates, error, success, message } = useSelector(
+    (state) => state.auth
+  );
+
+  // Use specific loading state for password reset
+  const isLoading = loadingStates.resetPassword;
+
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
-
-  const { token } = useParams();
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { isLoading, error, success, message } = useSelector(
-    (state) => state.auth
-  );
+  const [resetCompleted, setResetCompleted] = useState(false);
 
   useEffect(() => {
-    // Clear errors and messages when component mounts
+    // Clear any existing errors or messages when component mounts
     dispatch(clearError());
     dispatch(clearMessage());
+
+    // Cleanup when component unmounts
+    return () => {
+      dispatch(clearError());
+      dispatch(clearMessage());
+    };
   }, [dispatch]);
 
   useEffect(() => {
+    // Display success message
     if (success) {
-      // Redirect to login page after successful password reset
+      toast.success(message || "Password has been reset successfully!");
+      setResetCompleted(true);
+
+      // Redirect to login after a short delay
       setTimeout(() => {
         navigate("/login");
       }, 3000);
     }
-  }, [success, navigate]);
+  }, [success, message, navigate]);
+
+  useEffect(() => {
+    // Display error message
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
     }));
 
-    // Clear password error when typing
-    if (name === "password" || name === "confirmPassword") {
-      setPasswordError("");
-    }
+    // Clear password error when user types
+    setPasswordError("");
   };
 
-  const validateForm = () => {
-    // Password validation
-    if (formData.password !== formData.confirmPassword) {
-      setPasswordError("Passwords do not match");
+  const validatePassword = () => {
+    const { password, confirmPassword } = formData;
+
+    // Check if password meets requirements
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters long");
+      toast.error("Password must be at least 8 characters long");
       return false;
     }
 
-    if (formData.password.length < 8) {
-      setPasswordError("Password must be at least 8 characters long");
+    // Check for at least one uppercase letter, one lowercase letter, and one number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    if (!passwordRegex.test(password)) {
+      setPasswordError(
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+      );
+      toast.error("Password must meet all requirements");
+      return false;
+    }
+
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      toast.error("Passwords do not match");
       return false;
     }
 
@@ -68,29 +106,52 @@ function ResetPassword() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      dispatch(resetPassword({ token, password: formData.password }));
+    if (!validatePassword()) {
+      return;
     }
+
+    // Dispatch reset password action
+    dispatch(resetPassword({ token, password: formData.password.trim() }));
   };
+
+  if (resetCompleted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md text-center">
+          <div className="text-green-600 mb-4">
+            <svg
+              className="w-16 h-16 mx-auto"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Password Reset Successful!
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Your password has been reset successfully.
+          </p>
+          <p className="text-gray-600">Redirecting to login page...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Reset Password
         </h2>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {message} Redirecting to login...
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -107,8 +168,9 @@ function ResetPassword() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Create a new password"
+                placeholder="Enter your new password"
                 required
+                disabled={isLoading}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
@@ -147,9 +209,6 @@ function ResetPassword() {
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Password must be at least 8 characters long
-            </p>
           </div>
 
           <div>
@@ -167,6 +226,7 @@ function ResetPassword() {
               onChange={handleChange}
               placeholder="Confirm your new password"
               required
+              disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {passwordError && (
@@ -174,20 +234,37 @@ function ResetPassword() {
             )}
           </div>
 
+          <div className="text-sm text-gray-600">
+            <p>Password must:</p>
+            <ul className="list-disc pl-5">
+              <li>Be at least 8 characters long</li>
+              <li>Include at least one uppercase letter</li>
+              <li>Include at least one lowercase letter</li>
+              <li>Include at least one number</li>
+            </ul>
+          </div>
+
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70"
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70 flex justify-center items-center"
           >
-            {isLoading ? "Resetting..." : "Reset Password"}
+            {isLoading ? (
+              <>
+                <ClipLoader size={20} color={"#ffffff"} className="mr-2" />
+                <span>Resetting Password...</span>
+              </>
+            ) : (
+              "Reset Password"
+            )}
           </button>
         </form>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-6">
           <p className="text-gray-600">
             Remember your password?{" "}
             <Link to="/login" className="text-blue-600 hover:underline">
-              Back to Login
+              Back to login
             </Link>
           </p>
         </div>
