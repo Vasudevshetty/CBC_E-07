@@ -2,10 +2,25 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
-import { Link } from "react-router-dom";
 import Streaks from "../components/Streaks";
 
 function CircularProgress({ percentage }) {
+  const [animatedPercentage, setAnimatedPercentage] = useState(0);
+
+  useEffect(() => {
+    let currentPercentage = 0;
+    const interval = setInterval(() => {
+      if (currentPercentage >= percentage) {
+        clearInterval(interval);
+      } else {
+        currentPercentage += 1;
+        setAnimatedPercentage(currentPercentage);
+      }
+    }, 20); // Adjust the speed of the animation here
+
+    return () => clearInterval(interval);
+  }, [percentage]);
+
   return (
     <div className="relative w-24 h-24">
       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -20,7 +35,7 @@ function CircularProgress({ percentage }) {
         <path
           className="text-[#B200FF] stroke-current"
           strokeWidth="3"
-          strokeDasharray={`${percentage}, 100`}
+          strokeDasharray={`${animatedPercentage}, 100`}
           fill="none"
           d="M18 2.0845
             a 15.9155 15.9155 0 0 1 0 31.831
@@ -28,7 +43,7 @@ function CircularProgress({ percentage }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-white text-lg font-bold">{percentage}%</span>
+        <span className="text-white text-lg font-bold">{animatedPercentage}%</span>
       </div>
     </div>
   );
@@ -105,52 +120,80 @@ function Dashboard() {
           </p>
         </div>
       </div>
-      <div className="bg-white ">
+      <div className="h-60 py-2">
         <Streaks />
       </div>
-      {/* Your Assessments Section */}
-      <h1 className="text-white text-3xl font-semibold tracking-wide ">
-        Your Assessment{" "}
-      </h1>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      {/* Your Assessments and Progress Section */}
+      <div className="mt-4 flex flex-wrap gap-6">
         {/* Assessments List */}
-        <div className="space-y-4 max-h-72 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-[#B200FF] scrollbar-track-gray-800 bg-gray-900 p-4 rounded-lg shadow-lg">
-          {[
-            { id: 1, title: "React Basics Quiz", dueDate: "2025-05-12" },
-            { id: 2, title: "JavaScript Fundamentals", dueDate: "2025-05-15" },
-            { id: 3, title: "CSS Grid Mastery", dueDate: "2025-05-20" },
-            { id: 4, title: "Node.js Essentials", dueDate: "2025-05-25" },
-            {
-              id: 5,
-              title: "Express.js API Development",
-              dueDate: "2025-05-30",
-            },
-            { id: 6, title: "MongoDB Basics", dueDate: "2025-06-05" },
-            { id: 7, title: "React Hooks Deep Dive", dueDate: "2025-06-10" },
-            {
-              id: 8,
-              title: "Advanced JavaScript Concepts",
-              dueDate: "2025-06-15",
-            },
-          ].map((assessment) => (
-            <Link
-              to={`/assessment/${assessment.id}`}
-              key={assessment.id}
-              className="bg-gradient-to-r ml-4 from-[#B200FF] to-[#8A00FF] text-white px-6 py-4 rounded-lg shadow-lg flex items-center justify-between"
-              style={{ height: "48px", width: "26rem" }}
-            >
-              <div>
-                <h3 className="text-lg font-bold">{assessment.title}</h3>
-                <p className="text-gray-300 text-sm">
-                  Due Date: {assessment.dueDate}
-                </p>
-              </div>
-            </Link>
-          ))}
+        <div className="flex-1 max-h-72 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-[#B200FF] scrollbar-track-gray-800 bg-gray-900 p-4 rounded-lg shadow-lg">
+          <h1 className="text-white text-3xl font-semibold tracking-wide mb-4">
+            Your Assessments
+          </h1>
+          <ul className="space-y-4">
+            {[
+              {
+                id: 1,
+                title: "React Basics Quiz",
+                dueDate: "2025-05-12",
+              },
+              {
+                id: 2,
+                title: "JavaScript Fundamentals",
+                dueDate: "2025-05-15",
+              },
+              {
+                id: 3,
+                title: "CSS Grid Mastery",
+                dueDate: "2025-05-20",
+              },
+              {
+                id: 4,
+                title: "Node.js Essentials",
+                dueDate: "2025-05-25",
+              },
+              {
+                id: 5,
+                title: "Express.js API Development",
+                dueDate: "2025-05-30",
+              },
+              {
+                id: 6,
+                title: "MongoDB Basics",
+                dueDate: "2025-06-05",
+              },
+              {
+                id: 7,
+                title: "React Hooks Deep Dive",
+                dueDate: "2025-06-10",
+              },
+              {
+                id: 8,
+                title: "Advanced JavaScript Concepts",
+                dueDate: "2025-06-15",
+              },
+            ].map((assessment) => (
+              <li
+                key={assessment.id}
+                className="flex justify-between items-center bg-gradient-to-r from-[#B200FF] to-[#8A00FF] text-white px-6 py-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+              >
+                <div>
+                  <h3 className="text-lg font-bold">{assessment.title}</h3>
+                  <p className="text-gray-300 text-sm">
+                    Due Date: {assessment.dueDate}
+                  </p>
+                </div>
+                <button className="bg-white text-[#B200FF] px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors duration-300 hover:cursor-pointer">
+                  Start
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Progress Section */}
-        <div className="bg-gradient-to-r from-gray-800 to-gray-900 border border-[#B200FF]/20 rounded-xl p-6 shadow-lg">
+        <div className="flex-1 bg-gradient-to-r from-gray-800 to-gray-900 border border-[#B200FF]/20 rounded-xl p-6 shadow-lg">
           <h2 className="text-2xl font-bold text-[#B200FF] mb-4">
             Your Progress
           </h2>
