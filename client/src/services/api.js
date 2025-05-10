@@ -3,7 +3,7 @@ import axios from "axios";
 // Create axios instance with base URL
 const api = axios.create({
   baseURL:
-    import.meta.env.VITE_APP_ENV !== "development"
+    import.meta.env.VITE_APP_ENV === "development"
       ? import.meta.env.VITE_APP_BACKEND_URL
       : import.meta.env.VITE_APP_BACKEND_URL_PROD,
   headers: {
