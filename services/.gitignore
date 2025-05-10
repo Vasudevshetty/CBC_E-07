@@ -62,7 +62,7 @@ instance/
 
 # Scrapy stuff:
 .scrapy
-
+*.db
 # Sphinx documentation
 docs/_build/
 gatenv/
@@ -117,3 +117,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+Textbooks
