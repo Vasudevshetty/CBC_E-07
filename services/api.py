@@ -10,7 +10,7 @@ from utils.database import insert_application_logs, get_chat_history
 from typing import Optional
 import uuid
 from dotenv import load_dotenv
-from groq import GroqClient
+from groq import Groq
 
 
 load_dotenv()
@@ -19,7 +19,7 @@ api = FastAPI()
 
 groq_api_key1 = os.getenv("GROQ_API_KEY1")
 groq_api_key2 = os.getenv("GROQ_API_kEY2")
-client = GroqClient(api_key=groq_api_key1)
+client = Groq(api_key=groq_api_key1)
 
 api.add_middleware(
     CORSMiddleware,
@@ -29,7 +29,7 @@ api.add_middleware(
     allow_headers=["*"],
 )
 
-llm = ChatGroq(model= "llama-3.3-70b", api_key=groq_api_key2)
+llm = ChatGroq(model= "llama-3.3-70b-versatile", api_key=groq_api_key2)
 os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
 model,embeddings = get_model()
 
@@ -158,7 +158,7 @@ For each strategy:
 Format your response as structured, actionable advice with clear headings, numbered steps, and bullet points."""
         
         response = client.chat.completions.create(
-            model="llama-3.3-70b",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are an expert educational consultant specializing in personalized learning strategies."},
                 {"role": "user", "content": prompt}
@@ -167,9 +167,26 @@ Format your response as structured, actionable advice with clear headings, numbe
             max_tokens=800
         )
         
-        assistant_message = response.choices[0].message.content
+        detailed_response = response.choices[0].message.content
         
-        return {"response": assistant_message}
+        overview_prompt = f"Create a 4-5 word overview that summarizes revision strategies for {topic} for a {learner_type} learner."
+        overview_response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "Create extremely concise summaries in 4-5 words only."},
+                {"role": "user", "content": overview_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=10
+        )
+        
+        overview = overview_response.choices[0].message.content.strip()
+        
+        return {
+            "response": detailed_response,
+            "overview": overview
+        }
+    
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling Groq API: {str(e)}")
