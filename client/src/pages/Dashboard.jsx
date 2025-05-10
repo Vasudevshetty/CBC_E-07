@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
+import Streaks from "../components/Streaks";
 
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
@@ -62,9 +63,9 @@ function Dashboard() {
           </p>
         </div>
       </div>
-        <div className="bg-white h-40">
-          
-        </div>
+      <div className="bg-white h-40">
+        <Streaks />
+      </div>
       {/* Your Assessments Section */}
       <h1 className="text-white text-3xl font-semibold tracking-wide ">
         Your Assessment{" "}
