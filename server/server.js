@@ -60,6 +60,14 @@ app.get("/api/v1/health", (req, res) => {
   res.status(200).json({ status: "Server is running!" });
 });
 
+// 404 catch-all route - must be placed after all other routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -72,7 +80,8 @@ app.use((err, req, res, next) => {
 
 // Connect to MongoDB and start server
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/studysyncsv3";
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb://localhost:27017/studysyncsv3";
 
 // Only start server if this file is run directly
 if (require.main === module) {
