@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Frontend and Backend
 
 on:
   push:
@@ -6,37 +6,55 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
+    name: Deploy to VPS
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      # Step 2: Set up SSH
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
         with:
-          node-version: "18"
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build
-
-      - name: Deploy to server
+      # Step 3: Deploy to VPS
+      - name: Deploy to VPS
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          NODE_ENV: production
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 700 ~/.ssh
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -t rsa server.fauxigent.com >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=no vasudevshetty@server.fauxigent.com << 'EOF'
+            set -e # Exit on errors
 
-          # Debug SSH connection
-          ssh -v vasudevshetty@server.fauxigent.com exit
+            echo "Navigating to project directory..."
+            cd /home/vasudevshetty/projects/CBC_E-07/
 
-          # Deploy files
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r dist/* vasudevshetty@server.fauxigent.com:/var/www/test3.fauxigent.com
+            echo "Pulling the latest code from main branch..."
+            git pull origin main
+
+            echo "Installing frontend dependencies and building the project..."
+            cd client
+            npm install
+            npm run build
+
+            echo "Navigating to backend directory..."
+            cd ../server
+
+            echo "Installing backend dependencies..."
+            npm install
+
+            # echo "Navigating to services directory..."
+            # cd ../services
+            # source gatenv/bin/activate
+            # pip install -r requirements.txt
+
+            echo "Restarting backend with PM2..."
+            pm2 reload studysyncs-backend
+            # pm2 reload studysyncs-service
+            pm2 save
+
+            echo "Deployment complete!"
+          EOF
