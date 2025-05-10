@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 
 function Dashboard() {
-  const dispatch = useDispatch();
-  const { user, isLoading } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const [loadingData, setLoadingData] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Animation effect when component mounts
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   // Fetch dashboard data on component mount
   useEffect(() => {
@@ -29,179 +34,192 @@ function Dashboard() {
             {
               id: 2,
               type: "quiz",
-              title: "JavaScript Fundamentals",
-              date: "2023-03-28",
+              title: "JavaScript Fundamentals Quiz",
+              date: "2023-04-03",
+            },
+            {
+              id: 3,
+              type: "assignment",
+              title: "Build a React Component",
+              date: "2023-04-05",
+            },
+          ],
+          recommendedCourses: [
+            {
+              id: 101,
+              title: "Advanced JavaScript Concepts",
+              duration: "4 hours",
+              level: "Intermediate",
+            },
+            {
+              id: 102,
+              title: "React Hooks Mastery",
+              duration: "3.5 hours",
+              level: "Advanced",
+            },
+            {
+              id: 103,
+              title: "CSS Grid & Flexbox",
+              duration: "2 hours",
+              level: "Intermediate",
             },
           ],
         };
 
-        setDashboardData(mockData);
-        setLoadingData(false);
+        // Simulate API delay
+        setTimeout(() => {
+          setDashboardData(mockData);
+          setLoadingData(false);
+        }, 1000);
       } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        toast.error("Failed to load dashboard data");
         setLoadingData(false);
-        toast.error(
-          "Failed to load dashboard data: " + (error.message || "Unknown error")
-        );
       }
     };
 
-    // Only fetch dashboard data when user is available
-    if (!isLoading && user) {
-      fetchDashboardData();
-    } else if (!isLoading && !user) {
-      // If loading is done but no user found
-      setLoadingData(false);
-    }
-  }, [user, isLoading, dispatch]);
+    fetchDashboardData();
+  }, []);
 
-  // Loading state for entire dashboard
-  if (isLoading) {
+  // Loading state
+  if (loadingData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center">
-          <ClipLoader size={50} color={"#3B82F6"} />
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If not loading and no user, display an error or redirect message
-  if (!isLoading && !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-          <h2 className="text-xl font-semibold text-red-600 mb-4">
-            Not logged in
-          </h2>
-          <p className="mb-4 text-gray-600">
-            Please log in to view your dashboard.
-          </p>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            onClick={() => (window.location.href = "/login")}
-          >
-            Go to Login
-          </button>
-        </div>
+      <div className="flex justify-center items-center h-96">
+        <ClipLoader color="#B200FF" size={50} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col w-full">
-      <div className="w-full p-6">
-        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-        <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
+    <div
+      className={`transition-all duration-700 ease-out ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      }`}
+    >
+      <Toaster position="top-right" />
 
-        {loadingData ? (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <div className="flex items-center justify-center h-40">
-              <ClipLoader size={35} color={"#3B82F6"} />
-              <p className="ml-3 text-gray-600">Loading your stats...</p>
-            </div>
+      {/* Welcome Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          Welcome back,{" "}
+          <span className="text-[#B200FF]">{user?.name || "Student"}</span>!
+        </h1>
+        <p className="text-gray-300">
+          Here&apos;s an overview of your learning journey
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Card 1 */}
+        <div
+          className="bg-black bg-opacity-50 backdrop-blur-sm rounded-xl p-6 border border-[#B200FF]/20 shadow-lg hover:shadow-[#B200FF]/20 transition-all duration-300 hover:-translate-y-1"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top right, rgba(178, 0, 255, 0.1), transparent 70%)",
+          }}
+        >
+          <h3 className="text-gray-400 font-medium mb-2">Completed Courses</h3>
+          <div className="text-4xl font-bold text-white">
+            {dashboardData.stats.completedCourses}
           </div>
-        ) : (
-          <>
-            {/* Stats Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-700 mb-2">
-                  Completed Courses
-                </h2>
-                <p className="text-3xl font-bold text-blue-600">
-                  {dashboardData?.stats.completedCourses || 0}
-                </p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-700 mb-2">
-                  In Progress
-                </h2>
-                <p className="text-3xl font-bold text-yellow-500">
-                  {dashboardData?.stats.inProgressCourses || 0}
-                </p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-700 mb-2">
-                  Achievements
-                </h2>
-                <p className="text-3xl font-bold text-green-600">
-                  {dashboardData?.stats.achievements || 0}
-                </p>
-              </div>
-            </div>
-
-            {/* Recent Activity Section */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                Recent Activity
-              </h2>
-              {dashboardData?.recentActivity?.length > 0 ? (
-                <ul className="divide-y divide-gray-200">
-                  {dashboardData.recentActivity.map((activity) => (
-                    <li key={activity.id} className="py-3">
-                      <div className="flex items-center">
-                        <div className="bg-blue-100 rounded-full p-2 mr-3">
-                          <svg
-                            className="h-4 w-4 text-blue-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">
-                            {activity.title}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {activity.type.charAt(0).toUpperCase() +
-                              activity.type.slice(1)}{" "}
-                            • {new Date(activity.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500">No recent activity found.</p>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Quick Actions Section */}
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition duration-200"
-              onClick={() => toast.success("Feature coming soon!")}
-            >
-              Browse Courses
-            </button>
-            <button
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition duration-200"
-              onClick={() => toast.success("Feature coming soon!")}
-            >
-              Continue Learning
-            </button>
-            <button
-              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition duration-200"
-              onClick={() => toast.success("Feature coming soon!")}
-            >
-              View Certificates
-            </button>
+          <div className="mt-4 h-2 w-full bg-gray-700 rounded-full">
+            <div
+              className="h-2 bg-gradient-to-r from-[#B200FF] to-[#8A00FF] rounded-full"
+              style={{ width: "60%" }}
+            ></div>
           </div>
+        </div>
+
+        {/* Card 2 */}
+        <div
+          className="bg-black bg-opacity-50 backdrop-blur-sm rounded-xl p-6 border border-[#B200FF]/20 shadow-lg hover:shadow-[#B200FF]/20 transition-all duration-300 hover:-translate-y-1"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top right, rgba(178, 0, 255, 0.1), transparent 70%)",
+          }}
+        >
+          <h3 className="text-gray-400 font-medium mb-2">In Progress</h3>
+          <div className="text-4xl font-bold text-white">
+            {dashboardData.stats.inProgressCourses}
+          </div>
+          <div className="mt-4 h-2 w-full bg-gray-700 rounded-full">
+            <div
+              className="h-2 bg-gradient-to-r from-[#B200FF] to-[#8A00FF] rounded-full"
+              style={{ width: "30%" }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Card 3 */}
+        <div
+          className="bg-black bg-opacity-50 backdrop-blur-sm rounded-xl p-6 border border-[#B200FF]/20 shadow-lg hover:shadow-[#B200FF]/20 transition-all duration-300 hover:-translate-y-1"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top right, rgba(178, 0, 255, 0.1), transparent 70%)",
+          }}
+        >
+          <h3 className="text-gray-400 font-medium mb-2">Achievements</h3>
+          <div className="text-4xl font-bold text-white">
+            {dashboardData.stats.achievements}
+          </div>
+          <div className="mt-4 h-2 w-full bg-gray-700 rounded-full">
+            <div
+              className="h-2 bg-gradient-to-r from-[#B200FF] to-[#8A00FF] rounded-full"
+              style={{ width: "75%" }}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-white mb-4">
+          Recent Activity
+        </h2>
+        <div className="bg-black bg-opacity-50 backdrop-blur-sm rounded-xl overflow-hidden">
+          <div className="divide-y divide-[#B200FF]/20">
+            {dashboardData.recentActivity.map((activity) => (
+              <div
+                key={activity.id}
+                className="p-4 hover:bg-[#B200FF]/10 transition-colors duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-medium">{activity.title}</h4>
+                    <p className="text-gray-400 text-sm">
+                      {activity.type.charAt(0).toUpperCase() +
+                        activity.type.slice(1)}
+                    </p>
+                  </div>
+                  <div className="text-sm text-gray-400">{activity.date}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Recommended Courses */}
+      <div>
+        <h2 className="text-2xl font-semibold text-white mb-4">
+          Recommended For You
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {dashboardData.recommendedCourses.map((course) => (
+            <div
+              key={course.id}
+              className="bg-black bg-opacity-40 backdrop-blur-sm border border-[#B200FF]/20 rounded-xl p-5 shadow-lg hover:shadow-[#B200FF]/20 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+            >
+              <h3 className="text-white font-semibold mb-2">{course.title}</h3>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">{course.duration}</span>
+                <span className="bg-[#B200FF]/20 text-[#B200FF] px-2 py-1 rounded text-xs">
+                  {course.level}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
