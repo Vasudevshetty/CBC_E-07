@@ -3,15 +3,15 @@ import { useSelector, useDispatch } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import SideBar from "../components/SideBar";
-import NavBar from "../components/NavBar";
+import { logoutUser } from "../store/slices/authSlice";
 
 function Dashboard() {
   const dispatch = useDispatch();
   const { user, isLoading } = useSelector((state) => state.auth);
   const [loadingData, setLoadingData] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Fetch dashboard data on component mount
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -47,16 +47,18 @@ function Dashboard() {
       }
     };
 
-    // Only fetch dashboard data when user is available
     if (!isLoading && user) {
       fetchDashboardData();
     } else if (!isLoading && !user) {
-      // If loading is done but no user found
       setLoadingData(false);
     }
   }, [user, isLoading, dispatch]);
 
-  // Loading state for entire dashboard
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    toast.success("Logged out successfully");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -68,7 +70,6 @@ function Dashboard() {
     );
   }
 
-  // If not loading and no user, display an error or redirect message
   if (!isLoading && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -92,16 +93,38 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col w-full">
-      {/* Navigation Bar */}
-      <NavBar />
+      {/* Top bar with user dropdown */}
+      <div className="absolute top-4 right-4 bg-gray-100 border-white  rounded-full w-fit shadow-lg">
+        <button
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-300 transition"
+        >
+          <img
+            src={"/default-profile.jpg"}
+            alt="User"
+            className="w-10 h-10 rounded-full object-cover border-2 border-white"
+          />
+          <span className="text-gray-700 font-medium text-sm md:text-base">
+            {user?.name || "Guest"}
+          </span>
+        </button>
+        {dropdownOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10">
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-1">
-        {/* Sidebar takes 20% */}
         <div className="w-[20%] bg-gray-900">
           <SideBar />
         </div>
 
-        {/* Main content takes 80% */}
         <div className="w-[80%] p-6">
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
           <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
@@ -115,7 +138,6 @@ function Dashboard() {
             </div>
           ) : (
             <>
-              {/* Stats Section */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-lg shadow p-6">
                   <h2 className="text-lg font-semibold text-gray-700 mb-2">
@@ -143,7 +165,6 @@ function Dashboard() {
                 </div>
               </div>
 
-              {/* Recent Activity Section */}
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-lg font-semibold text-gray-700 mb-4">
                   Recent Activity
@@ -189,7 +210,6 @@ function Dashboard() {
             </>
           )}
 
-          {/* Quick Actions Section */}
           <div className="mt-6">
             <h2 className="text-lg font-semibold text-gray-700 mb-4">
               Quick Actions
