@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
+import Streaks from "../components/Streaks";
 
 function CircularProgress({ percentage }) {
   return (
@@ -63,16 +64,15 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    let progressValue = 0;
     const interval = setInterval(() => {
-      progressValue += 1;
-      setProgress(progressValue);
-      if (progressValue >= 65) {
-        clearInterval(interval);
-      }
-    }, 50);
-
-    return () => clearInterval(interval);
+      setProgress((prev) => {
+        if (prev >= 65) {
+          clearInterval(interval);
+          return 65;
+        }
+        return prev + 1;
+      });
+    }, 20);
   }, []);
 
   // Loading state
@@ -105,7 +105,9 @@ function Dashboard() {
           </p>
         </div>
       </div>
-      <div className="bg-white h-40"></div>
+      <div className="bg-white ">
+        <Streaks />
+      </div>
       {/* Your Assessments Section */}
       <h1 className="text-white text-3xl font-semibold tracking-wide ">
         Your Assessment{" "}
@@ -168,8 +170,8 @@ function Dashboard() {
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white ">Progress</h3>
-              <CircularProgress percentage={progress} size={32} />
+              <h3 className="text-lg font-semibold text-white">Progress</h3>
+              <CircularProgress percentage={progress} />
             </div>
           </div>
         </div>

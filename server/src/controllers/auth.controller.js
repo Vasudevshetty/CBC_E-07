@@ -99,7 +99,7 @@ exports.login = async (req, res) => {
         message: "Incorrect email or password",
       });
     }
-
+    console.log(user);
     // Send JWT token
     createSendToken(user, 200, res);
   } catch (err) {

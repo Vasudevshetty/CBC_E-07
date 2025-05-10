@@ -274,3 +274,12 @@
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
+
+/* GitHubCalendar month name text color */
+.react-github-calendar .month-name {
+  fill: #ffffff; /* Set month name text color to white */
+}
+
+.react-github-calendar .day {
+  fill: #ffffff; /* Set dots (day boxes) color to white */
+}
