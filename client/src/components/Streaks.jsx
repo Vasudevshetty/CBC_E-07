@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import GitHubCalendar from "react-github-calendar";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -14,12 +14,14 @@ const Streaks = () => {
       try {
         // Record today's login
         await axios.post(
-          `${import.meta.env.VITE_APP_BACKEND_URL}/login/record/${user._id}`
+          `${import.meta.env.VITE_APP_BACKEND_URL}/api/v1/login/record/${
+            user._id
+          }`
         );
 
         // Fetch login data
         const res = await axios.get(
-          `${import.meta.env.VITE_APP_BACKEND_URL}/login/get/${user._id}`
+          `${import.meta.env.VITE_APP_BACKEND_URL}/api/v1/login/get/${user._id}`
         );
         console.log(res);
 
@@ -42,24 +44,34 @@ const Streaks = () => {
   }, {});
   console.log(calendarValues);
 
-  const customDates = {
-    "2025-05-01": 1,
-    "2025-05-02": 2,
-    "2025-05-03": 4,
+  const customTheme = {
+    dark: [
+      "#333333", // Background color for empty dots
+      "#4A0099", // Grade 1
+      "#6A00CC", // Grade 2
+      "#8A00FF", // Grade 3
+      "#B200FF", // Grade 4
+    ],
   };
+
   return (
-    <div style={{ background: "black", padding: "10px", marginBottom: "10px" }}>
-      <GitHubCalendar
-        values={customDates}
-        // blockSize={13}
-        // blockMargin={3}
-        // fontSize={12}
-        // showWeekdayLabels
-        style={{
-          margin: "0 auto",
-          color: "white",
-        }}
-      />
+    <div className="bg-gradient-to-r from-gray-800 to-gray-900 border border-[#B200FF]/20  p-4 shadow-lg">
+      <h2 className="text-2xl font-bold text-[#B200FF] mb-4">Your Streaks</h2>
+      <div className="flex flex-col items-center space-y-6">
+        {Object.keys(calendarValues).length > 0 ? (
+          <GitHubCalendar
+            values={calendarValues}
+            blockSize={13}
+            blockMargin={3}
+            fontSize={12}
+            showWeekdayLabels
+            theme={customTheme} // Apply custom theme
+            className="rounded-lg bg-gray-900 p-4 shadow-md"
+          />
+        ) : (
+          <p className="text-gray-300">Loading streaks...</p>
+        )}
+      </div>
     </div>
   );
 };

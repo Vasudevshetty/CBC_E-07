@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Path
 import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
@@ -6,7 +6,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from utils.bot import initialize_retriver, initialize_rag_chain, get_model, extract_video_id
-from utils.database import insert_application_logs, get_chat_history, get_all_session_ids 
+from utils.database import *
 from typing import Optional, List 
 import uuid
 from dotenv import load_dotenv
@@ -44,7 +44,7 @@ def read_root():
     return {"Hello": "World"}
 
 @api.post("/chat")
-def personal_assistant(session_id: Optional[str] = None, user_query: str = "", subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
+def personal_assistant(session_id: Optional[str] = None, user_id: str = "anonymous", user_query: str = "", subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
     _, retriever = initialize_retriver(model, embeddings, subject)
     rag_chain = initialize_rag_chain(model, retriever, subject, learner_type)
     if not session_id:
@@ -54,14 +54,13 @@ def personal_assistant(session_id: Optional[str] = None, user_query: str = "", s
         response = rag_chain.invoke({
         "input": user_query, "chat_history": chat_history, "subject":subject})['answer']
 
-        insert_application_logs(session_id, user_query, response)
+        insert_application_logs(session_id, user_id, user_query, response)
         return {"session_id": session_id, "response": response}
     except KeyError as e:
-        raise HTTPException(status_code=500, detail =f"Error Processing th eresponse :{e}")
+        raise HTTPException(status_code=500, detail=f"Error Processing the response: {e}")
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
-    
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
 
 @api.get("/sessions", response_model=List[str])
 def get_sessions():
@@ -74,6 +73,26 @@ def get_sessions():
         raise e 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred while fetching session IDs: {str(e)}")
+
+@api.get("/sessions_by_user")
+def get_user_sessions(user_id: str):
+    try:
+        session_ids = get_sessions_by_user_id(user_id)
+        if session_ids is None:
+            raise HTTPException(status_code=501, detail="Failed to retrieve sessions for the user")
+        return {"user_id": user_id, "sessions": session_ids}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while fetching user sessions: {str(e)}")
+
+@api.get("/chat_history")
+def get_session_chat_history(session_id: str):
+    try:
+        chats = get_chats_by_session_id(session_id)
+        if chats is None:
+            raise HTTPException(status_code=404, detail="No chat history found for this session")
+        return {"session_id": session_id, "chats": chats}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while fetching chat history: {str(e)}")
 
 @api.post("/recommendations")
 def get_recommendations(subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
@@ -185,6 +204,8 @@ For each strategy:
 - Suggest how to track progress
 - Explain why this technique works well for fast learners
 
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
+
 Format your response as structured, actionable advice with clear headings and bullet points."""
 
         elif learner_type == 'medium':
@@ -195,18 +216,16 @@ As a medium-paced learner, this student:
 - Benefits from balanced theory and application
 - Retains information best through varied approaches
 - Appreciates clear structure and examples
-
 Please provide 3 revision strategies specifically tailored for {topic}:
 1. A comprehensive study plan (include time estimates for each component)
 2. A practical application technique that reinforces understanding
 3. A retrieval practice method to strengthen memory retention
-
 For each strategy:
 - Provide a clear name and description
 - Include 2-3 concrete examples directly related to {topic}
 - Suggest a schedule for implementation
 - Explain how this approach balances depth and efficiency
-
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as structured, actionable advice with clear headings and bullet points."""
 
         elif learner_type == "slow":
@@ -228,7 +247,7 @@ For each strategy:
 - Include 3-4 specific examples directly related to {topic}
 - Suggest checkpoints to verify understanding before moving forward
 - Explain how this approach promotes deep, lasting comprehension
-
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as structured, actionable advice with clear headings, numbered steps, and bullet points."""
         
         response = client.chat.completions.create(
@@ -292,6 +311,8 @@ For each component:
 - Suggest how to leverage existing qualifications in {current_qualificaion}
 - Explain how this approach maximizes their fast learning potential
 
+Throughout your response, use relevant emojis to highlight key points, milestones, and important concepts.
+
 Format your response as a professional career development plan with clear sections, timelines, and action items."""
 
         elif learner_type == 'medium':
@@ -314,7 +335,7 @@ For each component:
 - Balance skill acquisition with practical experience
 - Suggest how to leverage existing qualifications in {current_qualificaion}
 - Include regular progress assessment points
-
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as a professional career development plan with clear sections, timelines, and action items."""
 
         elif learner_type == "slow":
@@ -337,7 +358,7 @@ For each component:
 - Emphasize thorough understanding and practical application
 - Suggest how to leverage existing qualifications in {current_qualificaion}
 - Include validation checkpoints to ensure mastery before progression
-
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as a professional career development plan with clear sections, detailed timelines, and measured action items."""
         
         response = client.chat.completions.create(
@@ -599,3 +620,45 @@ def assess_learner_type(video_correct: int, aptitude_correct: int):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error during prediction: {str(e)}")
+
+@api.post("/create_session")
+def create_new_session(user_id: str = "anonymous"):
+    """
+    Create a new session for a user and return the session ID.
+    """
+    try:
+        session_id = create_session(user_id)
+        return {"session_id": session_id, "user_id": user_id, "status": "created"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create session: {str(e)}")
+
+@api.delete("/delete_session")
+def remove_session(
+    session_id: str, 
+    user_id: Optional[str] = None
+):
+    """
+    Delete a session and all its associated records.
+    
+    Parameters:
+    - session_id: ID of the session to delete
+    - user_id: Optional user ID for additional verification
+    """
+    try:
+        deleted_count = delete_session(session_id, user_id)
+        if deleted_count == 0:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Session with ID {session_id} not found" + 
+                       (f" for user {user_id}" if user_id else "")
+            )
+        return {
+            "session_id": session_id, 
+            "user_id": user_id,
+            "deleted_records": deleted_count, 
+            "status": "deleted"
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
