@@ -1,1 +1,274 @@
 @import "tailwindcss";
+
+/* Global Scrollbar Styling */
+/* Firefox */
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(178, 0, 255, 0.4) rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* WebKit browsers (Chrome, Safari, etc) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(178, 0, 255, 0.4);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 3px rgba(178, 0, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(178, 0, 255, 0.7);
+  box-shadow: 0 0 5px rgba(178, 0, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark background adjustment */
+.bg-black ::-webkit-scrollbar-track,
+.bg-gray-900 ::-webkit-scrollbar-track,
+[class*="bg-opacity"] ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.bg-black ::-webkit-scrollbar-thumb,
+.bg-gray-900 ::-webkit-scrollbar-thumb,
+[class*="bg-opacity"] ::-webkit-scrollbar-thumb {
+  background: rgba(178, 0, 255, 0.5);
+}
+
+/* Animations for AI Study Assistant */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(178, 0, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(178, 0, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(178, 0, 255, 0);
+  }
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 5px rgba(192, 192, 192, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.8),
+      0 0 15px rgba(178, 0, 255, 0.5);
+  }
+  100% {
+    text-shadow: 0 0 5px rgba(192, 192, 192, 0.5);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+.animate-glow {
+  animation: glow 2s infinite;
+}
+
+/* Custom styles for the AI Assistant */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 5s ease infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-shine {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shine 3s infinite;
+}
+
+/* Button glow effect for send button */
+.glow-effect {
+  position: relative;
+}
+
+.glow-effect::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 8px;
+  background: linear-gradient(45deg, #b200ff, #6000cc, #b200ff);
+  background-size: 400%;
+  z-index: -1;
+  animation: glowing 20s linear infinite;
+  filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.glow-effect:hover::before {
+  opacity: 0.7;
+}
+
+@keyframes glowing {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 400% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+.animate-glow {
+  animation: glow 1.5s ease-in-out infinite alternate;
+  text-shadow: 0 0 5px rgba(178, 0, 255, 0.7), 0 0 10px rgba(178, 0, 255, 0.5);
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px rgba(178, 0, 255, 0.7), 0 0 10px rgba(178, 0, 255, 0.5);
+    opacity: 0.8;
+  }
+  to {
+    text-shadow: 0 0 10px rgba(178, 0, 255, 0.9),
+      0 0 15px rgba(178, 0, 255, 0.7), 0 0 20px rgba(178, 0, 255, 0.5);
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbar for specific elements (even thinner than global) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px !important;
+  height: 4px !important;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(178, 0, 255, 0.3) !important;
+  border-radius: 999px !important;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(178, 0, 255, 0.5) !important;
+}
+
+.text-silver {
+  color: #c0c0c0;
+  @keyframes typewriter {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  .typewriter {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typewriter 4s steps(40, end);
+  }
+}
+
+/* Animation for gradient backgrounds */
+@keyframes animate-gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: animate-gradient 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+/* Float animation for subtle movement */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
