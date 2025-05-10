@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
+import careerPathReducer from "./slices/careerPathSlice";
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
+    careerPath: careerPathReducer,
   },
-  devTools: process.env.NODE_ENV !== "production",
+  devTools: import.meta.env.VITE_APP_ENV !== "production",
 });
 
 export default store;

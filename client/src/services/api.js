@@ -3,7 +3,7 @@ import axios from "axios";
 // Create axios instance with base URL
 const api = axios.create({
   baseURL:
-    import.meta.env.VITE_APP_ENV === "development"
+    import.meta.env.VITE_APP_ENV !== "development"
       ? import.meta.env.VITE_APP_BACKEND_URL
       : import.meta.env.VITE_APP_BACKEND_URL_PROD,
   headers: {
@@ -11,12 +11,6 @@ const api = axios.create({
   },
   withCredentials: true, // Important for cookies
 });
-
-console.log(
-  import.meta.env.VITE_APP_ENV === "development"
-    ? import.meta.env.VITE_APP_BACKEND_URL
-    : import.meta.env.VITE_APP_BACKEND_URL_PROD
-);
 
 // Response interceptor for handling authentication errors
 api.interceptors.response.use(
@@ -35,22 +29,40 @@ api.interceptors.response.use(
 
 // Auth API calls
 export const authApi = {
-  register: (userData) => api.post("/auth/register", userData),
-  login: (credentials) => api.post("/auth/login", credentials),
-  logout: () => api.get("/auth/logout"),
-  getMe: () => api.get("/auth/me"),
-  forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
+  register: (userData) => api.post("/api/v1/auth/register", userData),
+  login: (credentials) => api.post("/api/v1/auth/login", credentials),
+  logout: () => api.get("/api/v1/auth/logout"),
+  getMe: () => api.get("/api/v1/auth/me"),
+  forgotPassword: (email) =>
+    api.post("/api/v1/auth/forgot-password", { email }),
   resetPassword: (token, password) =>
-    api.patch(`/auth/reset-password/${token}`, { password }),
+    api.patch(`/api/v1/auth/reset-password/${token}`, { password }),
   updatePassword: (passwordData) =>
-    api.patch("/auth/update-password", passwordData),
+    api.patch("/api/v1/auth/update-password", passwordData),
+};
+
+// Career API calls
+export const careerApi = {
+  getCareerPath: (goal, currentQualification, learnerType = "slow") =>
+    api.post(
+      "/services/carreer",
+      {},
+      {
+        params: {
+          goal,
+          current_qualificaion: currentQualification,
+          learner_type: learnerType,
+        },
+      }
+    ),
 };
 
 // User API calls
 export const userApi = {
-  updateProfile: (userData) => api.patch("/user/update-profile", userData),
+  updateProfile: (userData) =>
+    api.patch("/api/v1/user/update-profile", userData),
   uploadProfileImage: (formData) =>
-    api.post("/user/upload-profile-image", formData, {
+    api.post("/api/v1/user/upload-profile-image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 };
