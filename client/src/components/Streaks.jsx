@@ -23,7 +23,7 @@ const Streaks = () => {
         );
         console.log(res);
 
-        // Extract only dates from the response data
+        // Extract dates from the response data and update loginData
         const dates = res?.data?.map((entry) => entry.date) || [];
         setLoginData(dates);
       } catch (error) {
@@ -32,28 +32,34 @@ const Streaks = () => {
     };
 
     fetchData();
-  }, [user]);
+  }, [user?._id]);
   console.log(loginData);
 
-  // Prepare the GitHubCalendar values
+  // Prepare the calendar values from the fetched login data
   const calendarValues = loginData.reduce((acc, date) => {
-    acc[date] = 1; // You can set any value here, like 1 for each date
+    acc[date] = 1; // Color the days with logins (can use any value like 1 for streak)
     return acc;
   }, {});
+  console.log(calendarValues);
 
+  const customDates = {
+    "2025-05-01": 1,
+    "2025-05-02": 2,
+    "2025-05-03": 4,
+  };
   return (
-    <div style={{ padding: "10px" }}>
-      {Object.keys(calendarValues).length > 0 ? (
-        <GitHubCalendar
-          values={calendarValues}
-          blockSize={13}
-          blockMargin={3}
-          fontSize={12}
-          showWeekdayLabels
-        />
-      ) : (
-        <p>Loading streaks...</p>
-      )}
+    <div style={{ background: "black", padding: "10px", marginBottom: "10px" }}>
+      <GitHubCalendar
+        values={customDates}
+        // blockSize={13}
+        // blockMargin={3}
+        // fontSize={12}
+        // showWeekdayLabels
+        style={{
+          margin: "0 auto",
+          color: "white",
+        }}
+      />
     </div>
   );
 };
