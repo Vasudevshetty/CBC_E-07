@@ -235,10 +235,11 @@
       width: 100%;
     }
   }
-}
-.typewriter {
-  display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  animation: typewriter 4s steps(40, end);
+
+  .typewriter {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typewriter 4s steps(40, end);
+  }
 }
