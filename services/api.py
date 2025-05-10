@@ -11,6 +11,7 @@ from typing import Optional
 import uuid
 from dotenv import load_dotenv
 from groq import Groq
+import json
 
 
 load_dotenv()
@@ -56,6 +57,62 @@ def personal_assistant(session_id: Optional[str] = None, user_query: str = "", s
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
     
+
+@api.post("/recommendations")
+def get_recommendations(subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
+    
+    prompt = f"""Based on the subject '{subject}', and considering they are a '{learner_type}' learner, provide 3-5 concise recommendations for the search bar of the study assitant. These could be related topics, questions related to the subject.
+    Subject: {subject}
+    Learner Type: {learner_type}
+    Output the recommendations as a JSON list of strings. For example: ["Recommendation 1", "Study Resource A", "Next Step B"]
+    Recommendations:"""
+    
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an assistant that provides educational recommendations formatted as a JSON list of strings."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300
+        )
+        recommendations_str = response.choices[0].message.content.strip()
+        parsed_recommendations = json.loads(recommendations_str) if recommendations_str else []
+        return {"recommendations": parsed_recommendations}
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing JSON from Groq API for recommendations: {str(e)}. Response: {recommendations_str}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calling Groq API for recommendations: {str(e)}")
+
+@api.post("/autocomplete")
+def get_autocomplete_suggestions(user_query_partial: str, subject: str = "Design and Analysis of Algorithms"):
+    prompt = f"""Complete the following user query or provide relevant autocomplete suggestions. The user is typing about the subject '{subject}'.
+    Partial Query: {user_query_partial}
+    Subject: {subject}
+    Provide up to 5 suggestions.
+    Output the suggestions as a JSON list of strings. For example: ["suggestion 1", "suggestion 2"]
+    Autocomplete Suggestions:"""
+    
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile", # Or a smaller model if latency is critical
+            messages=[
+                {"role": "system", "content": "You are an assistant that provides autocomplete suggestions formatted as a JSON list of strings."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5, 
+            max_tokens=100, 
+            # stop=["\n"] # Stop token might interfere with JSON list generation if it spans multiple lines, consider removing or adjusting.
+        )
+        suggestions_str = response.choices[0].message.content.strip()
+        processed_suggestions = json.loads(suggestions_str) if suggestions_str else []
+        return {"suggestions": processed_suggestions}
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing JSON from Groq API for autocomplete: {str(e)}. Response: {suggestions_str}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calling Groq API for autocomplete: {str(e)}")
+
 
 @api.post("/upload")
 async def upload_textbook(file: UploadFile = File(...)):
