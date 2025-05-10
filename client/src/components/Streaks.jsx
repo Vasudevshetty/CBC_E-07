@@ -55,7 +55,7 @@ const Streaks = () => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-gray-800 to-gray-900 border border-[#B200FF]/20  p-4 shadow-lg">
+    <div className="bg-gradient-to-r h-full from-gray-800 to-gray-900 border border-[#B200FF]/20  p-4 shadow-lg">
       <h2 className="text-2xl font-bold text-[#B200FF] mb-4">Your Streaks</h2>
       <div className="flex flex-col items-center space-y-6">
         {Object.keys(calendarValues).length > 0 ? (

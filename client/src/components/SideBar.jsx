@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../store/slices/authSlice";
+
+
 
 function SideBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,8 +19,13 @@ function SideBar() {
     { name: "Profile", link: "/profile" },
   ];
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     console.log("Logout clicked");
+    dispatch(logoutUser());
+    navigate("/");
   };
 
   // Animation effect when component mounts
@@ -59,7 +68,7 @@ function SideBar() {
       {/* Menu icon (absolute on top-left) with glowing effect */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden bg-opacity-80 bg-gray-900 p-2 rounded-full text-[#B200FF] shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40 transition-all duration-300"
+        className="fixed top-4 left-4 z-50 md:hidden bg-opacity-80 bg-gray-900 p-2 rounded-full text-[#B200FF] shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40 hover:scale-110 transition-all duration-300"
       >
         {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
       </button>
@@ -125,7 +134,9 @@ function SideBar() {
                         {isActive && (
                           <span className="absolute inset-0 bg-[#B200FF] opacity-10 blur-md"></span>
                         )}
-                        <span className="relative z-10">{link.name}</span>
+                        <span className="relative z-10 hover:scale-105 transition-transform duration-300">
+                          {link.name}
+                        </span>
                       </>
                     )}
                   </NavLink>
@@ -136,10 +147,19 @@ function SideBar() {
 
           <div className="p-6 border-t border-[#B200FF]/30">
             <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#B200FF] to-[#9000CC] hover:from-[#9000CC] hover:to-[#B200FF] text-white rounded-lg w-full justify-center transition-all duration-300 shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40"
+              onClick={() => {
+                setIsOpen(false);
+                handleLogout();
+              }}
+              className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#B200FF] to-[#9000CC] hover:from-[#9000CC] hover:to-[#B200FF] text-white rounded-lg w-full justify-center transition-all duration-300 shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40 hover:scale-105 hover:cursor-pointer"
+              title="Logout"
             >
-              <FaSignOutAlt /> Logout
+              {/* Logout icon */}
+              <span className="text-lg">
+                <FaSignOutAlt />
+              </span>
+              {/* Logout text */}
+              <span className="text-sm">Logout</span>
             </button>
             <p className="text-center text-xs mt-6 text-gray-400">
               2025 &copy;{" "}
