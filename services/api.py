@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Path
+from fastapi import FastAPI, HTTPException, UploadFile, File, Path, Body
 import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
@@ -16,7 +16,10 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
 import joblib
 import numpy as np
-from utils.assessdb import save_user_assessment, bulk_save_video_questions, bulk_save_aptitude_questions
+from utils.assessdb import save_user_assessment, bulk_save_video_questions, bulk_save_aptitude_questions, get_video_questions, get_aptitude_questions
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+import traceback
 
 load_dotenv()
 
@@ -37,8 +40,6 @@ api.add_middleware(
 llm = ChatGroq(model= "llama-3.3-70b-versatile", api_key=groq_api_key2)
 os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
 model,embeddings = get_model()
-random_forest = joblib.load("models/random_forest_model.pkl")
-joblib.dump(random_forest, 'models/random_forest_model.pkl')
 
 @api.get("/")
 def read_root():
@@ -422,6 +423,7 @@ JSON Output:
         questions_str = response.choices[0].message.content.strip()
         
         try:
+            # Parse the response
             if questions_str.startswith("```json"):
                 questions_str = questions_str.split("```json")[1].split("```")[0].strip()
             elif questions_str.startswith("```"):
@@ -452,7 +454,8 @@ JSON Output:
                     'correct_answer': q['correct_answer']
                 })
             
-            bulk_save_video_questions(questions_to_save, video_id)
+            # Save questions for this specific user, replacing any previous questions
+            bulk_save_video_questions(user_id, questions_to_save, video_id)
             
             # Create a stripped version without correct answers for the response
             client_response = []
@@ -546,7 +549,8 @@ JSON Output:
                     'correct_answer': q['correct_answer']
                 })
             
-            bulk_save_aptitude_questions(questions_to_save)
+            # Save questions for this specific user, replacing any previous questions
+            bulk_save_aptitude_questions(user_id, questions_to_save)
             
             # Create a stripped version without correct answers for the response
             client_response = []
@@ -573,16 +577,46 @@ JSON Output:
         print(f"An unexpected error occurred in mental_ability_questions: {type(e).__name__} - {str(e)}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred while generating mental ability questions: {str(e)}")
 
+# Update the Pydantic model for the assessment input - simplified since we no longer need question IDs
+class AssessmentInput(BaseModel):
+    phase1options: List[Optional[str]]  # Selected option values for video questions, null if not selected
+    phase2options: List[Optional[str]]  # Selected option values for aptitude questions, null if not selected
+    user_id: str = "anonymous"
+
 @api.post("/assessment")
-def assess_learner_type(video_correct: int, aptitude_correct: int):
+def assess_learner_type(assessment_data: AssessmentInput):
     try:
+        # Extract data from the input
+        user_id = assessment_data.user_id
+        
+        # Get video questions and correct answers from the database for this user
+        video_questions = get_video_questions(user_id)
+        
+        # Get aptitude questions and correct answers from the database for this user
+        aptitude_questions = get_aptitude_questions(user_id)
+        
+        # Calculate video score by comparing selected options with correct answers
+        video_correct = 0
+        for i, selected in enumerate(assessment_data.phase1options):
+            if i < len(video_questions) and selected is not None:
+                if selected == video_questions[i]["correct_answer"]:
+                    video_correct += 1
+        
+        # Calculate aptitude score by comparing selected options with correct answers
+        aptitude_correct = 0
+        for i, selected in enumerate(assessment_data.phase2options):
+            if i < len(aptitude_questions) and selected is not None:
+                if selected == aptitude_questions[i]["correct_answer"]:
+                    aptitude_correct += 1
+        
+        # Use the LLM to classify the learner type
         prompt = f"""You are an expert student assessor. Based on the following performance metrics, classify the student as a 'slow', 'medium', or 'fast' learner.
 
 Aptitude Test Performance:
-- Correct Answers: {aptitude_correct} out of 5
+- Correct Answers: {aptitude_correct} out of {len(aptitude_questions)}
 
 Video Comprehension Performance:
-- Correct Answers: {video_correct} out of 5
+- Correct Answers: {video_correct} out of {len(video_questions)}
 
 Consider that 'fast' learners grasp concepts quickly and perform very well (e.g., high scores like 4 aptitude and 4 video correct),
 'medium' learners show steady understanding (e.g., moderate scores),
@@ -615,45 +649,29 @@ Classification:"""
                 print(f"Unexpected classification from LLM: {classification}")
                 raise HTTPException(status_code=500, detail=f"Received unexpected classification from LLM: {response.choices[0].message.content.strip()}")
 
-        return {"learner_type_assessment": classification}
+        # Save the assessment results to database
+        save_user_assessment(
+            user_id=user_id,
+            video_score=video_correct,
+            aptitude_score=aptitude_correct,
+            learner_type=classification
+        )
+        
+        return {
+            "user_id": user_id,
+            "video_score": video_correct,
+            "video_total": len(video_questions),
+            "aptitude_score": aptitude_correct,
+            "aptitude_total": len(aptitude_questions),
+            "learner_type_assessment": classification
+        }
 
     except HTTPException as e:
         raise e
     except Exception as e:
         print(f"An unexpected error occurred in assess_learner_type: {type(e).__name__} - {str(e)}")
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during learner assessment: {str(e)}")
-
-
-@api.post("/assessment_model")
-def assess_learner_type(user_id: str = "anonymous", video_correct: int = 0, aptitude_correct: int = 0):
-    try:
-        features = np.array([[video_correct, aptitude_correct]])
-        prediction_int = random_forest.predict(features)[0]
-        
-        # Convert numpy.int64 to Python int
-        classification_int = int(prediction_int)
-        
-        # Map integer prediction back to string label
-        label_map = {0: "slow", 1: "medium", 2: "fast"}
-        classification_label = label_map.get(classification_int, "unknown")
-
-        if classification_label == "unknown":
-            print(f"Warning: Unknown classification integer from model: {classification_int}")
-        else:
-            # Save the assessment results to database
-            save_user_assessment(
-                user_id=user_id,
-                video_score=video_correct,
-                aptitude_score=aptitude_correct,
-                learner_type=classification_label
-            )
-
-        return {"learner_type_assessment": classification_label}
-    except Exception as e:
-        print(f"Error in /assessment_model: {type(e).__name__} - {str(e)}")
-        import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error during prediction: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during learner assessment: {str(e)}")
 
 @api.post("/create_session")
 def create_new_session(user_id: str = "anonymous"):
