@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { mcqQuestions } from "../data/ui";
 
-const questions = mcqQuestions;
-
-function Quiz() {
+function Quiz({ questions }) {
   const navigate = useNavigate();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);

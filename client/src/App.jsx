@@ -120,14 +120,14 @@ function App() {
             <Route path="/assessment" element={<Assessment />} />
             <Route path="/assessment/:id" element={<Assessment />} />
 
-            <Route
+            {/* <Route
               element={
                 <ProtectedRoute>
                   <Quiz />
                 </ProtectedRoute>
               }
               path="/quiz"
-            />
+            /> */}
 
             {/* Redirect for unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
