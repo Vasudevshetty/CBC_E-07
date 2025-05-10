@@ -24,7 +24,9 @@ function Assessment() {
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Rules to Follow</h2>
           <ul className="list-disc list-inside space-y-2 text-lg">
-            <li>Ensure a stable internet connection throughout the assessment.</li>
+            <li>
+              Ensure a stable internet connection throughout the assessment.
+            </li>
             <li>Do not refresh or close the browser during the assessment.</li>
             <li>Complete the video before proceeding to the quiz.</li>
             <li>Once the quiz starts, it must be completed in one sitting.</li>
