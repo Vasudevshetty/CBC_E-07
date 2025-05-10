@@ -1,4 +1,3 @@
-import { RiAccountCircleLine } from "react-icons/ri";
 import { IoLogOutOutline } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
