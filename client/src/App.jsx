@@ -10,7 +10,7 @@ import { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import { fetchCurrentUser } from "./store/slices/authSlice";
 import DashboardLayout from "./components/DashboardLayout";
-import QuizPage from "./pages/QuizPage";
+import Quiz from "./pages/Quiz";
 
 // Lazy loading components for better performance
 const Login = lazy(() => import("./pages/Login"));
@@ -117,16 +117,7 @@ function App() {
               <Route path="/career" element={<CareerPath />} />
               <Route path="/revise" element={<Revise />} />
             </Route>
-            <Route path="/quiz" element={<QuizPage />} />
-
-            <Route
-              element={
-                <ProtectedRoute>
-                  <QuizPanel />
-                </ProtectedRoute>
-              }
-              path="/quiz/:id"
-            />
+            <Route path="/quiz" element={<Quiz />} />
 
             {/* Redirect for unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />

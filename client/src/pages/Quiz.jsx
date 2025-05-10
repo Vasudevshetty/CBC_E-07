@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { mcqQuestions } from "../../data/ui";
+import { mcqQuestions } from "../data/ui";
 
 const questions = mcqQuestions;
 
@@ -58,19 +58,13 @@ function Quiz() {
     setCurrentQuestionIndex(currentQuestionIndex + 1);
   };
 
-  const handlePrevQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-  };
-
   const handleSubmitQuiz = () => {
     console.log("Quiz submitted with answers:", answers);
     navigate("/quiz-results", { state: { answers } });
   };
 
   return (
-    <div className="w-screen h-[80vh]  text-white flex items-center justify-center">
+    <div className="w-screen h-screen py-20  text-white flex items-center justify-center bg-gradient-to-b from-indigo-900 to-purple-900">
       <div className="max-w-5xl w-full h-full bg-zinc-900 rounded-lg shadow-lg overflow-hidden flex">
         {/* Question and options section */}
         <div className="w-1/2 p-6 flex flex-col justify-between">
@@ -142,9 +136,9 @@ function Quiz() {
 
         {/* Image section */}
         <div className="w-1/2 h-full flex items-center justify-center bg-zinc-800">
-          {currentQuestion.imageUrl ? (
+          {currentQuestion.image ? (
             <img
-              src={currentQuestion.imageUrl}
+              src={currentQuestion.image}
               alt="Question illustration"
               className="p-8 w-full h-full object-contain rounded-lg"
             />
