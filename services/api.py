@@ -2,17 +2,18 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader # Updated import
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from utils.bot import initialize_retriver, initialize_rag_chain, get_model
-from utils.database import insert_application_logs, get_chat_history
-from typing import Optional
+from utils.bot import initialize_retriver, initialize_rag_chain, get_model, extract_video_id
+from utils.database import insert_application_logs, get_chat_history, get_all_session_ids # Add get_all_session_ids
+from typing import Optional, List # Import List
 import uuid
 from dotenv import load_dotenv
 from groq import Groq
 import json
-
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
 
 load_dotenv()
 
@@ -57,6 +58,18 @@ def personal_assistant(session_id: Optional[str] = None, user_query: str = "", s
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
     
+
+@api.get("/sessions", response_model=List[str])
+def get_sessions():
+    try:
+        session_ids = get_all_session_ids() 
+        if session_ids is None: 
+             raise HTTPException(status_code=501, detail="Database function to get all session IDs not implemented or returned None.")
+        return session_ids
+    except HTTPException as e:
+        raise e 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while fetching session IDs: {str(e)}")
 
 @api.post("/recommendations")
 def get_recommendations(subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
@@ -342,3 +355,217 @@ Format your response as a professional career development plan with clear sectio
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling Groq API: {str(e)}")
+
+
+
+
+@api.post("/video_questions")
+def get_questions(url: str):
+    try:
+        video_id = extract_video_id(url)
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        full_text = " ".join([entry["text"] for entry in transcript_list])
+
+        if not full_text.strip():
+            raise HTTPException(status_code=400, detail="Transcript is empty or contains only whitespace.")
+
+        prompt = f"""Based on the following transcript, generate 5 multiple-choice questions.
+Each question must have 4 options, and only one option should be the correct answer.
+Provide the output as a JSON list of objects. Each object should have the following keys:
+- "question": (string) The question text.
+- "options": (list of 4 strings) The multiple choice options.
+- "correct_answer": (string) The text of the correct option.
+
+Transcript:
+{full_text[:4000]} # Limiting transcript length to avoid exceeding token limits
+
+JSON Output:
+"""
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that generates multiple-choice questions from a given text, formatted as a JSON list of objects."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+            max_tokens=1500,
+            response_format={"type": "json_object"} 
+        )
+        
+        questions_str = response.choices[0].message.content.strip()
+        
+        try:
+            if questions_str.startswith("```json"):
+                questions_str = questions_str.split("```json")[1].split("```")[0].strip()
+            elif questions_str.startswith("```"): # Fallback for just ```
+                questions_str = questions_str.split("```")[1].strip()
+
+
+            parsed_response = json.loads(questions_str)
+
+            if isinstance(parsed_response, dict) and "questions" in parsed_response and isinstance(parsed_response["questions"], list):
+                questions_data = parsed_response["questions"]
+            elif isinstance(parsed_response, list):
+                questions_data = parsed_response
+            else:
+                if isinstance(parsed_response, dict):
+                    for key, value in parsed_response.items():
+                        if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and "question" in value[0]:
+                            questions_data = value
+                            break
+                    else: # no break
+                        raise ValueError("JSON does not contain a list of questions in the expected format.")
+                else:
+                    raise ValueError("JSON response is not a list or a dictionary containing a list of questions.")
+
+        except json.JSONDecodeError as e:
+            # Log the problematic string for debugging
+            print(f"JSONDecodeError: {e}")
+            print(f"Problematic JSON string: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"Error parsing JSON from LLM: {str(e)}. Response: {questions_str}")
+        except ValueError as e:
+            print(f"ValueError: {e}")
+            print(f"Problematic JSON structure: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"LLM response format error: {str(e)}. Response: {questions_str}")
+
+        return {"questions": questions_data}
+
+    except TranscriptsDisabled:
+        raise HTTPException(status_code=400, detail="Transcripts are disabled for this video.")
+    except NoTranscriptFound:
+        raise HTTPException(status_code=404, detail="No transcript found for this video.")
+    except HTTPException as e: 
+        raise e
+    except Exception as e:
+       
+        print(f"An unexpected error occurred: {type(e).__name__} - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+@api.get("/aptitude")
+def get_aptitude_questions():
+    try:
+        prompt = f"""Generate 5 multiple-choice aptitude questions.
+The questions should be of moderate difficulty, suitable for a general audience.
+Each question must have 4 options, and only one option should be the correct answer.
+Provide the output as a JSON list of objects. Each object should have the following keys:
+- "question": (string) The question text.
+- "options": (list of 4 strings) The multiple choice options.
+- "correct_answer": (string) The text of the correct option.
+
+JSON Output:
+"""
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile", 
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that generates multiple-choice mental ability questions, formatted as a JSON list of objects."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.6, 
+            max_tokens=1500,
+            response_format={"type": "json_object"}
+        )
+        
+        questions_str = response.choices[0].message.content.strip()
+        
+        try:
+            # Attempt to clean up potential markdown code block formatting
+            if questions_str.startswith("```json"):
+                questions_str = questions_str.split("```json")[1].split("```")[0].strip()
+            elif questions_str.startswith("```"): 
+                questions_str = questions_str.split("```")[1].strip()
+
+            parsed_response = json.loads(questions_str)
+
+            # Standardize access to the list of questions
+            questions_data = []
+            if isinstance(parsed_response, dict) and "questions" in parsed_response and isinstance(parsed_response["questions"], list):
+                questions_data = parsed_response["questions"]
+            elif isinstance(parsed_response, list):
+                questions_data = parsed_response
+            else: # Try to find a list of questions if the structure is slightly different
+                if isinstance(parsed_response, dict):
+                    for key, value in parsed_response.items():
+                        if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and "question" in value[0]:
+                            questions_data = value
+                            break
+                    else: # no break
+                        raise ValueError("JSON does not contain a list of questions in the expected format.")
+                else:
+                    raise ValueError("JSON response is not a list or a dictionary containing a list of questions.")
+
+            if not questions_data or len(questions_data) == 0:
+                 raise ValueError("LLM returned an empty list of questions.")
+            if len(questions_data) > 5:
+                questions_data = questions_data[:5]
+
+
+        except json.JSONDecodeError as e:
+            print(f"JSONDecodeError for mental ability questions: {e}")
+            print(f"Problematic JSON string: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"Error parsing JSON from LLM for mental ability questions: {str(e)}. Response: {questions_str}")
+        except ValueError as e:
+            print(f"ValueError for mental ability questions: {e}")
+            print(f"Problematic JSON structure: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"LLM response format error for mental ability questions: {str(e)}. Response: {questions_str}")
+
+        return {"questions": questions_data}
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"An unexpected error occurred in mental_ability_questions: {type(e).__name__} - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while generating mental ability questions: {str(e)}")
+
+@api.post("/assessment")
+def assess_learner_type(video_correct: int, aptitude_correct: int):
+    try:
+        prompt = f"""You are an expert student assessor. Based on the following performance metrics, classify the student as a 'slow', 'medium', or 'fast' learner.
+
+Aptitude Test Performance:
+- Correct Answers: {aptitude_correct} out of 5
+
+Video Comprehension Performance:
+- Correct Answers: {video_correct} out of 5
+
+Consider that 'fast' learners grasp concepts quickly and perform very well (e.g., high scores like 4 aptitude and 4 video correct),
+'medium' learners show steady understanding (e.g., moderate scores),
+and 'slow' learners might need more time and support (e.g., lower scores like 0-1 correct).
+
+Provide your classification as a single word: 'slow', 'medium', or 'fast'.
+
+Classification:"""
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that classifies learners based on performance data. Respond with a single word: 'slow', 'medium', or 'fast'."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,  # Lower temperature for more deterministic classification
+            max_tokens=10     # Expecting a short response
+        )
+        
+        classification = response.choices[0].message.content.strip().lower()
+        
+        allowed_classifications = ["slow", "medium", "fast"]
+        if classification not in allowed_classifications:
+            # Fallback or attempt to find the keyword if the LLM adds minor extra text
+            for allowed_class in allowed_classifications:
+                if allowed_class in classification:
+                    classification = allowed_class
+                    break
+            else: # no break
+                print(f"Unexpected classification from LLM: {classification}")
+                raise HTTPException(status_code=500, detail=f"Received unexpected classification from LLM: {response.choices[0].message.content.strip()}")
+
+        return {"learner_type_assessment": classification}
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"An unexpected error occurred in assess_learner_type: {type(e).__name__} - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during learner assessment: {str(e)}")
+
+

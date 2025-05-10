@@ -110,13 +110,23 @@ function App() {
                 </ProtectedRoute>
               }
             >
+              {" "}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/ai-asst" element={<AiAsst />} />
+              <Route path="/ai-study-assistant/:id?" element={<AiAsst />} />
               <Route path="/career" element={<CareerPath />} />
               <Route path="/revise" element={<Revise />} />
             </Route>
             <Route path="/quiz" element={<QuizPage />} />
+
+            <Route
+              element={
+                <ProtectedRoute>
+                  <QuizPanel />
+                </ProtectedRoute>
+              }
+              path="/quiz/:id"
+            />
 
             {/* Redirect for unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />

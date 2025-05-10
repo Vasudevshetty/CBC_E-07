@@ -37,4 +37,12 @@ def get_chat_history(session_id):
     conn.close()
     return messages
 
+def get_all_session_ids():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT session_id FROM application_logs')
+    session_ids = [row['session_id'] for row in cursor.fetchall()]
+    conn.close()
+    return session_ids
+
 create_application_logs()
