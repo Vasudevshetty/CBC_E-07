@@ -21,7 +21,6 @@ const Streaks = () => {
         const res = await axios.get(
           `${import.meta.env.VITE_APP_BACKEND_URL}/login/get/${user._id}`
         );
-        console.log(res);
 
         // Extract dates from the response data and update loginData
         const dates = res?.data?.map((entry) => entry.date) || [];
@@ -33,14 +32,12 @@ const Streaks = () => {
 
     fetchData();
   }, [user?._id]);
-  console.log(loginData);
 
   // Prepare the calendar values from the fetched login data
   const calendarValues = loginData.reduce((acc, date) => {
     acc[date] = 1; // Color the days with logins (can use any value like 1 for streak)
     return acc;
   }, {});
-  console.log(calendarValues);
 
   const customDates = {
     "2025-05-01": 1,
