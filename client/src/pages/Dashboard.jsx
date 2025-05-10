@@ -106,7 +106,7 @@ function Dashboard() {
     <div
       className={`transition-all duration-700 ease-out ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-      } px-8 py-4`}
+      } px-8 py-2`}
     >
       <Toaster position="top-right" />
 

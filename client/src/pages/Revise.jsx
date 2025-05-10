@@ -395,13 +395,13 @@ function Revise() {
                   <button
                     key={topic.id}
                     onClick={() => handleTopicSelect(topic.name)}
-                    className="bg-gradient-to-br from-black/80 to-[#190023]/90 border border-[#B200FF]/30 hover:border-[#B200FF]/70 rounded-lg p-4 text-center transition-all text-white flex flex-col items-center justify-center space-y-2 hover:shadow-lg hover:shadow-[#B200FF]/30 transform hover:translate-y-[-1px] duration-300"
+                    className="border border-dashed  border-[#B200FF]/50 bg-gradient-to-br from-black/80 to-[#190023]/90 rounded-full cursor-pointer p-2 text-center text-sm text-white transition-all duration-300 hover:bg-[#190023]/80 hover:border-[#B200FF]/70 "
                     style={{
                       boxShadow:
                         "0 2px 10px rgba(178, 0, 255, 0.1), inset 0 0 15px rgba(0, 0, 0, 0.8)",
                     }}
                   >
-                    <span className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
                       {topic.name}
                     </span>
                   </button>

@@ -124,7 +124,7 @@ function CareerPath() {
         </div>
       </div>
       {/* Main Content */}
-      <div className="flex-1 flex flex-col p-4 h-[calc(100vh-126px)] overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 h-[calc(100vh-126px)] overflow-">
         {!showResults ? (
           <div className="w-full h-full flex">
             {/* Left Panel - Career Selection */}
@@ -143,7 +143,7 @@ function CareerPath() {
                   </p>
                 </div>
 
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-scroll">
                   <form
                     onSubmit={handleSubmit}
                     className="flex flex-col h-full"
