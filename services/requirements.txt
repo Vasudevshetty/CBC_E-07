@@ -12,3 +12,5 @@ faiss-cpu
 langchain_huggingface
 python-dotenv
 youtube-transcript-api
+scikit-learn
+numpy

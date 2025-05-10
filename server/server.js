@@ -36,7 +36,7 @@ app.use(helmet());
 // Enable CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // Adjust to your client's URL
+    origin: [process.env.CLIENT_URL, "http://localhost:5173"], // Adjust to your client's URL
     credentials: true, // Allow cookies to be sent with requests
   })
 );
