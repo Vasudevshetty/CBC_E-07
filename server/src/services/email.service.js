@@ -79,3 +79,4 @@ exports.sendPasswordResetEmail = async (email, resetURL, name) => {
     html,
   });
 };
+// Added email verification functionality
