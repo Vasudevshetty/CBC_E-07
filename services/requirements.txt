@@ -11,3 +11,4 @@ pypdf
 faiss-cpu
 langchain_huggingface
 python-dotenv
+youtube-transcript-api

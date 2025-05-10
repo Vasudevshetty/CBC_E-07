@@ -6,6 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
+import re
 load_dotenv()
 
 UPLOAD_DIR = "uploads"
@@ -63,3 +64,9 @@ Context:
     question_answer_chain = create_stuff_documents_chain(model, qa_prompt)
     return create_retrieval_chain(retriever, question_answer_chain)
 
+def extract_video_id(url: str):
+    # Extract video ID from standard YouTube URL
+    match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", url)
+    if match:
+        return match.group(1)
+    raise ValueError("Invalid YouTube URL")
