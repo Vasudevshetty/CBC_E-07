@@ -20,6 +20,7 @@ function Register() {
   const [passwordError, setPasswordError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [nameError, setNameError] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -30,8 +31,10 @@ function Register() {
 
   // Use specific loading state for registration
   const isLoading = loadingStates.register;
-
   useEffect(() => {
+    // Animation effect
+    setIsVisible(true);
+
     // Clear errors and messages when component mounts
     dispatch(clearError());
     dispatch(clearMessage());
@@ -155,20 +158,43 @@ function Register() {
       );
     }
   };
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="bg-[radial-gradient(circle_at_top,_#B200FF,_black)] min-h-screen h-screen w-screen flex flex-col justify-center items-center p-4 overflow-hidden">
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+      {/* Decorative Lines */}
+      <img
+        src="/Home/hline.png"
+        alt=""
+        className="absolute top-0 left-0 w-full opacity-15 object-cover"
+      />
+      <img
+        src="/Home/hline.png"
+        alt=""
+        className="absolute bottom-0 left-0 w-full opacity-15 object-cover"
+      />
+      <img
+        src="/Home/vline.png"
+        alt=""
+        className="absolute left-4 md:left-8 lg:left-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+      />
+      <img
+        src="/Home/vline.png"
+        alt=""
+        className="absolute right-4 md:right-8 lg:right-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+      />{" "}
+      <div
+        className={`w-full max-w-md sm:max-w-lg md:max-w-xl p-6 md:p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 transition-all duration-1000 ease-out ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        }`}
+      >
+        <h2 className="text-3xl font-bold text-center text-white mb-6">
           Create an Account
-        </h2>
-
+        </h2>{" "}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="name"
-              className="block text-gray-700 font-semibold mb-1"
+              className="block text-white font-semibold mb-1"
             >
               Full Name
             </label>
@@ -180,19 +206,18 @@ function Register() {
               onChange={handleChange}
               placeholder="Enter your full name"
               required
-              className={`w-full px-3 py-2 border ${
-                nameError ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              className={`w-full px-4 py-3 bg-white/10 border ${
+                nameError ? "border-red-500" : "border-white/30"
+              } rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60`}
             />
             {nameError && (
-              <p className="text-red-500 text-sm mt-1">{nameError}</p>
+              <p className="text-red-400 text-sm mt-1">{nameError}</p>
             )}
-          </div>
-
+          </div>{" "}
           <div>
             <label
               htmlFor="email"
-              className="block text-gray-700 font-semibold mb-1"
+              className="block text-white font-semibold mb-1"
             >
               Email Address
             </label>
@@ -204,19 +229,18 @@ function Register() {
               onChange={handleChange}
               placeholder="Enter your email"
               required
-              className={`w-full px-3 py-2 border ${
-                emailError ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              className={`w-full px-4 py-3 bg-white/10 border ${
+                emailError ? "border-red-500" : "border-white/30"
+              } rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60`}
             />
             {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
+              <p className="text-red-400 text-sm mt-1">{emailError}</p>
             )}
-          </div>
-
+          </div>{" "}
           <div>
             <label
               htmlFor="password"
-              className="block text-gray-700 font-semibold mb-1"
+              className="block text-white font-semibold mb-1"
             >
               Password
             </label>
@@ -229,13 +253,13 @@ function Register() {
                 onChange={handleChange}
                 placeholder="Create a password"
                 required
-                className={`w-full px-3 py-2 border ${
-                  passwordError ? "border-red-500" : "border-gray-300"
-                } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`w-full px-4 py-3 bg-white/10 border ${
+                  passwordError ? "border-red-500" : "border-white/30"
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60`}
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-white"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
@@ -269,12 +293,11 @@ function Register() {
                 )}
               </button>
             </div>
-          </div>
-
+          </div>{" "}
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-gray-700 font-semibold mb-1"
+              className="block text-white font-semibold mb-1"
             >
               Confirm Password
             </label>
@@ -286,16 +309,15 @@ function Register() {
               onChange={handleChange}
               placeholder="Confirm your password"
               required
-              className={`w-full px-3 py-2 border ${
-                passwordError ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              className={`w-full px-4 py-3 bg-white/10 border ${
+                passwordError ? "border-red-500" : "border-white/30"
+              } rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60`}
             />
             {passwordError && (
-              <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+              <p className="text-red-400 text-sm mt-1">{passwordError}</p>
             )}
-          </div>
-
-          <div className="text-sm text-gray-600">
+          </div>{" "}
+          <div className="text-sm text-white/80">
             <p>Password must:</p>
             <ul className="list-disc pl-5">
               <li>Be at least 8 characters long</li>
@@ -304,11 +326,10 @@ function Register() {
               <li>Include at least one number</li>
             </ul>
           </div>
-
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70 flex justify-center items-center"
+            className="w-full py-3 px-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-gray-200 transition-all hover:shadow-lg hover:shadow-white/20 transform hover:-translate-y-1 disabled:opacity-70 flex justify-center items-center mt-6"
           >
             {isLoading ? (
               <>
@@ -319,12 +340,14 @@ function Register() {
               "Register"
             )}
           </button>
-        </form>
-
-        <div className="text-center mt-4">
-          <p className="text-gray-600">
+        </form>{" "}
+        <div className="text-center mt-6">
+          <p className="text-white">
             Already have an account?{" "}
-            <Link to="/login" className="text-blue-600 hover:underline">
+            <Link
+              to="/login"
+              className="text-purple-300 hover:text-white transition-colors font-medium"
+            >
               Login here
             </Link>
           </p>

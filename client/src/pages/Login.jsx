@@ -11,6 +11,7 @@ function Login() {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ function Login() {
   const from = location.state?.from?.pathname || "/dashboard";
 
   useEffect(() => {
+    // Animation effect
+    setIsVisible(true);
+
     // Clear errors and messages when component mounts
     dispatch(clearError());
     dispatch(clearMessage());
@@ -82,10 +86,37 @@ function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="bg-[radial-gradient(circle_at_top,_#B200FF,_black)] min-h-screen h-screen w-screen flex flex-col justify-center items-center p-4 overflow-hidden">
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+
+      {/* Decorative Lines */}
+      <img
+        src="/Home/hline.png"
+        alt=""
+        className="absolute top-0 left-0 w-full opacity-15 object-cover"
+      />
+      <img
+        src="/Home/hline.png"
+        alt=""
+        className="absolute bottom-0 left-0 w-full opacity-15 object-cover"
+      />
+      <img
+        src="/Home/vline.png"
+        alt=""
+        className="absolute left-4 md:left-8 lg:left-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+      />
+      <img
+        src="/Home/vline.png"
+        alt=""
+        className="absolute right-4 md:right-8 lg:right-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+      />
+
+      <div
+        className={`w-full max-w-md sm:max-w-lg md:max-w-xl p-6 md:p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 transition-all duration-1000 ease-out ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        }`}
+      >
+        <h2 className="text-3xl font-bold text-center text-white mb-6">
           Welcome Back
         </h2>
 
@@ -93,7 +124,7 @@ function Login() {
           <div>
             <label
               htmlFor="email"
-              className="block text-gray-700 font-semibold mb-1"
+              className="block text-white font-semibold mb-1"
             >
               Email Address
             </label>
@@ -105,7 +136,7 @@ function Login() {
               onChange={handleChange}
               placeholder="Enter your email"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60"
             />
           </div>
 
@@ -113,13 +144,13 @@ function Login() {
             <div className="flex items-center justify-between mb-1">
               <label
                 htmlFor="password"
-                className="block text-gray-700 font-semibold"
+                className="block text-white font-semibold"
               >
                 Password
               </label>
               <Link
                 to="/forgot-password"
-                className="text-sm text-blue-600 hover:underline"
+                className="text-sm text-purple-300 hover:text-white transition-colors"
               >
                 Forgot Password?
               </Link>
@@ -133,17 +164,17 @@ function Login() {
                 onChange={handleChange}
                 placeholder="Enter your password"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60"
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-white"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-500"
+                    className="h-5 w-5"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -157,7 +188,7 @@ function Login() {
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-500"
+                    className="h-5 w-5"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -176,11 +207,11 @@ function Login() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70 flex justify-center items-center"
+            className="w-full py-3 px-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-gray-200 transition-all hover:shadow-lg hover:shadow-white/20 transform hover:-translate-y-1 disabled:opacity-70 flex justify-center items-center mt-6"
           >
             {isLoading ? (
               <>
-                <ClipLoader size={20} color={"#ffffff"} className="mr-2" />
+                <ClipLoader size={20} color={"#000000"} className="mr-2" />
                 <span>Logging in...</span>
               </>
             ) : (
@@ -189,10 +220,13 @@ function Login() {
           </button>
         </form>
 
-        <div className="text-center mt-4">
-          <p className="text-gray-600">
+        <div className="text-center mt-6">
+          <p className="text-white">
             Don&apos;t have an account?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
+            <Link
+              to="/register"
+              className="text-purple-300 hover:text-white transition-colors font-medium"
+            >
               Sign up here
             </Link>
           </p>
