@@ -56,6 +56,55 @@ function AiAsst() {
     dispatch(getSessions());
   }, [dispatch]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const createNewSession = useCallback(() => {
+    // Create a temporary session ID to return immediately
+    const tempSessionId = `session-${Date.now()}`;
+
+    // Create a new temporary session object
+    const newSession = {
+      id: tempSessionId,
+      name: `New Study Session`,
+      lastUpdated: new Date().toISOString(),
+      subject: selectedSubject,
+    };
+
+    // Update sessions in Redux with temporary session
+    dispatch(updateSessions([newSession, ...(sessions || [])]));
+
+    // Clear and initialize chat history
+    dispatch(clearChatHistory());
+    dispatch(
+      addMessageToHistory({
+        role: "assistant",
+        content: `Hello ${
+          user?.name || "there"
+        }! I'm your AI study assistant for ${getSubjectName(
+          selectedSubject
+        )}. How can I help you today?`,
+      })
+    );
+
+    // Also call the API to create a session and update when response is received
+    dispatch(createSession(user?.id || "anonymous"))
+      .then((action) => {
+        if (action.payload && !action.error) {
+          const apiSessionId = action.payload.id || action.payload.session_id;
+
+          // Update the URL if needed
+          if (apiSessionId && apiSessionId !== tempSessionId) {
+            navigate(`/ai-study-assistant/${apiSessionId}`, { replace: true });
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to create new session:", err);
+        // We already have a temporary session, so no further action needed
+      });
+
+    return tempSessionId;
+  });
+
   // Handle session initialization
   useEffect(() => {
     // Skip if sessions aren't loaded yet
@@ -205,54 +254,6 @@ function AiAsst() {
       }
     });
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const createNewSession = useCallback(() => {
-    // Create a temporary session ID to return immediately
-    const tempSessionId = `session-${Date.now()}`;
-
-    // Create a new temporary session object
-    const newSession = {
-      id: tempSessionId,
-      name: `New Study Session`,
-      lastUpdated: new Date().toISOString(),
-      subject: selectedSubject,
-    };
-
-    // Update sessions in Redux with temporary session
-    dispatch(updateSessions([newSession, ...(sessions || [])]));
-
-    // Clear and initialize chat history
-    dispatch(clearChatHistory());
-    dispatch(
-      addMessageToHistory({
-        role: "assistant",
-        content: `Hello ${
-          user?.name || "there"
-        }! I'm your AI study assistant for ${getSubjectName(
-          selectedSubject
-        )}. How can I help you today?`,
-      })
-    );
-
-    // Also call the API to create a session and update when response is received
-    dispatch(createSession(user?.id || "anonymous"))
-      .then((action) => {
-        if (action.payload && !action.error) {
-          const apiSessionId = action.payload.id || action.payload.session_id;
-
-          // Update the URL if needed
-          if (apiSessionId && apiSessionId !== tempSessionId) {
-            navigate(`/ai-study-assistant/${apiSessionId}`, { replace: true });
-          }
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to create new session:", err);
-        // We already have a temporary session, so no further action needed
-      });
-
-    return tempSessionId;
-  });
   const updateSessionLastUpdated = (sessionId) => {
     const updatedSessions = sessions.map((session) =>
       session.id === sessionId
