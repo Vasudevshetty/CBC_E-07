@@ -70,4 +70,43 @@ def get_chats_by_session_id(session_id):
     conn.close()
     return chats
 
+def create_session(user_id):
+    """
+    Create a new session for a user and return the session ID.
+    """
+    import uuid
+    session_id = str(uuid.uuid4())
+    conn = get_db_connection()
+    conn.execute('INSERT INTO application_logs (session_id, user_id, user_query, model_response) VALUES (?, ?, ?, ?)',
+                 (session_id, user_id, "", "Session started"))
+    conn.commit()
+    conn.close()
+    return session_id
+
+def delete_session(session_id, user_id=None):
+    """
+    Delete a session and all its associated records.
+    
+    Parameters:
+    - session_id: ID of the session to delete
+    - user_id: Optional user ID for additional verification
+    
+    Returns the number of deleted records.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    if user_id:
+        # Delete only if both session_id and user_id match
+        cursor.execute('DELETE FROM application_logs WHERE session_id = ? AND user_id = ?', 
+                      (session_id, user_id))
+    else:
+        # Delete based on session_id only
+        cursor.execute('DELETE FROM application_logs WHERE session_id = ?', (session_id,))
+        
+    deleted_count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return deleted_count
+
 create_application_logs()
