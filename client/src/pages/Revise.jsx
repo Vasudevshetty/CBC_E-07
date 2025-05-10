@@ -297,7 +297,7 @@ function Revise() {
 
   return (
     <div
-      className="flex flex-col h-full min-h-screen bg-black bg-opacity-20"
+      className="flex flex-col h-full bg-black bg-opacity-20"
       style={{
         backgroundImage:
           "radial-gradient(circle at top center, rgba(178, 0, 255, 0.05) 0%, transparent 70%), linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.7))",
