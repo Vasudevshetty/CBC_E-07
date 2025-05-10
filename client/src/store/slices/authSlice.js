@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { authApi } from "../../services/api";
+import { authApi, userApi } from "../../services/api";
 
-// Async thunks
+// Auth Thunks
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (userData, { rejectWithValue }) => {
@@ -74,10 +74,57 @@ export const resetPassword = createAsyncThunk(
   }
 );
 
+// User Profile Thunks
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (profileData, { rejectWithValue }) => {
+    try {
+      const response = await userApi.updateProfile(profileData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const updatePassword = createAsyncThunk(
+  "auth/updatePassword",
+  async (passwordData, { rejectWithValue }) => {
+    try {
+      const response = await userApi.updatePassword(passwordData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const uploadProfileImage = createAsyncThunk(
+  "auth/uploadProfileImage",
+  async (imageData, { rejectWithValue }) => {
+    try {
+      const response = await userApi.uploadProfileImage(imageData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const initialState = {
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  loadingStates: {
+    login: false,
+    register: false,
+    logout: false,
+    fetchUser: false,
+    forgotPassword: false,
+    resetPassword: false,
+    updateProfile: false,
+    updatePassword: false,
+    uploadImage: false,
+  },
   error: null,
   success: false,
   message: "",
@@ -102,87 +149,150 @@ const authSlice = createSlice({
     builder
       // Register cases
       .addCase(registerUser.pending, (state) => {
-        state.isLoading = true;
+        state.loadingStates.register = true;
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.register = false;
         state.success = true;
-        state.isAuthenticated = true; // Set authenticated to true
-        state.user = action.payload.user; // Store user data
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
         state.message = action.payload.message || "Registration successful";
       })
       .addCase(registerUser.rejected, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.register = false;
         state.error = action.payload?.message || "Registration failed";
       })
 
       // Login cases
       .addCase(loginUser.pending, (state) => {
-        state.isLoading = true;
+        state.loadingStates.login = true;
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.login = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.message = "Login successful";
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.login = false;
         state.error = action.payload?.message || "Login failed";
       })
 
       // Logout cases
+      .addCase(logoutUser.pending, (state) => {
+        state.loadingStates.logout = true;
+      })
       .addCase(logoutUser.fulfilled, (state) => {
+        state.loadingStates.logout = false;
         state.user = null;
         state.isAuthenticated = false;
         state.message = "Logged out successfully";
       })
+      .addCase(logoutUser.rejected, (state) => {
+        state.loadingStates.logout = false;
+      })
 
       // Get current user cases
       .addCase(fetchCurrentUser.pending, (state) => {
-        state.isLoading = true;
+        state.loadingStates.fetchUser = true;
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.fetchUser = false;
         state.isAuthenticated = true;
+        state.success = true;
         state.user = action.payload.user;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
-        state.isLoading = false;
+        state.loadingStates.fetchUser = false;
         state.isAuthenticated = false;
         state.user = null;
       })
 
       // Forgot password cases
       .addCase(forgotPassword.pending, (state) => {
-        state.isLoading = true;
+        state.loadingStates.forgotPassword = true;
         state.error = null;
       })
       .addCase(forgotPassword.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.forgotPassword = false;
         state.success = true;
         state.message = action.payload.message || "Password reset email sent";
       })
       .addCase(forgotPassword.rejected, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.forgotPassword = false;
         state.error = action.payload?.message || "Failed to send reset email";
       })
 
       // Reset password cases
       .addCase(resetPassword.pending, (state) => {
-        state.isLoading = true;
+        state.loadingStates.resetPassword = true;
         state.error = null;
       })
       .addCase(resetPassword.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.resetPassword = false;
         state.success = true;
         state.message = action.payload.message || "Password reset successfully";
       })
       .addCase(resetPassword.rejected, (state, action) => {
-        state.isLoading = false;
+        state.loadingStates.resetPassword = false;
         state.error = action.payload?.message || "Failed to reset password";
+      })
+
+      // Update profile cases
+      .addCase(updateProfile.pending, (state) => {
+        state.loadingStates.updateProfile = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.loadingStates.updateProfile = false;
+        state.success = true;
+        state.message =
+          action.payload.message || "Profile updated successfully";
+        if (action.payload.user) {
+          state.user = { ...state.user, ...action.payload.user };
+        }
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.loadingStates.updateProfile = false;
+        state.error = action.payload?.message || "Failed to update profile";
+      })
+
+      // Update password cases
+      .addCase(updatePassword.pending, (state) => {
+        state.loadingStates.updatePassword = true;
+        state.error = null;
+      })
+      .addCase(updatePassword.fulfilled, (state, action) => {
+        state.loadingStates.updatePassword = false;
+        state.success = true;
+        state.message =
+          action.payload.message || "Password updated successfully";
+      })
+      .addCase(updatePassword.rejected, (state, action) => {
+        state.loadingStates.updatePassword = false;
+        state.error = action.payload?.message || "Failed to update password";
+      })
+
+      // Profile image upload cases
+      .addCase(uploadProfileImage.pending, (state) => {
+        state.loadingStates.uploadImage = true;
+        state.error = null;
+      })
+      .addCase(uploadProfileImage.fulfilled, (state, action) => {
+        state.loadingStates.uploadImage = false;
+        state.success = true;
+        state.message =
+          action.payload.message || "Profile image updated successfully";
+        if (action.payload.user && action.payload.user.profileImage) {
+          state.user.profileImage = action.payload.user.profileImage;
+        }
+      })
+      .addCase(uploadProfileImage.rejected, (state, action) => {
+        state.loadingStates.uploadImage = false;
+        state.error =
+          action.payload?.message || "Failed to upload profile image";
       });
   },
 });

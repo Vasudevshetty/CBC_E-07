@@ -12,6 +12,7 @@ function Home() {
       <Footer />
     </div>
   );
+>>>>>>> f483e2ee68accd43d3c77104df7467299473339a
 }
 
 export default Home;

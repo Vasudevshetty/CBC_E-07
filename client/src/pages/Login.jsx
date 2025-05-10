@@ -1,7 +1,15 @@
+<<<<<<< HEAD
+function Login() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <h1 className="text-2xl font-bold mb-2">Login Page</h1>
+=======
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
-import { loginUser, clearError } from "../store/slices/authSlice";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { loginUser, clearError, clearMessage } from "../store/slices/authSlice";
+import toast, { Toaster } from "react-hot-toast";
+import { ClipLoader } from "react-spinners";
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -12,21 +20,45 @@ function Login() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoading, error, isAuthenticated } = useSelector(
+  const location = useLocation();
+
+  // Use the granular loading state instead of the generic isLoading
+  const { loadingStates, error, isAuthenticated } = useSelector(
     (state) => state.auth
   );
 
+  // Use specific loading state for login
+  const isLoading = loadingStates.login;
+
+  // Get redirect path from location state or default to dashboard
+  const from = location.state?.from?.pathname || "/dashboard";
+
   useEffect(() => {
-    // Clear errors when component mounts
+    // Clear errors and messages when component mounts
     dispatch(clearError());
+    dispatch(clearMessage());
+
+    // Cleanup function to clear errors and messages when component unmounts
+    return () => {
+      dispatch(clearError());
+      dispatch(clearMessage());
+    };
   }, [dispatch]);
 
   useEffect(() => {
-    // Redirect if already authenticated
+    // Redirect if authenticated
     if (isAuthenticated) {
-      navigate("/dashboard");
+      toast.success("Login successful!");
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, from]);
+
+  useEffect(() => {
+    // Show error message if login fails
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,21 +70,30 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(loginUser(formData));
+    const { email, password } = formData;
+
+    // Basic validation
+    if (!email.trim() || !password.trim()) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
+    // Dispatch login action with credentials
+    dispatch(
+      loginUser({
+        email: email.trim(),
+        password: password.trim(),
+      })
+    );
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Login to Your Account
+          Welcome Back
         </h2>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -75,7 +116,7 @@ function Login() {
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex items-center justify-between mb-1">
               <label
                 htmlFor="password"
                 className="block text-gray-700 font-semibold"
@@ -141,9 +182,16 @@ function Login() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70"
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70 flex justify-center items-center"
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? (
+              <>
+                <ClipLoader size={20} color={"#ffffff"} className="mr-2" />
+                <span>Logging in...</span>
+              </>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
 
@@ -151,11 +199,12 @@ function Login() {
           <p className="text-gray-600">
             Don&apos;t have an account?{" "}
             <Link to="/register" className="text-blue-600 hover:underline">
-              Register here
+              Sign up here
             </Link>
           </p>
         </div>
       </div>
+>>>>>>> f483e2ee68accd43d3c77104df7467299473339a
     </div>
   );
 }
