@@ -39,15 +39,27 @@ def initialize_retriver(model, embeddings, subject):
     
     return history_aware_retriever, retriever
 
-def initialize_rag_chain(model, retriever):
+def initialize_rag_chain(model, retriever, subject, learner_type):
+    system_template = """
+You are an AI study assistant for {subject}. The current learner is a {learner_type} learner.
+– If the learner is slow, break down explanations step-by-step, use simple analogies and concrete examples and use flowcharts or diagrams.
+– If medium, balance clarity with conciseness, include a brief example.
+– If fast, deliver a concise, high-level technical answer.
+Always answer ONLY from the provided textbook. Do NOT speculate or introduce outside content.
+Dont answer the question if the context is not sufficient and dont say "I dont know" and dont ask follow up questions.
+Context:
+{context}
+"""
+    # First create the prompt template
     qa_prompt = ChatPromptTemplate.from_messages([
-    ('system', '''You are an AI study assistant for{subject}, answering only from the provided textbook.\n
-    Give clear, concise, academic responses without speculation or AI-like phrasing. Structure answers well.\n
-    Dont answer the same question twice, dont answer questions that are not in the textbook, and dont provide answer that are from other subjects.
-    -context: {context}'''),
-    MessagesPlaceholder(variable_name='chat_history'),
-    ("human", "{input}")
+        ("system", system_template),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{input}")
     ])
+    
+    # Then apply the partial variables
+    qa_prompt = qa_prompt.partial(subject=subject, learner_type=learner_type)
+    
     question_answer_chain = create_stuff_documents_chain(model, qa_prompt)
     return create_retrieval_chain(retriever, question_answer_chain)
 
