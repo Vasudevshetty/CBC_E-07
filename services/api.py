@@ -6,8 +6,8 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from utils.bot import initialize_retriver, initialize_rag_chain, get_model
-from utils.database import insert_application_logs, get_chat_history
-from typing import Optional
+from utils.database import insert_application_logs, get_chat_history, get_all_session_ids # Add get_all_session_ids
+from typing import Optional, List # Import List
 import uuid
 from dotenv import load_dotenv
 from groq import Groq
@@ -57,6 +57,19 @@ def personal_assistant(session_id: Optional[str] = None, user_query: str = "", s
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occured: {e}")
     
+
+@api.get("/sessions", response_model=List[str])
+def get_sessions():
+    try:
+        session_ids = get_all_session_ids() 
+        if session_ids is None: 
+             raise HTTPException(status_code=501, detail="Database function to get all session IDs not implemented or returned None.")
+        return session_ids
+    except HTTPException as e:
+        raise e 
+    except Exception as e:
+        # Log the exception e for debugging purposes if you have a logger setup
+        raise HTTPException(status_code=500, detail=f"An error occurred while fetching session IDs: {str(e)}")
 
 @api.post("/recommendations")
 def get_recommendations(subject: str = "Design and Analysis of Algorithms", learner_type: str = "medium"):
