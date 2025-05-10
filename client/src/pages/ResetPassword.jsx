@@ -1,42 +1,41 @@
 import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
 import {
-  registerUser,
+  resetPassword,
   clearError,
   clearMessage,
 } from "../store/slices/authSlice";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 
-function Register() {
+function ResetPassword() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Use granular loading states from Redux
+  const { loadingStates, error, success, message } = useSelector(
+    (state) => state.auth
+  );
+
+  // Use specific loading state for password reset
+  const isLoading = loadingStates.resetPassword;
+
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
     password: "",
     confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [nameError, setNameError] = useState("");
-
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  // Use the granular loading states instead of the generic isLoading
-  const { loadingStates, error, success, message, isAuthenticated } =
-    useSelector((state) => state.auth);
-
-  // Use specific loading state for registration
-  const isLoading = loadingStates.register;
+  const [resetCompleted, setResetCompleted] = useState(false);
 
   useEffect(() => {
-    // Clear errors and messages when component mounts
+    // Clear any existing errors or messages when component mounts
     dispatch(clearError());
     dispatch(clearMessage());
 
-    // Cleanup function to clear errors and messages when component unmounts
+    // Cleanup when component unmounts
     return () => {
       dispatch(clearError());
       dispatch(clearMessage());
@@ -44,181 +43,123 @@ function Register() {
   }, [dispatch]);
 
   useEffect(() => {
-    // Redirect to dashboard if authenticated
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    }
-    // If registration was successful but not yet authenticated
-    else if (success) {
-      toast.success(message || "Registration successful!");
-      // Show success message briefly then redirect
+    // Display success message
+    if (success) {
+      toast.success(message || "Password has been reset successfully!");
+      setResetCompleted(true);
+
+      // Redirect to login after a short delay
       setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
+        navigate("/login");
+      }, 3000);
     }
-  }, [success, navigate, isAuthenticated, message]);
+  }, [success, message, navigate]);
 
   useEffect(() => {
-    // Check if there's an error from the server related to email
-    if (error && error.toLowerCase().includes("email")) {
-      setEmailError(error);
-      toast.error(error);
-    } else if (error) {
+    // Display error message
+    if (error) {
       toast.error(error);
     }
   }, [error]);
 
-  const clearErrors = () => {
-    setPasswordError("");
-    setEmailError("");
-    setNameError("");
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
     }));
 
-    // Clear relevant error when typing
-    if (name === "password" || name === "confirmPassword") {
-      setPasswordError("");
-    } else if (name === "email") {
-      setEmailError("");
-    } else if (name === "name") {
-      setNameError("");
-    }
+    // Clear password error when user types
+    setPasswordError("");
   };
 
-  const validateForm = () => {
-    let isValid = true;
-    clearErrors();
+  const validatePassword = () => {
+    const { password, confirmPassword } = formData;
 
-    // Validate name
-    if (formData.name.trim().length < 3) {
-      setNameError("Name must be at least 3 characters long");
-      toast.error("Name must be at least 3 characters long");
-      isValid = false;
-    }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim())) {
-      setEmailError("Please enter a valid email address");
-      toast.error("Please enter a valid email address");
-      isValid = false;
-    }
-
-    // Validate passwords
-    const password = formData.password.trim();
-    const confirmPassword = formData.confirmPassword.trim();
-
-    if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
-      toast.error("Passwords do not match");
-      isValid = false;
-    }
-
+    // Check if password meets requirements
     if (password.length < 8) {
       setPasswordError("Password must be at least 8 characters long");
       toast.error("Password must be at least 8 characters long");
-      isValid = false;
+      return false;
     }
 
-    // Check if password has at least one uppercase letter, one lowercase letter, and one number
+    // Check for at least one uppercase letter, one lowercase letter, and one number
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
     if (!passwordRegex.test(password)) {
       setPasswordError(
         "Password must contain at least one uppercase letter, one lowercase letter, and one number"
       );
       toast.error("Password must meet all requirements");
-      isValid = false;
+      return false;
     }
 
-    return isValid;
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      toast.error("Passwords do not match");
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      const { name, email, password, confirmPassword } = formData;
-      // Send trimmed values to prevent whitespace issues
-      dispatch(
-        registerUser({
-          name: name.trim(),
-          email: email.trim(),
-          password: password.trim(),
-          confirmPassword: confirmPassword.trim(),
-        })
-      );
+    if (!validatePassword()) {
+      return;
     }
+
+    // Dispatch reset password action
+    dispatch(resetPassword({ token, password: formData.password.trim() }));
   };
+
+  if (resetCompleted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md text-center">
+          <div className="text-green-600 mb-4">
+            <svg
+              className="w-16 h-16 mx-auto"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Password Reset Successful!
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Your password has been reset successfully.
+          </p>
+          <p className="text-gray-600">Redirecting to login page...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Create an Account
+          Reset Password
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
-              htmlFor="name"
-              className="block text-gray-700 font-semibold mb-1"
-            >
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              required
-              className={`w-full px-3 py-2 border ${
-                nameError ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            />
-            {nameError && (
-              <p className="text-red-500 text-sm mt-1">{nameError}</p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-gray-700 font-semibold mb-1"
-            >
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              className={`w-full px-3 py-2 border ${
-                emailError ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            />
-            {emailError && (
-              <p className="text-red-500 text-sm mt-1">{emailError}</p>
-            )}
-          </div>
-
-          <div>
-            <label
               htmlFor="password"
               className="block text-gray-700 font-semibold mb-1"
             >
-              Password
+              New Password
             </label>
             <div className="relative">
               <input
@@ -227,11 +168,10 @@ function Register() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Create a password"
+                placeholder="Enter your new password"
                 required
-                className={`w-full px-3 py-2 border ${
-                  passwordError ? "border-red-500" : "border-gray-300"
-                } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                disabled={isLoading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="button"
@@ -276,7 +216,7 @@ function Register() {
               htmlFor="confirmPassword"
               className="block text-gray-700 font-semibold mb-1"
             >
-              Confirm Password
+              Confirm New Password
             </label>
             <input
               type={showPassword ? "text" : "password"}
@@ -284,11 +224,10 @@ function Register() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              placeholder="Confirm your password"
+              placeholder="Confirm your new password"
               required
-              className={`w-full px-3 py-2 border ${
-                passwordError ? "border-red-500" : "border-gray-300"
-              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              disabled={isLoading}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {passwordError && (
               <p className="text-red-500 text-sm mt-1">{passwordError}</p>
@@ -313,19 +252,19 @@ function Register() {
             {isLoading ? (
               <>
                 <ClipLoader size={20} color={"#ffffff"} className="mr-2" />
-                <span>Creating Account...</span>
+                <span>Resetting Password...</span>
               </>
             ) : (
-              "Register"
+              "Reset Password"
             )}
           </button>
         </form>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-6">
           <p className="text-gray-600">
-            Already have an account?{" "}
+            Remember your password?{" "}
             <Link to="/login" className="text-blue-600 hover:underline">
-              Login here
+              Back to login
             </Link>
           </p>
         </div>
@@ -334,4 +273,4 @@ function Register() {
   );
 }
 
-export default Register;
+export default ResetPassword;
