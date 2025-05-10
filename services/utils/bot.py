@@ -18,8 +18,8 @@ def get_model():
     embeddings = HuggingFaceEmbeddings(model_name='all-MiniLM-L6-v2')
     return model, embeddings
 
-def initialize_retriver(model, embeddings, subject, sem):
-    vector_db = FAISS.load_local(f'src/RAG/sem{sem}/{subject}', embeddings, allow_dangerous_deserialization=True)
+def initialize_retriver(model, embeddings, subject):
+    vector_db = FAISS.load_local(f'RAG/{subject}', embeddings, allow_dangerous_deserialization=True)
     retriever = vector_db.as_retriever()
 
     contextualize_q_system_prompt = """
