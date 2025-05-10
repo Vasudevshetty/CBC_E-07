@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Assessment() {
   const [step, setStep] = useState(1);
@@ -97,9 +98,9 @@ function Assessment() {
             <p className="text-lg mb-4">
               You have completed the video. Click below to start the quiz.
             </p>
-            <button className="px-6 py-3 bg-gradient-to-r from-[#B200FF] to-[#8A00FF] text-white rounded-lg shadow-lg hover:shadow-xl transition-all">
+            <Link to="/quiz" className="px-6 py-3 bg-gradient-to-r from-[#B200FF] to-[#8A00FF] text-white rounded-lg shadow-lg hover:shadow-xl transition-all">
               Start Step 2: Take Quiz
-            </button>
+            </Link>
           </div>
         )}
       </div>

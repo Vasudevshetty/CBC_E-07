@@ -227,15 +227,15 @@
 
 .text-silver {
   color: #c0c0c0;
-@keyframes typewriter {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
+  @keyframes typewriter {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
   }
 }
-
 .typewriter {
   display: inline-block;
   overflow: hidden;
