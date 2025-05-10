@@ -24,9 +24,7 @@ const createSendToken = (user, statusCode, res) => {
   res.status(statusCode).cookie("jwt", token, cookieOptions).json({
     success: true,
     token,
-    data: {
-      user,
-    },
+    user,
   });
 };
 
@@ -139,9 +137,13 @@ exports.logout = (req, res) => {
 exports.getMe = (req, res) => {
   res.status(200).json({
     success: true,
+<<<<<<< HEAD
     data: {
       user: req.user,
     },
+=======
+    user: req.user,
+>>>>>>> f483e2ee68accd43d3c77104df7467299473339a
   });
 };
 
