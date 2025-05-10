@@ -474,10 +474,7 @@ def get_questions(url: str, user_id: str = "anonymous"):
         full_text = " ".join([entry["text"] for entry in transcript_list])
 
         if not full_text.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Transcript is empty or contains only whitespace.",
-            )
+            raise HTTPException(status_code=400, detail="Transcript is empty or contains only whitespace.")
 
         prompt = f"""Based on the following transcript, generate 5 multiple-choice questions.
 Each question must have 4 options, and only one option should be the correct answer.
@@ -495,109 +492,177 @@ JSON Output:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {
-                    "role": "system",
-                    "content": "You are an AI assistant that generates multiple-choice questions from a given text, formatted as a JSON list of objects.",
-                },
-                {"role": "user", "content": prompt},
+                {"role": "system", "content": "You are an AI assistant that generates multiple-choice questions from a given text, formatted as a JSON list of objects."},
+                {"role": "user", "content": prompt}
             ],
             temperature=0.5,
             max_tokens=1500,
-            response_format={"type": "json_object"},
+            response_format={"type": "json_object"} 
         )
-
+        
         questions_str = response.choices[0].message.content.strip()
-
+        
         try:
             # Parse the response
-            if questions_str.startswith("```json"):
-                questions_str = (
-                    questions_str.split("```json")[1].split("```")[0].strip()
-                )
-            elif questions_str.startswith("```"):
-                questions_str = questions_str.split("```")[1].strip()
+            if questions_str.startswith("json"):
+                questions_str = questions_str.split("json")[1].split("")[0].strip()
+            elif questions_str.startswith(""):
+                questions_str = questions_str.split("")[1].strip()
 
             parsed_response = json.loads(questions_str)
 
-            if (
-                isinstance(parsed_response, dict)
-                and "questions" in parsed_response
-                and isinstance(parsed_response["questions"], list)
-            ):
+            if isinstance(parsed_response, dict) and "questions" in parsed_response and isinstance(parsed_response["questions"], list):
                 questions_data = parsed_response["questions"]
             elif isinstance(parsed_response, list):
                 questions_data = parsed_response
             else:
                 if isinstance(parsed_response, dict):
                     for key, value in parsed_response.items():
-                        if (
-                            isinstance(value, list)
-                            and len(value) > 0
-                            and isinstance(value[0], dict)
-                            and "question" in value[0]
-                        ):
+                        if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and "question" in value[0]:
                             questions_data = value
                             break
                     else:
-                        raise ValueError(
-                            "JSON does not contain a list of questions in the expected format."
-                        )
+                        raise ValueError("JSON does not contain a list of questions in the expected format.")
                 else:
-                    raise ValueError(
-                        "JSON response is not a list or a dictionary containing a list of questions."
-                    )
+                    raise ValueError("JSON response is not a list or a dictionary containing a list of questions.")
 
             # Save the full questions data (with correct answers) to the database
             questions_to_save = []
             for q in questions_data:
-                questions_to_save.append(
-                    {"question": q["question"], "correct_answer": q["correct_answer"]}
-                )
-
+                questions_to_save.append({
+                    'question': q['question'],
+                    'correct_answer': q['correct_answer']
+                })
+            
             # Save questions for this specific user, replacing any previous questions
-            # bulk_save_video_questions(user_id, questions_to_save, video_id)
+            bulk_save_video_questions(user_id, questions_to_save, video_id)
+            
+            # Create a stripped version without correct answers for the response
+            client_response = []
+            for q in questions_data:
+                client_response.append({
+                    'question': q['question'],
+                    'options': q['options']
+                })
 
-            # # Create a stripped version without correct answers for the response
-            # client_response = []
-            # for q in questions_data:
-            #     client_response.append({
-            #         'question': q['question'],
-            #         'options': q['options']
-            #     })
-
-            return {"questions": questions_to_save}
+            return {"questions": client_response, "transcript": full_text}
 
         except json.JSONDecodeError as e:
             print(f"JSONDecodeError: {e}")
             print(f"Problematic JSON string: {questions_str}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error parsing JSON from LLM: {str(e)}. Response: {questions_str}",
-            )
+            raise HTTPException(status_code=500, detail=f"Error parsing JSON from LLM: {str(e)}. Response: {questions_str}")
         except ValueError as e:
             print(f"ValueError: {e}")
             print(f"Problematic JSON structure: {questions_str}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"LLM response format error: {str(e)}. Response: {questions_str}",
-            )
+            raise HTTPException(status_code=500, detail=f"LLM response format error: {str(e)}. Response: {questions_str}")
 
     except TranscriptsDisabled:
-        raise HTTPException(
-            status_code=400, detail="Transcripts are disabled for this video."
-        )
+        raise HTTPException(status_code=400, detail="Transcripts are disabled for this video.")
     except NoTranscriptFound:
-        raise HTTPException(
-            status_code=404, detail="No transcript found for this video."
-        )
-    except HTTPException as e:
+        raise HTTPException(status_code=404, detail="No transcript found for this video.")
+    except HTTPException as e: 
         raise e
     except Exception as e:
         print(f"An unexpected error occurred: {type(e).__name__} - {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"An unexpected error occurred: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
+
+@api.post("/video_questions_transcript")
+def get_questions(transcript: str, user_id: str = "anonymous"):
+    try:
+
+        if not transcript.strip():
+            raise HTTPException(status_code=400, detail="Transcript is empty or contains only whitespace.")
+
+        prompt = f"""Based on the following transcript, generate 5 multiple-choice questions.
+Each question must have 4 options, and only one option should be the correct answer.
+Provide the output as a JSON list of objects. Each object should have the following keys:
+- "question": (string) The question text.
+- "options": (list of 4 strings) The multiple choice options.
+- "correct_answer": (string) The text of the correct option.
+
+Transcript:
+{transcript[:4000]} # Limiting transcript length to avoid exceeding token limits
+
+JSON Output:
+"""
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that generates multiple-choice questions from a given text, formatted as a JSON list of objects."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+            max_tokens=1500,
+            response_format={"type": "json_object"} 
+        )
+        
+        questions_str = response.choices[0].message.content.strip()
+        
+        try:
+            # Parse the response
+            if questions_str.startswith("json"):
+                questions_str = questions_str.split("json")[1].split("")[0].strip()
+            elif questions_str.startswith(""):
+                questions_str = questions_str.split("")[1].strip()
+
+            parsed_response = json.loads(questions_str)
+
+            if isinstance(parsed_response, dict) and "questions" in parsed_response and isinstance(parsed_response["questions"], list):
+                questions_data = parsed_response["questions"]
+            elif isinstance(parsed_response, list):
+                questions_data = parsed_response
+            else:
+                if isinstance(parsed_response, dict):
+                    for key, value in parsed_response.items():
+                        if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and "question" in value[0]:
+                            questions_data = value
+                            break
+                    else:
+                        raise ValueError("JSON does not contain a list of questions in the expected format.")
+                else:
+                    raise ValueError("JSON response is not a list or a dictionary containing a list of questions.")
+
+            # Save the full questions data (with correct answers) to the database
+            questions_to_save = []
+            for q in questions_data:
+                questions_to_save.append({
+                    'question': q['question'],
+                    'correct_answer': q['correct_answer']
+                })
+            
+            # Save questions for this specific user, replacing any previous questions
+            bulk_save_video_questions(user_id, questions_to_save, video_id=None)
+            
+            # Create a stripped version without correct answers for the response
+            client_response = []
+            for q in questions_data:
+                client_response.append({
+                    'question': q['question'],
+                    'options': q['options']
+                })
+
+            return {"questions": client_response}
+
+        except json.JSONDecodeError as e:
+            print(f"JSONDecodeError: {e}")
+            print(f"Problematic JSON string: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"Error parsing JSON from LLM: {str(e)}. Response: {questions_str}")
+        except ValueError as e:
+            print(f"ValueError: {e}")
+            print(f"Problematic JSON structure: {questions_str}")
+            raise HTTPException(status_code=500, detail=f"LLM response format error: {str(e)}. Response: {questions_str}")
+
+    except TranscriptsDisabled:
+        raise HTTPException(status_code=400, detail="Transcripts are disabled for this video.")
+    except NoTranscriptFound:
+        raise HTTPException(status_code=404, detail="No transcript found for this video.")
+    except HTTPException as e: 
+        raise e
+    except Exception as e:
+        print(f"An unexpected error occurred: {type(e)._name_} - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 @api.get("/aptitude")
 def get_aptitude_questions(user_id: str = "anonymous"):
