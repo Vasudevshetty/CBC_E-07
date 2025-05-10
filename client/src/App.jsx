@@ -40,7 +40,7 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
-
+  console.log(isAuthenticated);
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
@@ -124,10 +124,10 @@ function App() {
             <Route
               element={
                 <ProtectedRoute>
-                  <QuizPanel />
+                  <Quiz />
                 </ProtectedRoute>
               }
-              path="/quiz/:id"
+              path="/quiz"
             />
 
             {/* Redirect for unknown routes */}

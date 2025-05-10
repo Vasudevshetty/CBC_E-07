@@ -25,7 +25,6 @@ function Navbar() {
           StudySyncs
         </Link>
       </div>
-
       {/* Right Side */}
       <div className="flex space-x-4 items-center">
         {user ? (
