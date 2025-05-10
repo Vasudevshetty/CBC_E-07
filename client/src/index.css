@@ -246,7 +246,8 @@
 
 /* Animation for gradient backgrounds */
 @keyframes animate-gradient {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -261,7 +262,8 @@
 
 /* Float animation for subtle movement */
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -271,4 +273,13 @@
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+/* GitHubCalendar month name text color */
+.react-github-calendar .month-name {
+  fill: #ffffff; /* Set month name text color to white */
+}
+
+.react-github-calendar .day {
+  fill: #ffffff; /* Set dots (day boxes) color to white */
 }
