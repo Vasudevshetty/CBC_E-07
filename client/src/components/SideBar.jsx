@@ -13,6 +13,7 @@ function SideBar() {
     { name: "Revise", link: "/revise" },
     { name: "Profile", link: "/profile" },
     { name: "Ai Asst", link: "/ai-asst" },
+    { name: "Quiz", link: "/quiz-panel" },
   ];
 
   const handleLogout = () => {
