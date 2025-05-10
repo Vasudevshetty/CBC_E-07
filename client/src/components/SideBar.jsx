@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
 
 function SideBar() {
@@ -8,10 +8,11 @@ function SideBar() {
   const touchStartX = useRef(null);
 
   const links = [
-    { name: "Home", link: "/" },
     { name: "Dashboard", link: "/dashboard" },
+    {name:"Careers Path" ,link:"/career"},
     { name: "Revise", link: "/revise" },
     { name: "Profile", link: "/profile" },
+    {name:"Ai Asst" ,link:'/ai-asst'}
   ];
 
   const handleLogout = () => {
@@ -70,10 +71,10 @@ function SideBar() {
       >
         <div className="flex flex-col w-full justify-between h-full">
           <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6 text-center text-blue-400">
+            <Link to="/" className=" text-3xl tracking-wider font-bold flex justify-center items-center text-blue-400">
                   StudySyncs
-            </h1>
-            <ul className="flex flex-col gap-4  ">
+            </Link>
+            <ul className="flex flex-col gap-4 mt-4 ">
               {links.map((link, index) => (
                 <li key={index}>
                   <NavLink
@@ -84,7 +85,7 @@ function SideBar() {
                         isActive
                           ? "bg-blue-500 text-white"
                           : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`
+                      } text-sm tracking-widest`
                     }
                   >
                     {link.name}

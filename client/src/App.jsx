@@ -5,6 +5,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Revise from "./pages/Revise";
+import CareerPath from "./pages/CareerPath";
+import AiAsst from "./pages/AiAsst";
 
 function App() {
   return (
@@ -16,7 +18,9 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/career" element={<CareerPath />} />
           <Route path="/revise" element={<Revise />} />
+          <Route path="/ai-asst" element={<AiAsst />} />
         </Routes>
       </div>
     </Router>
