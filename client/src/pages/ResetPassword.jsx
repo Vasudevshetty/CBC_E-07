@@ -13,6 +13,7 @@ function ResetPassword() {
   const { token } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [isVisible, setIsVisible] = useState(false);
 
   // Use granular loading states from Redux
   const { loadingStates, error, success, message } = useSelector(
@@ -29,8 +30,10 @@ function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [resetCompleted, setResetCompleted] = useState(false);
-
   useEffect(() => {
+    // Animation effect
+    setIsVisible(true);
+
     // Clear any existing errors or messages when component mounts
     dispatch(clearError());
     dispatch(clearMessage());
@@ -113,12 +116,33 @@ function ResetPassword() {
     // Dispatch reset password action
     dispatch(resetPassword({ token, password: formData.password.trim() }));
   };
-
   if (resetCompleted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md text-center">
-          <div className="text-green-600 mb-4">
+      <div className="bg-[radial-gradient(circle_at_top,_#B200FF,_black)] min-h-screen h-screen w-screen flex flex-col justify-center items-center p-4 overflow-hidden">
+        {/* Decorative Lines */}
+        <img
+          src="/Home/hline.png"
+          alt=""
+          className="absolute top-0 left-0 w-full opacity-15 object-cover"
+        />
+        <img
+          src="/Home/hline.png"
+          alt=""
+          className="absolute bottom-0 left-0 w-full opacity-15 object-cover"
+        />
+        <img
+          src="/Home/vline.png"
+          alt=""
+          className="absolute left-4 md:left-8 lg:left-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+        />
+        <img
+          src="/Home/vline.png"
+          alt=""
+          className="absolute right-4 md:right-8 lg:right-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+        />
+
+        <div className="w-full max-w-md p-6 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 text-center">
+          <div className="text-green-400 mb-4">
             <svg
               className="w-16 h-16 mx-auto"
               fill="none"
@@ -133,31 +157,54 @@ function ResetPassword() {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2">
             Password Reset Successful!
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-white/80 mb-6">
             Your password has been reset successfully.
           </p>
-          <p className="text-gray-600">Redirecting to login page...</p>
+          <p className="text-white/80">Redirecting to login page...</p>
         </div>
       </div>
     );
   }
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="bg-[radial-gradient(circle_at_top,_#B200FF,_black)] min-h-screen h-screen w-screen flex flex-col justify-center items-center p-4 overflow-hidden">
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+      {/* Decorative Lines */}
+      <img
+        src="/Home/hline.png"
+        alt=""
+        className="absolute top-0 left-0 w-full opacity-15 object-cover"
+      />
+      <img
+        src="/Home/hline.png"
+        alt=""
+        className="absolute bottom-0 left-0 w-full opacity-15 object-cover"
+      />
+      <img
+        src="/Home/vline.png"
+        alt=""
+        className="absolute left-4 md:left-8 lg:left-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+      />
+      <img
+        src="/Home/vline.png"
+        alt=""
+        className="absolute right-4 md:right-8 lg:right-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
+      />{" "}
+      <div
+        className={`w-full max-w-md sm:max-w-lg md:max-w-xl p-6 md:p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 transition-all duration-1000 ease-out ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        }`}
+      >
+        <h2 className="text-3xl font-bold text-center text-white mb-6">
           Reset Password
         </h2>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="password"
-              className="block text-gray-700 font-semibold mb-1"
+              className="block text-white font-semibold mb-1"
             >
               New Password
             </label>
@@ -171,17 +218,17 @@ function ResetPassword() {
                 placeholder="Enter your new password"
                 required
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60"
+              />{" "}
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-white"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-500"
+                    className="h-5 w-5"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -209,12 +256,11 @@ function ResetPassword() {
                 )}
               </button>
             </div>
-          </div>
-
+          </div>{" "}
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-gray-700 font-semibold mb-1"
+              className="block text-white font-semibold mb-1"
             >
               Confirm New Password
             </label>
@@ -227,14 +273,13 @@ function ResetPassword() {
               placeholder="Confirm your new password"
               required
               disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/60"
             />
             {passwordError && (
-              <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+              <p className="text-red-400 text-sm mt-1">{passwordError}</p>
             )}
-          </div>
-
-          <div className="text-sm text-gray-600">
+          </div>{" "}
+          <div className="text-sm text-white/80">
             <p>Password must:</p>
             <ul className="list-disc pl-5">
               <li>Be at least 8 characters long</li>
@@ -243,11 +288,10 @@ function ResetPassword() {
               <li>Include at least one number</li>
             </ul>
           </div>
-
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition duration-200 disabled:opacity-70 flex justify-center items-center"
+            className="w-full py-3 px-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-gray-200 transition-all hover:shadow-lg hover:shadow-white/20 transform hover:-translate-y-1 disabled:opacity-70 flex justify-center items-center mt-6"
           >
             {isLoading ? (
               <>
@@ -258,12 +302,14 @@ function ResetPassword() {
               "Reset Password"
             )}
           </button>
-        </form>
-
+        </form>{" "}
         <div className="text-center mt-6">
-          <p className="text-gray-600">
+          <p className="text-white">
             Remember your password?{" "}
-            <Link to="/login" className="text-blue-600 hover:underline">
+            <Link
+              to="/login"
+              className="text-purple-300 hover:text-white transition-colors font-medium"
+            >
               Back to login
             </Link>
           </p>
