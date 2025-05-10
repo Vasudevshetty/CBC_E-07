@@ -46,14 +46,14 @@ jobs:
             echo "Installing backend dependencies..."
             npm install
 
-            # echo "Navigating to services directory..."
-            # cd ../services
-            # source gatenv/bin/activate
-            # pip install -r requirements.txt
+            echo "Navigating to services directory..."
+            cd ../services
+            source gatenv/bin/activate
+            pip install -r requirements.txt
 
             echo "Restarting backend with PM2..."
             pm2 reload studysyncs-backend
-            # pm2 reload studysyncs-service
+            pm2 reload studysyncs-service
             pm2 save
 
             echo "Deployment complete!"
