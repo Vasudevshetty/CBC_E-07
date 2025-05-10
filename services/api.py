@@ -216,18 +216,16 @@ As a medium-paced learner, this student:
 - Benefits from balanced theory and application
 - Retains information best through varied approaches
 - Appreciates clear structure and examples
-
 Please provide 3 revision strategies specifically tailored for {topic}:
 1. A comprehensive study plan (include time estimates for each component)
 2. A practical application technique that reinforces understanding
 3. A retrieval practice method to strengthen memory retention
-
 For each strategy:
 - Provide a clear name and description
 - Include 2-3 concrete examples directly related to {topic}
 - Suggest a schedule for implementation
 - Explain how this approach balances depth and efficiency
-
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as structured, actionable advice with clear headings and bullet points."""
 
         elif learner_type == "slow":
@@ -249,7 +247,7 @@ For each strategy:
 - Include 3-4 specific examples directly related to {topic}
 - Suggest checkpoints to verify understanding before moving forward
 - Explain how this approach promotes deep, lasting comprehension
-
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as structured, actionable advice with clear headings, numbered steps, and bullet points."""
         
         response = client.chat.completions.create(
@@ -337,6 +335,7 @@ For each component:
 - Balance skill acquisition with practical experience
 - Suggest how to leverage existing qualifications in {current_qualificaion}
 - Include regular progress assessment points
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as a professional career development plan with clear sections, timelines, and action items."""
 
         elif learner_type == "slow":
@@ -359,7 +358,7 @@ For each component:
 - Emphasize thorough understanding and practical application
 - Suggest how to leverage existing qualifications in {current_qualificaion}
 - Include validation checkpoints to ensure mastery before progression
-
+Throughout your response, use relevant emojis to make the content more engaging and highlight key points.
 Format your response as a professional career development plan with clear sections, detailed timelines, and measured action items."""
         
         response = client.chat.completions.create(
