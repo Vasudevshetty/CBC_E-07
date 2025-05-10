@@ -1,0 +1,9 @@
+langchain
+langchain_groq
+fastapi
+uvicorn 
+langchain-community
+pydantic
+pymongo
+python-multipart
+uvicorn
