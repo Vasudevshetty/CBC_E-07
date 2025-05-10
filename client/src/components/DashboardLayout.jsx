@@ -18,7 +18,7 @@ function DashboardLayout() {
 
       {/* Main content - fixed height with no scrolling at container level */}
       <div
-        className={`flex-1 ml-0 md:ml-64 p-6 transition-all duration-700 ease-out h-screen ${
+        className={`flex-1 ml-0 md:ml-64 p-2 transition-all duration-700 ease-out h-screen ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         }`}
       >
@@ -27,7 +27,7 @@ function DashboardLayout() {
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#B200FF] opacity-5 blur-3xl rounded-full -z-10"></div>
 
         {/* Content container with glass effect and scrolling only within this container */}
-        <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-xl shadow-lg shadow-[#B200FF]/10 p-6 h-full overflow-y-auto">
+        <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-xl shadow-lg shadow-[#B200FF]/10 h-full overflow-y-auto">
           <Outlet />
         </div>
       </div>
