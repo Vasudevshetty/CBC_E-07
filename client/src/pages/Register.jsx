@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser, clearError } from "../store/slices/authSlice";
+import { registerUser, clearError, clearMessage } from "../store/slices/authSlice";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -12,26 +12,53 @@ function Register() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoading, error, success, message } = useSelector(
+  const { isLoading, error, success, message, isAuthenticated } = useSelector(
     (state) => state.auth
   );
 
   useEffect(() => {
-    // Clear errors when component mounts
+    // Clear errors and messages when component mounts
     dispatch(clearError());
+    dispatch(clearMessage());
+    
+    // Cleanup function to clear errors and messages when component unmounts
+    return () => {
+      dispatch(clearError());
+      dispatch(clearMessage());
+    };
   }, [dispatch]);
 
   useEffect(() => {
-    if (success) {
-      // Redirect to login page after successful registration
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+    // Redirect to dashboard if authenticated
+    if (isAuthenticated) {
+      navigate("/dashboard");
     }
-  }, [success, navigate]);
+    // If registration was successful but not yet authenticated
+    else if (success) {
+      // Show success message briefly then redirect
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
+    }
+  }, [success, navigate, isAuthenticated]);
+
+  useEffect(() => {
+    // Check if there's an error from the server related to email
+    if (error && error.toLowerCase().includes("email")) {
+      setEmailError(error);
+    }
+  }, [error]);
+
+  const clearErrors = () => {
+    setPasswordError("");
+    setEmailError("");
+    setNameError("");
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,33 +67,69 @@ function Register() {
       [name]: value,
     }));
 
-    // Clear password error when typing
+    // Clear relevant error when typing
     if (name === "password" || name === "confirmPassword") {
       setPasswordError("");
+    } else if (name === "email") {
+      setEmailError("");
+    } else if (name === "name") {
+      setNameError("");
     }
   };
 
   const validateForm = () => {
-    // Password validation
-    if (formData.password !== formData.confirmPassword) {
+    let isValid = true;
+    clearErrors();
+    
+    // Validate name
+    if (formData.name.trim().length < 3) {
+      setNameError("Name must be at least 3 characters long");
+      isValid = false;
+    }
+    
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setEmailError("Please enter a valid email address");
+      isValid = false;
+    }
+    
+    // Validate passwords
+    const password = formData.password.trim();
+    const confirmPassword = formData.confirmPassword.trim();
+    
+    if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
-      return false;
+      isValid = false;
     }
 
-    if (formData.password.length < 8) {
+    if (password.length < 8) {
       setPasswordError("Password must be at least 8 characters long");
-      return false;
+      isValid = false;
+    }
+    
+    // Check if password has at least one uppercase letter, one lowercase letter, and one number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    if (!passwordRegex.test(password)) {
+      setPasswordError("Password must contain at least one uppercase letter, one lowercase letter, and one number");
+      isValid = false;
     }
 
-    return true;
+    return isValid;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (validateForm()) {
-      const { name, email, password } = formData;
-      dispatch(registerUser({ name, email, password }));
+      const { name, email, password, confirmPassword } = formData;
+      // Send trimmed values to prevent whitespace issues
+      dispatch(registerUser({ 
+        name: name.trim(), 
+        email: email.trim(), 
+        password: password.trim(),
+        confirmPassword: confirmPassword.trim() 
+      }));
     }
   };
 
@@ -77,7 +140,7 @@ function Register() {
           Create an Account
         </h2>
 
-        {error && (
+        {error && !emailError && !passwordError && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
@@ -85,7 +148,7 @@ function Register() {
 
         {success && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {message} Redirecting to login...
+            {message} Redirecting to dashboard...
           </div>
         )}
 
@@ -105,8 +168,13 @@ function Register() {
               onChange={handleChange}
               placeholder="Enter your full name"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border ${
+                nameError ? "border-red-500" : "border-gray-300"
+              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
+            {nameError && (
+              <p className="text-red-500 text-sm mt-1">{nameError}</p>
+            )}
           </div>
 
           <div>
@@ -124,8 +192,13 @@ function Register() {
               onChange={handleChange}
               placeholder="Enter your email"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border ${
+                emailError ? "border-red-500" : "border-gray-300"
+              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
+            {emailError && (
+              <p className="text-red-500 text-sm mt-1">{emailError}</p>
+            )}
           </div>
 
           <div>
@@ -144,7 +217,9 @@ function Register() {
                 onChange={handleChange}
                 placeholder="Create a password"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border ${
+                  passwordError ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               <button
                 type="button"
@@ -182,9 +257,6 @@ function Register() {
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Password must be at least 8 characters long
-            </p>
           </div>
 
           <div>
@@ -202,11 +274,23 @@ function Register() {
               onChange={handleChange}
               placeholder="Confirm your password"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border ${
+                passwordError ? "border-red-500" : "border-gray-300"
+              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
             {passwordError && (
               <p className="text-red-500 text-sm mt-1">{passwordError}</p>
             )}
+          </div>
+
+          <div className="text-sm text-gray-600">
+            <p>Password must:</p>
+            <ul className="list-disc pl-5">
+              <li>Be at least 8 characters long</li>
+              <li>Include at least one uppercase letter</li>
+              <li>Include at least one lowercase letter</li>
+              <li>Include at least one number</li>
+            </ul>
           </div>
 
           <button

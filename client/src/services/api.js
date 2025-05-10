@@ -15,10 +15,8 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    if (error.response && error.response.status === 401) {
-      // Handle unauthorized errors - redirect to login
-      window.location.href = "/login";
-    }
+    // Don't automatically redirect - just return the error
+    // We'll handle the redirect in React components when needed
     return Promise.reject(error);
   }
 );
