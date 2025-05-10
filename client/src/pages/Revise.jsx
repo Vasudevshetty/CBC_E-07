@@ -10,6 +10,7 @@ import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { FiSearch, FiPrinter, FiCopy, FiCheck } from "react-icons/fi";
 import { AiOutlineStar, AiFillStar } from "react-icons/ai";
+import "../utils/animations.css";
 
 function Revise() {
   // Get user data from localStorage instead of Redux to simplify
@@ -138,45 +139,150 @@ function Revise() {
         <head>
           <title>${topicName} - Revision Notes</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+            
             body {
-              font-family: Arial, sans-serif;
+              font-family: 'Inter', system-ui, sans-serif;
               line-height: 1.6;
               padding: 20px;
               max-width: 800px;
               margin: 0 auto;
+              color: #333;
+              background-color: #fafafa;
             }
+            
             h1 { 
               color: #B200FF;
+              background: linear-gradient(90deg, #B200FF 0%, #9000CC 100%);
+              background-clip: text;
+              -webkit-background-clip: text;
+              color: transparent;
               border-bottom: 2px solid #B200FF;
               padding-bottom: 8px;
+              margin-top: 0;
+              font-weight: 700;
             }
-            h2 { color: #9900DD; }
-            h3 { color: #7700AA; }
+            
+            h2 { 
+              color: #9900DD;
+              font-weight: 600;
+            }
+            
+            h3 { 
+              color: #7700AA;
+              font-weight: 500;
+            }
+            
             .header {
               display: flex;
               justify-content: space-between;
               align-items: center;
+              margin-bottom: 20px;
+              padding: 10px;
+              background: linear-gradient(to right, rgba(178, 0, 255, 0.05), transparent);
+              border-radius: 8px;
             }
+            
+            .logo {
+              width: 30px;
+              height: 30px;
+              background: linear-gradient(135deg, #B200FF, #8000CC);
+              border-radius: 50%;
+              position: relative;
+              margin-right: 10px;
+              display: inline-block;
+              vertical-align: middle;
+            }
+            
+            .logo::after {
+              content: '';
+              width: 12px;
+              height: 12px;
+              background: white;
+              border-radius: 50%;
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+            }
+            
             .meta {
               color: #666;
               font-size: 14px;
+              text-align: right;
+              background-color: rgba(178, 0, 255, 0.05);
+              padding: 8px 12px;
+              border-radius: 8px;
             }
+            
+            .meta p {
+              margin: 3px 0;
+            }
+            
+            ul, ol {
+              padding-left: 20px;
+            }
+            
+            li {
+              margin-bottom: 5px;
+            }
+            
+            code {
+              background-color: rgba(178, 0, 255, 0.1);
+              color: #B200FF;
+              padding: 2px 4px;
+              border-radius: 3px;
+              font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            }
+            
+            blockquote {
+              border-left: 4px solid #B200FF;
+              padding-left: 15px;
+              margin-left: 0;
+              font-style: italic;
+              color: #555;
+            }
+            
+            a {
+              color: #B200FF;
+              text-decoration: none;
+              border-bottom: 1px solid rgba(178, 0, 255, 0.3);
+            }
+            
             @media print {
               body {
                 padding: 0;
+                background-color: white;
+              }
+              
+              .header {
+                background: none;
+              }
+              
+              .meta {
+                background: none;
+              }
+              
+              a {
+                color: #B200FF;
+                text-decoration: none;
               }
             }
           </style>
         </head>
         <body>
           <div class="header">
-            <h1>${topicName}</h1>
+            <h1><span class="logo"></span> ${topicName}</h1>
             <div class="meta">
-              <p>Printed from CBC Revision Center</p>
+              <p><strong>CBC Revision Center</strong></p>
               <p>Date: ${new Date().toLocaleDateString()}</p>
+              <p>Time: ${new Date().toLocaleTimeString()}</p>
             </div>
           </div>
           ${content}
+          <div style="text-align: center; margin-top: 30px; color: #999; font-size: 12px; border-top: 1px solid #eee; padding-top: 10px;">
+            Generated by CBC Revision Center | Study smarter, not harder
+          </div>
         </body>
       </html>
     `);
@@ -190,13 +296,41 @@ function Revise() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-black bg-opacity-20">
+    <div
+      className="flex flex-col h-full bg-black bg-opacity-20"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at top center, rgba(178, 0, 255, 0.05) 0%, transparent 70%), linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.7))",
+        backgroundAttachment: "fixed",
+      }}
+    >
       {/* Header */}
-      <div className="bg-black bg-opacity-40 p-4 border-b border-[#B200FF]/20">
-        <h1 className="font-medium text-white text-2xl">Revision Center</h1>
-        <p className="text-sm text-gray-300">
-          Master topics with comprehensive revision notes
-        </p>
+      <div
+        className="bg-gradient-to-r from-black/90 to-[#190023]/80 p-4 border-b border-[#B200FF]/20"
+        style={{
+          boxShadow:
+            "0 4px 15px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(178, 0, 255, 0.1)",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="font-medium text-2xl flex items-center">
+              <span
+                className="mr-2 h-7 w-7 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full flex items-center justify-center animate-gradient"
+                style={{ boxShadow: "0 0 15px rgba(178, 0, 255, 0.6)" }}
+              >
+                <span className="h-3 w-3 bg-white rounded-full animate-pulse"></span>
+              </span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100 animate-glow">
+                Revision Center
+              </span>
+            </h1>
+            <p className="text-sm text-gray-300 ml-8 animate-float">
+              Master topics with comprehensive revision notes
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -204,8 +338,10 @@ function Revise() {
         {isSearching ? (
           <div className="flex flex-col items-center justify-center flex-1">
             <div className="w-full max-w-xl mx-auto">
-              <h2 className="text-xl font-semibold text-white mb-8 text-center">
-                Hello {user.name}! What would you like to revise today?
+              <h2 className="text-xl font-semibold mb-8 text-center">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+                  Hello {user.name}! What would you like to revise today?
+                </span>
               </h2>
 
               {/* Search Input */}
@@ -217,11 +353,17 @@ function Revise() {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Enter a topic to study..."
-                    className="w-full bg-black bg-opacity-60 text-white border border-[#B200FF]/40 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#B200FF] pr-10"
+                    className="w-full border bg-black/90 border-[#B200FF]/50 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#B200FF]/80 text-white transition-all duration-300 hover:border-[#B200FF]/70 placeholder-gray-400/70 pr-10"
+                    style={{
+                      boxShadow:
+                        "0 0 15px rgba(178, 0, 255, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.8)",
+                      background:
+                        "linear-gradient(to bottom right, rgba(25,0,30,0.9) 0%, rgba(0,0,0,0.95) 100%)",
+                    }}
                   />
                   <button
                     type="submit"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#B200FF] hover:text-[#9900DD]"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#B200FF] hover:text-[#9900DD] transition-colors duration-300"
                   >
                     <FiSearch className="text-lg" />
                   </button>
@@ -234,11 +376,23 @@ function Revise() {
                   <button
                     key={topic.id}
                     onClick={() => handleTopicSelect(topic.id)}
-                    className="bg-black bg-opacity-60 border border-[#B200FF]/30 hover:border-[#B200FF]/70 rounded-lg p-4 text-center transition-all text-white flex flex-col items-center justify-center space-y-2 hover:bg-black hover:bg-opacity-80"
+                    className="bg-gradient-to-br from-black/80 to-[#190023]/90 border border-[#B200FF]/30 hover:border-[#B200FF]/70 rounded-lg p-4 text-center transition-all text-white flex flex-col items-center justify-center space-y-2 hover:shadow-lg hover:shadow-[#B200FF]/30 transform hover:translate-y-[-1px] duration-300"
+                    style={{
+                      boxShadow:
+                        "0 2px 10px rgba(178, 0, 255, 0.1), inset 0 0 15px rgba(0, 0, 0, 0.8)",
+                    }}
                   >
-                    <span className="text-lg">{topic.name}</span>
+                    <span className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+                      {topic.name}
+                    </span>
                     {favorites.includes(topic.id) && (
-                      <AiFillStar className="text-yellow-400 text-lg mt-2" />
+                      <AiFillStar
+                        className="text-yellow-400 text-lg mt-2"
+                        style={{
+                          filter:
+                            "drop-shadow(0 0 3px rgba(250, 204, 21, 0.7))",
+                        }}
+                      />
                     )}
                   </button>
                 ))}
@@ -247,19 +401,37 @@ function Revise() {
               {/* Favorites Section */}
               {favorites.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-medium text-white mb-4 flex items-center">
-                    <AiFillStar className="text-yellow-400 mr-2" /> Your
-                    Favorites
+                  <h3 className="text-lg font-medium mb-4 flex items-center">
+                    <span className="flex items-center bg-black/40 px-2 py-1 rounded-full border border-yellow-400/30">
+                      <AiFillStar
+                        className="text-yellow-400 mr-2"
+                        style={{
+                          filter:
+                            "drop-shadow(0 0 3px rgba(250, 204, 21, 0.7))",
+                        }}
+                      />
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-400">
+                        Your Favorites
+                      </span>
+                    </span>
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {favorites.map((topicId) => (
                       <button
                         key={topicId}
                         onClick={() => handleTopicSelect(topicId)}
-                        className="bg-black bg-opacity-80 border border-yellow-400/50 hover:border-yellow-400 rounded-md px-3 py-1.5 text-white text-sm flex items-center"
+                        className="bg-gradient-to-br from-black/70 to-[#190023]/70 border border-yellow-400/40 hover:border-yellow-400/90 rounded-md px-3 py-1.5 text-white text-sm flex items-center transform hover:translate-y-[-1px] transition-all duration-300 hover:shadow-md hover:shadow-yellow-400/30"
                       >
-                        <AiFillStar className="text-yellow-400 mr-1.5 text-xs" />
-                        {getTopicName(topicId)}
+                        <AiFillStar
+                          className="text-yellow-400 mr-1.5 text-xs"
+                          style={{
+                            filter:
+                              "drop-shadow(0 0 2px rgba(250, 204, 21, 0.7))",
+                          }}
+                        />
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-100">
+                          {getTopicName(topicId)}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -274,13 +446,15 @@ function Revise() {
               <div className="flex items-center">
                 <button
                   onClick={resetSearch}
-                  className="bg-black bg-opacity-60 hover:bg-opacity-80 border border-[#B200FF]/40 rounded-md px-4 py-2 text-white text-sm"
+                  className="bg-gradient-to-br from-black/80 to-[#190023]/80 hover:bg-opacity-80 border border-[#B200FF]/40 hover:border-[#B200FF]/70 rounded-md px-4 py-2 text-white text-sm transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-md hover:shadow-[#B200FF]/30 flex items-center"
                 >
-                  ← Back to Topics
+                  <span className="mr-1">←</span> Back to Topics
                 </button>
                 {selectedTopic && (
-                  <h2 className="ml-4 text-lg font-medium text-white">
-                    {getTopicName(selectedTopic)}
+                  <h2 className="ml-4 text-lg font-medium">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+                      {getTopicName(selectedTopic)}
+                    </span>
                   </h2>
                 )}
               </div>
@@ -289,12 +463,20 @@ function Revise() {
                   <>
                     <button
                       onClick={handleCopy}
-                      className="flex items-center text-white bg-black bg-opacity-60 hover:bg-opacity-80 border border-[#B200FF]/40 rounded-md px-4 py-2 text-sm"
+                      className="flex items-center text-white bg-gradient-to-br from-black/80 to-[#190023]/80 hover:bg-opacity-80 border border-[#B200FF]/40 hover:border-[#B200FF]/70 rounded-md px-4 py-2 text-sm transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-md hover:shadow-[#B200FF]/30"
                     >
                       {copied ? (
                         <>
-                          <FiCheck className="mr-1.5 text-green-400" />
-                          Copied!
+                          <FiCheck
+                            className="mr-1.5 text-green-400"
+                            style={{
+                              filter:
+                                "drop-shadow(0 0 2px rgba(74, 222, 128, 0.7))",
+                            }}
+                          />
+                          <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-green-100">
+                            Copied!
+                          </span>
                         </>
                       ) : (
                         <>
@@ -305,7 +487,7 @@ function Revise() {
                     </button>
                     <button
                       onClick={handlePrint}
-                      className="flex items-center text-white bg-black bg-opacity-60 hover:bg-opacity-80 border border-[#B200FF]/40 rounded-md px-4 py-2 text-sm"
+                      className="flex items-center text-white bg-gradient-to-br from-black/80 to-[#190023]/80 hover:bg-opacity-80 border border-[#B200FF]/40 hover:border-[#B200FF]/70 rounded-md px-4 py-2 text-sm transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-md hover:shadow-[#B200FF]/30"
                     >
                       <FiPrinter className="mr-1.5" />
                       Print
@@ -314,16 +496,28 @@ function Revise() {
                 )}
                 <button
                   onClick={() => toggleFavorite(selectedTopic)}
-                  className={`flex items-center text-white bg-black bg-opacity-60 hover:bg-opacity-80 border ${
+                  className={`flex items-center text-white bg-gradient-to-br from-black/80 to-[#190023]/80 hover:bg-opacity-80 border ${
                     favorites.includes(selectedTopic)
-                      ? "border-yellow-400"
-                      : "border-[#B200FF]/40"
-                  } rounded-md px-4 py-2 text-sm transition-all duration-300`}
+                      ? "border-yellow-400/70 hover:border-yellow-400"
+                      : "border-[#B200FF]/40 hover:border-[#B200FF]/70"
+                  } rounded-md px-4 py-2 text-sm transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-md ${
+                    favorites.includes(selectedTopic)
+                      ? "hover:shadow-yellow-400/30"
+                      : "hover:shadow-[#B200FF]/30"
+                  }`}
                 >
                   {favorites.includes(selectedTopic) ? (
                     <>
-                      <AiFillStar className="text-yellow-400 mr-1.5" />
-                      Favorited
+                      <AiFillStar
+                        className="text-yellow-400 mr-1.5"
+                        style={{
+                          filter:
+                            "drop-shadow(0 0 2px rgba(250, 204, 21, 0.7))",
+                        }}
+                      />
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-400">
+                        Favorited
+                      </span>
                     </>
                   ) : (
                     <>
@@ -336,46 +530,85 @@ function Revise() {
             </div>
 
             {/* Revision Content */}
-            <div className="bg-black bg-opacity-40 border border-[#B200FF]/20 rounded-lg p-6 overflow-y-auto flex-1">
+            <div
+              className="bg-gradient-to-br from-black/90 to-[#190023]/30 border border-[#B200FF]/20 rounded-lg p-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-[#B200FF]/40 scrollbar-track-transparent"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at center top, rgba(178, 0, 255, 0.03) 0%, transparent 70%)",
+                boxShadow:
+                  "inset 0 0 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(178, 0, 255, 0.1)",
+              }}
+            >
               {selectedTopic && revisionContent[selectedTopic] ? (
                 <div className="prose prose-invert max-w-none">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
-                    className="text-white"
+                    className="text-white animate-fadeIn"
                     components={{
                       h1: (props) => (
                         <h1
-                          className="text-3xl font-bold mt-0 mb-6 text-[#B200FF]"
+                          className="text-3xl font-bold mt-0 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#B200FF] to-[#9000CC] animate-gradient"
+                          style={{
+                            textShadow: "0 2px 10px rgba(178, 0, 255, 0.5)",
+                          }}
                           {...props}
                         />
                       ),
                       h2: (props) => (
                         <h2
-                          className="text-2xl font-semibold mt-6 mb-4 text-[#B200FF]/90"
+                          className="text-2xl font-semibold mt-6 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#B200FF]/90 to-[#9000CC]/90"
+                          style={{
+                            textShadow: "0 1px 5px rgba(178, 0, 255, 0.4)",
+                          }}
                           {...props}
                         />
                       ),
                       h3: (props) => (
                         <h3
-                          className="text-xl font-medium mt-5 mb-3 text-[#B200FF]/80"
+                          className="text-xl font-medium mt-5 mb-3 bg-clip-text text-transparent bg-gradient-to-r from-[#B200FF]/80 to-[#9000CC]/80"
                           {...props}
                         />
                       ),
                       ul: (props) => (
-                        <ul className="list-disc list-inside mb-4" {...props} />
-                      ),
-                      ol: (props) => (
-                        <ol
-                          className="list-decimal list-inside mb-4"
+                        <ul
+                          className="list-disc list-inside mb-4 space-y-1"
                           {...props}
                         />
                       ),
-                      li: (props) => <li className="mb-1" {...props} />,
-                      p: (props) => <p className="mb-4" {...props} />,
+                      ol: (props) => (
+                        <ol
+                          className="list-decimal list-inside mb-4 space-y-1"
+                          {...props}
+                        />
+                      ),
+                      li: (props) => (
+                        <li
+                          className="mb-1 transition-colors duration-300 hover:text-purple-300"
+                          {...props}
+                        />
+                      ),
+                      p: (props) => (
+                        <p className="mb-4 leading-relaxed" {...props} />
+                      ),
                       a: (props) => (
                         <a
-                          className="text-[#B200FF] hover:underline"
+                          className="text-[#B200FF] hover:text-[#9000CC] transition-colors duration-300 border-b border-[#B200FF]/30 hover:border-[#B200FF] pb-0.5"
+                          {...props}
+                        />
+                      ),
+                      blockquote: (props) => (
+                        <blockquote
+                          className="border-l-4 border-[#B200FF]/50 pl-4 italic my-4 bg-black/30 py-2 px-2 rounded-r"
+                          style={{
+                            boxShadow: "inset 0 1px 5px rgba(0,0,0,0.2)",
+                          }}
+                          {...props}
+                        />
+                      ),
+                      code: (props) => (
+                        <code
+                          className="bg-black/50 text-[#B200FF] px-1 py-0.5 rounded border border-[#B200FF]/20"
                           {...props}
                         />
                       ),
@@ -385,8 +618,18 @@ function Revise() {
                   </ReactMarkdown>
                 </div>
               ) : (
-                <div className="text-white text-center">
-                  No content available for this topic.
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#B200FF]/20 to-[#8000CC]/20 rounded-full flex items-center justify-center mb-4 animate-float">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#B200FF]/40 to-[#8000CC]/40 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse"></div>
+                    </div>
+                  </div>
+                  <p className="text-white text-center text-lg animate-glow">
+                    No content available for this topic.
+                  </p>
+                  <p className="text-gray-400 text-center mt-2 text-sm">
+                    Please select another topic from the menu
+                  </p>
                 </div>
               )}
             </div>
@@ -397,44 +640,66 @@ function Revise() {
       {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-black bg-opacity-80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full">
+          <div className="bg-gradient-to-b from-black/90 to-[#190023]/80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full shadow-lg shadow-[#B200FF]/20 backdrop-blur-md">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-3 h-3 bg-[#B200FF] rounded-full animate-pulse mr-1"></div>
               <div
-                className="w-3 h-3 bg-[#B200FF] rounded-full animate-pulse mr-1"
-                style={{ animationDelay: "0.2s" }}
+                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse mr-1"
+                style={{ boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)" }}
               ></div>
               <div
-                className="w-3 h-3 bg-[#B200FF] rounded-full animate-pulse"
-                style={{ animationDelay: "0.4s" }}
+                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse mr-1"
+                style={{
+                  animationDelay: "0.2s",
+                  boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)",
+                }}
+              ></div>
+              <div
+                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse"
+                style={{
+                  animationDelay: "0.4s",
+                  boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)",
+                }}
               ></div>
             </div>
-            <div className="text-white text-center text-xl">{loadingText}</div>
+            <div
+              className="text-white text-center text-xl font-medium tracking-wide animate-glow"
+              style={{ textShadow: "0 0 5px rgba(178, 0, 255, 0.5)" }}
+            >
+              {loadingText}
+            </div>
           </div>
         </div>
       )}
 
       {/* Print Modal */}
       {showPrintModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-black bg-opacity-80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full">
-            <h3 className="text-xl text-white font-medium mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div
+            className="bg-gradient-to-b from-black/90 to-[#190023]/80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full shadow-lg"
+            style={{ boxShadow: "0 0 30px rgba(178, 0, 255, 0.2)" }}
+          >
+            <h3 className="text-xl font-medium mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
               Print Revision Notes
             </h3>
             <p className="text-gray-300 mb-6">
               This will open your browser&apos;s print dialog to print or save
-              the revision notes for {getTopicName(selectedTopic)}.
+              the revision notes for{" "}
+              <span className="text-[#B200FF]">
+                {getTopicName(selectedTopic)}
+              </span>
+              .
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowPrintModal(false)}
-                className="px-4 py-2 text-white border border-gray-500 rounded-md hover:bg-gray-800"
+                className="px-4 py-2 text-white border border-gray-500 rounded-md hover:bg-gray-800/50 transition-all duration-300"
               >
                 Cancel
               </button>
               <button
                 onClick={printContent}
-                className="px-4 py-2 text-white bg-[#B200FF] rounded-md hover:bg-[#9900DD]"
+                className="px-4 py-2 text-white bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-md hover:from-[#A000E6] hover:to-[#7000B5] transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-[#B200FF]/40"
+                style={{ boxShadow: "0 0 10px rgba(178, 0, 255, 0.3)" }}
               >
                 Print
               </button>
