@@ -1,15 +1,11 @@
 import { useSelector } from "react-redux";
 import SideBar from "../components/SideBar";
-import NavBar from "../components/NavBar";
 
 function CareerPath() {
   const { user } = useSelector((state) => state.auth);
 
   return (
     <div className="min-h-screen flex flex-col w-full">
-      {/* Navigation Bar */}
-      <NavBar />
-
       <div className="flex flex-1">
         {/* Sidebar - 20% */}
         <div className="w-[20%] bg-gray-900">

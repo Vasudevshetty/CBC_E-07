@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
-import NavBar from "../components/NavBar";
 import SideBar from "../components/SideBar";
 import {
   clearError,
@@ -175,9 +174,6 @@ function Profile() {
   return (
     <div className="min-h-screen flex flex-col w-full">
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-
-      {/* Navigation Bar */}
-      <NavBar />
 
       <div className="flex flex-1">
         {/* Sidebar takes 20% */}
