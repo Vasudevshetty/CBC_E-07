@@ -9,8 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import { fetchCurrentUser } from "./store/slices/authSlice";
-import QuizPanel from "./pages/QuizPanel";
 import DashboardLayout from "./components/DashboardLayout";
+import QuizPage from "./pages/QuizPage";
 
 // Lazy loading components for better performance
 const Login = lazy(() => import("./pages/Login"));
@@ -115,8 +115,8 @@ function App() {
               <Route path="/ai-asst" element={<AiAsst />} />
               <Route path="/career" element={<CareerPath />} />
               <Route path="/revise" element={<Revise />} />
-              <Route path="/quiz-panel" element={<QuizPanel />} />
             </Route>
+            <Route path="/quiz" element={<QuizPage />} />
 
             {/* Redirect for unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
