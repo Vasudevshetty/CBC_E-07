@@ -76,7 +76,8 @@ function CareerPath() {
     return qualification ? qualification.name : "Bachelor's Degree";
   };
 
-  return (    <div className="flex flex-col h-full bg-black bg-opacity-20">
+  return (
+    <div className="flex flex-col h-full bg-black bg-opacity-20">
       {/* Header */}
       <div className="bg-gradient-to-b from-black/95 to-black/80 p-4 border-b border-[#B200FF]/40 backdrop-blur-md shadow-lg shadow-black/40">
         <div className="flex justify-between items-center w-full">
@@ -91,13 +92,13 @@ function CareerPath() {
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
                 Career Path Advisor
               </span>
-            </h1>            <p className="text-sm text-gray-300 ml-8 animate-float">
+            </h1>{" "}
+            <p className="text-sm text-gray-300 ml-8 animate-float">
               Get personalized career guidance based on your goals
             </p>
           </div>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col p-4 h-[calc(100vh-126px)] overflow-hidden">
         {!showResults ? (
@@ -119,7 +120,10 @@ function CareerPath() {
                 </div>
 
                 <div className="flex-1 overflow-hidden">
-                  <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="flex flex-col h-full"
+                  >
                     <div className="flex-1">
                       <label
                         htmlFor="career-goal"
@@ -128,7 +132,7 @@ function CareerPath() {
                         What career path are you interested in? 🎯
                       </label>
 
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-1">
                         {careerGoals.map((goal) => (
                           <div
                             key={goal.id}
@@ -140,7 +144,9 @@ function CareerPath() {
                             } rounded-lg cursor-pointer transition-all duration-200`}
                           >
                             <span className="text-2xl mr-3">{goal.emoji}</span>
-                            <span className="text-white text-lg">{goal.name}</span>
+                            <span className="text-white text-lg">
+                              {goal.name}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -229,7 +235,9 @@ function CareerPath() {
                       </h3>
                       <div className="space-y-4 text-gray-300">
                         <div className="bg-[#B200FF]/10 rounded-lg p-4 border-l-4 border-[#B200FF]">
-                          <p className="text-white font-medium">Your Profile:</p>
+                          <p className="text-white font-medium">
+                            Your Profile:
+                          </p>
                           <div className="flex items-center mt-2">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -246,25 +254,30 @@ function CareerPath() {
                               />
                             </svg>
                             <span className="text-white">
-                              Qualification: {getQualificationName(userQualification)}
+                              Qualification:{" "}
+                              {getQualificationName(userQualification)}
                             </span>
                           </div>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="text-[#B200FF] mr-3 text-lg">1.</span>
+                          <span className="text-[#B200FF] mr-3 text-lg">
+                            1.
+                          </span>
                           <p>
                             <span className="text-white font-medium">
                               Focus Your Development
                             </span>
-                            <br />
-                            A defined path helps you concentrate on skill
-                            development that aligns with your professional goals.
+                            <br />A defined path helps you concentrate on skill
+                            development that aligns with your professional
+                            goals.
                           </p>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="text-[#B200FF] mr-3 text-lg">2.</span>
+                          <span className="text-[#B200FF] mr-3 text-lg">
+                            2.
+                          </span>
                           <p>
                             <span className="text-white font-medium">
                               Personalized Guidance
@@ -277,7 +290,9 @@ function CareerPath() {
                         </div>
 
                         <div className="flex items-start">
-                          <span className="text-[#B200FF] mr-3 text-lg">3.</span>
+                          <span className="text-[#B200FF] mr-3 text-lg">
+                            3.
+                          </span>
                           <p>
                             <span className="text-white font-medium">
                               Clear Milestones
@@ -321,8 +336,9 @@ function CareerPath() {
                                 Build Your Network
                               </p>
                               <p className="text-sm mt-1">
-                                Connect with professionals in your target industry
-                                through LinkedIn, events, and communities.
+                                Connect with professionals in your target
+                                industry through LinkedIn, events, and
+                                communities.
                               </p>
                             </div>
                           </div>
@@ -351,8 +367,8 @@ function CareerPath() {
                                 Develop Key Skills
                               </p>
                               <p className="text-sm mt-1">
-                                Focus on both technical expertise and soft skills
-                                like communication and leadership.
+                                Focus on both technical expertise and soft
+                                skills like communication and leadership.
                               </p>
                             </div>
                           </div>
@@ -372,7 +388,8 @@ function CareerPath() {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth={2}
-                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                />
                               </svg>
                             </div>
                             <div>
@@ -380,8 +397,9 @@ function CareerPath() {
                                 Continuous Learning
                               </p>
                               <p className="text-sm mt-1">
-                                Stay updated with industry trends through courses,
-                                certifications, and industry publications.
+                                Stay updated with industry trends through
+                                courses, certifications, and industry
+                                publications.
                               </p>
                             </div>
                           </div>
@@ -449,7 +467,8 @@ function CareerPath() {
                   </svg>
                   Change Career Path
                 </button>
-              </div>              {/* Career Path Content */}
+              </div>{" "}
+              {/* Career Path Content */}
               <div className="flex-1 flex flex-col overflow-hidden">
                 {careerSuggestions[selectedGoal] &&
                 careerSuggestions[selectedGoal][userQualification] ? (
@@ -473,10 +492,11 @@ function CareerPath() {
                         <span className="text-white font-medium">
                           Career path suggestion
                         </span>{" "}
-                        based on{" "}
-                        {getQualificationName(userQualification)} qualification
+                        based on {getQualificationName(userQualification)}{" "}
+                        qualification
                       </span>
-                    </div>                    {/* Display markdown content with scrolling */}
+                    </div>{" "}
+                    {/* Display markdown content with scrolling */}
                     <div className="flex-1 pr-4 overflow-hidden">
                       <div className="prose prose-invert max-w-none h-full overflow-y-auto custom-scrollbar px-1">
                         <ReactMarkdown
@@ -507,7 +527,10 @@ function CareerPath() {
                               />
                             ),
                             ul: (props) => (
-                              <ul className="list-none space-y-3 mb-4" {...props} />
+                              <ul
+                                className="list-none space-y-3 mb-4"
+                                {...props}
+                              />
                             ),
                             ol: (props) => (
                               <ol
@@ -524,7 +547,10 @@ function CareerPath() {
                               </li>
                             ),
                             p: (props) => (
-                              <p className="mb-4 text-gray-200 leading-relaxed" {...props} />
+                              <p
+                                className="mb-4 text-gray-200 leading-relaxed"
+                                {...props}
+                              />
                             ),
                             a: (props) => (
                               <a
@@ -563,7 +589,8 @@ function CareerPath() {
                         <p className="text-gray-300">
                           We don&apos;t have specific recommendations for{" "}
                           {getGoalName(selectedGoal)} with{" "}
-                          {getQualificationName(userQualification)} qualification.
+                          {getQualificationName(userQualification)}{" "}
+                          qualification.
                         </p>
                       </div>
                       <button
@@ -594,7 +621,6 @@ function CareerPath() {
           </div>
         )}
       </div>
-
       {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
@@ -605,19 +631,24 @@ function CareerPath() {
                 <div className="absolute inset-0 rounded-full border-t-4 border-r-4 border-[#B200FF] animate-spin"></div>
                 <div className="absolute inset-2 rounded-full border-4 border-[#B200FF]/10"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-3xl">{getGoalEmoji(selectedGoal) || "🎯"}</div>
+                  <div className="text-3xl">
+                    {getGoalEmoji(selectedGoal) || "🎯"}
+                  </div>
                 </div>
               </div>
             </div>
             <div className="text-white text-center">
               <div className="text-xl mb-2">{loadingText}</div>
-              <div className="text-sm text-gray-300">Personalized for your {getQualificationName(userQualification)} qualification</div>
+              <div className="text-sm text-gray-300">
+                Personalized for your {getQualificationName(userQualification)}{" "}
+                qualification
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Apply custom styles */}      <style>{`
+      {/* Apply custom styles */}{" "}
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
         }
