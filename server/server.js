@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
+const path = require("path");
 const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
 
@@ -50,6 +51,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Parse cookies
 app.use(cookieParser());
+
+// Serve profile images statically
+app.use(
+  "/uploads/profile-images",
+  express.static(path.join(__dirname, "uploads/profile-images"))
+);
 
 // Set up API routes
 app.use("/api/v1/auth", authRoutes);
