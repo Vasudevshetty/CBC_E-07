@@ -2,18 +2,20 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 import os, shutil, tempfile
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
-from langchain_community.document_loaders import PyPDFLoader # Updated import
+from langchain_community.document_loaders import PyPDFLoader 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from utils.bot import initialize_retriver, initialize_rag_chain, get_model, extract_video_id
-from utils.database import insert_application_logs, get_chat_history, get_all_session_ids # Add get_all_session_ids
-from typing import Optional, List # Import List
+from utils.database import insert_application_logs, get_chat_history, get_all_session_ids 
+from typing import Optional, List 
 import uuid
 from dotenv import load_dotenv
 from groq import Groq
 import json
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+import joblib
+import numpy as np
 
 load_dotenv()
 
@@ -34,6 +36,8 @@ api.add_middleware(
 llm = ChatGroq(model= "llama-3.3-70b-versatile", api_key=groq_api_key2)
 os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
 model,embeddings = get_model()
+random_forest = joblib.load("models/random_forest_model.pkl")
+joblib.dump(random_forest, 'models/random_forest_model.pkl')
 
 @api.get("/")
 def read_root():
@@ -569,3 +573,29 @@ Classification:"""
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred during learner assessment: {str(e)}")
 
 
+@api.post("/assessment_model")
+def assess_learner_type(video_correct: int, aptitude_correct: int):
+    try:
+        features = np.array([[video_correct, aptitude_correct]])
+        prediction_int = random_forest.predict(features)[0]
+        
+        # Convert numpy.int64 to Python int
+        classification_int = int(prediction_int)
+        
+        # Map integer prediction back to string label
+        label_map = {0: "slow", 1: "medium", 2: "fast"}
+        classification_label = label_map.get(classification_int, "unknown") # Default to "unknown" if not in map
+
+        if classification_label == "unknown":
+            # Handle case where prediction is not 0, 1, or 2, though unlikely with a trained classifier
+            print(f"Warning: Unknown classification integer from model: {classification_int}")
+            # You might want to raise an error or return a specific message
+            # For now, we'll return the "unknown" label
+
+        return {"learner_type_assessment": classification_label}
+    except Exception as e:
+        # Log the full error for debugging
+        print(f"Error in /assessment_model: {type(e).__name__} - {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error during prediction: {str(e)}")
