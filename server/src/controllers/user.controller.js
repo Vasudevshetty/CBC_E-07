@@ -131,3 +131,41 @@ exports.getAllUsers = async (req, res) => {
     });
   }
 };
+
+exports.getLernerType = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Use the learner type from the request state
+    const { learnerType } = req.body;
+    if (!learnerType) {
+      return res.status(400).json({
+        success: false,
+        message: "Learner type is required",
+      });
+    }
+
+    // Update learner type in the database
+    user.learnerType = learnerType;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        learnerType,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Error updating learner type",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+};

@@ -25,6 +25,9 @@ router.patch(
 // Delete user account
 router.delete("/profile", userController.deleteAccount);
 
+// Add route for updating learner type
+router.patch("/learner-type", userController.getLernerType);
+
 // Admin-only routes
 router.use(restrictTo("admin"));
 

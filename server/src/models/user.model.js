@@ -49,6 +49,13 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+  },
+  {
+    learnerType: {
+      type: String,
+      enum: ["slow", "medium", "fast"],
+      default: "medium",
+    },
   }
 );
 

@@ -325,6 +325,16 @@ function Assessment() {
         }
       );
 
+      // Update learner type in the database
+      try {
+        await api.patch("/api/v1/users/learner-type", {
+          learnerType: response.data.learner_type_assessment,
+        });
+        console.log("Learner type updated successfully in the database.");
+      } catch (error) {
+        console.error("Error updating learner type in the database:", error);
+      }
+
       console.log("Assessment submission response:", response.data); // Debugging log
       setLearnerType(response.data.learner_type_assessment);
       setCurrentPhase("results");

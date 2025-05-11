@@ -209,7 +209,9 @@ function Dashboard() {
                 <h3 className="text-lg font-semibold text-white">
                   Learner Type
                 </h3>
-                <p className="text-gray-300 mt-2">Consistent Learner</p>
+                <p className="text-gray-300 mt-2">
+                  {user?.learnerType || "Not determined yet"}
+                </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">
