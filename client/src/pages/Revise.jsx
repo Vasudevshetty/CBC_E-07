@@ -73,22 +73,28 @@ function Revise() {
     dispatch(getRevisionStrategies({ topic: searchInput }))
       .unwrap()
       .then(() => {
-        clearInterval(loadingInterval);
-        setIsLoading(false);
-        setLoadingText("");
         setIsSearching(false);
       })
       .catch((err) => {
-        clearInterval(loadingInterval);
-        setIsLoading(false);
-        setLoadingText("");
         console.error("Error loading revision:", err);
+        setLoadingText("Failed to load revision. Please try again.");
+        setTimeout(() => setLoadingText(""), 3000); // Clear error after a bit
+        setIsSearching(true); // Stay on search page or handle error display
+      })
+      .finally(() => {
+        clearInterval(loadingInterval); // Ensure interval is cleared
+        setIsLoading(false);
+        // Clear loading text only if no error message is currently displayed
+        if (loadingText && !loadingText.toLowerCase().includes("failed")) {
+          setLoadingText("");
+        }
       });
   };
 
   const handleTopicSelect = (topic) => {
     setIsLoading(true);
     setSelectedTopic(topic);
+    setSearchInput(topic); // Also set searchInput for consistency if needed
 
     const loadingSteps = [
       "Loading topic content...",
@@ -96,26 +102,31 @@ function Revise() {
       "Almost ready...",
     ];
     let stepIndex = 0;
+    setLoadingText(loadingSteps[stepIndex]); // Initial loading message
 
     const loadingInterval = setInterval(() => {
-      setLoadingText(loadingSteps[stepIndex]);
       stepIndex = (stepIndex + 1) % loadingSteps.length;
+      setLoadingText(loadingSteps[stepIndex]);
     }, 800);
 
     // Send request to get revision data
     dispatch(getRevisionStrategies({ topic }))
       .unwrap()
       .then(() => {
-        clearInterval(loadingInterval);
-        setIsLoading(false);
-        setLoadingText("");
         setIsSearching(false);
       })
       .catch((err) => {
-        clearInterval(loadingInterval);
-        setIsLoading(false);
-        setLoadingText("");
         console.error("Error loading revision:", err);
+        setLoadingText("Failed to load topic. Please try again.");
+        setTimeout(() => setLoadingText(""), 3000);
+        setIsSearching(true);
+      })
+      .finally(() => {
+        clearInterval(loadingInterval); // Ensure interval is cleared
+        setIsLoading(false);
+        if (loadingText && !loadingText.toLowerCase().includes("failed")) {
+            setLoadingText("");
+        }
       });
   };
 
@@ -588,76 +599,64 @@ function Revise() {
         )}
       </div>
 
-      {/* Loading Overlay */}
-      {(isLoading || loading) && (
+      {/* Loading Overlay - Added */}
+      {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-gradient-to-b from-black/90 to-[#190023]/80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full shadow-lg shadow-[#B200FF]/20 backdrop-blur-md">
-            <div className="flex items-center justify-center mb-4">
-              <div
-                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse mr-1"
-                style={{ boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)" }}
-              ></div>
-              <div
-                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse mr-1"
-                style={{
-                  animationDelay: "0.2s",
-                  boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)",
-                }}
-              ></div>
-              <div
-                className="w-3 h-3 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse"
-                style={{
-                  animationDelay: "0.4s",
-                  boxShadow: "0 0 5px rgba(178, 0, 255, 0.7)",
-                }}
-              ></div>
+          <div className="bg-black bg-opacity-80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full animated-gradient">
+            <div className="flex flex-col items-center">
+              <div className="relative w-28 h-28 mb-6">
+                <div className="absolute inset-0 rounded-full border-4 border-[#B200FF]/20"></div>
+                <div className="absolute inset-0 rounded-full border-t-4 border-r-4 border-[#B200FF] animate-spin"></div>
+                <div className="absolute inset-2 rounded-full border-4 border-[#B200FF]/10"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-3xl">📚</div> {/* Generic study emoji */}
+                </div>
+              </div>
             </div>
-            <div
-              className="text-white text-center text-xl font-medium tracking-wide animate-glow"
-              style={{ textShadow: "0 0 5px rgba(178, 0, 255, 0.5)" }}
-            >
-              {loadingText}
+            <div className="text-white text-center">
+              <div className="text-xl mb-2">{loadingText || "Loading..."}</div>
+              <div className="text-sm text-gray-300">
+                Preparing revision notes for "{selectedTopic || searchInput || 'your topic'}"... 
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Print Modal */}
+      {/* Print Modal - Existing code */}
       {showPrintModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div
-            className="bg-gradient-to-b from-black/90 to-[#190023]/80 border border-[#B200FF]/50 rounded-lg p-8 max-w-md w-full shadow-lg"
-            style={{ boxShadow: "0 0 30px rgba(178, 0, 255, 0.2)" }}
-          >
-            <h3 className="text-xl font-medium mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-black bg-opacity-80 border border-[#B200FF]/50 rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-lg font-semibold text-white mb-4">
               Print Revision Notes
-            </h3>
-            <p className="text-gray-300 mb-6">
-              This will open your browser&apos;s print dialog to print or save
-              the revision notes for{" "}
-              <span className="text-[#B200FF]">
-                {revisionData?.overview || "your topic"}
-              </span>
-              .
+            </h2>
+            <p className="text-sm text-gray-300 mb-4">
+              Your revision notes are ready to be printed. You can also save them as a PDF.
             </p>
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowPrintModal(false)}
-                className="px-4 py-2 text-white border border-gray-500 rounded-md hover:bg-gray-800/50 transition-all duration-300"
+                className="bg-gradient-to-br from-red-600 to-red-400 hover:bg-opacity-90 border border-red-500 rounded-md px-4 py-2 text-white text-sm transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-md"
               >
-                Cancel
+                Close
               </button>
               <button
                 onClick={printContent}
-                className="px-4 py-2 text-white bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-md hover:from-[#A000E6] hover:to-[#7000B5] transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-[#B200FF]/40"
-                style={{ boxShadow: "0 0 10px rgba(178, 0, 255, 0.3)" }}
+                className="bg-gradient-to-br from-[#B200FF] to-[#9000CC] hover:bg-opacity-90 border border-[#B200FF] rounded-md px-4 py-2 text-white text-sm transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-md"
               >
-                Print
+                Print Now
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Footer - Existing code */}
+      <div className="bg-black/80 text-white text-center p-4 border-t border-[#B200FF]/20">
+        <p className="text-sm">
+          &copy; 2023 CBC Revision Center. All rights reserved.
+        </p>
+      </div>
     </div>
   );
 }
