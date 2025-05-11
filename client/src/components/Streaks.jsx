@@ -12,66 +12,61 @@ const formatDate = (date) => {
 
 const Streaks = () => {
   const { user } = useSelector((state) => state.auth); // Kept for future use
+  const [streaksData, setStreaksData] = useState([]); // Holds data for each month block
+  const [activityStatus, setActivityStatus] = useState({});
 
-  const [calendarDays, setCalendarDays] = useState([]); // Array of Date objects
-  const [activityStatus, setActivityStatus] = useState({}); // Map of dateString to 'today', 'yesterday', or 'other'
-  const [monthLabels, setMonthLabels] = useState([]); // Array of { name: string, startOffsetRem: number }
-
-  const CELL_SIZE_REM = 1.5; // Corresponds to w-6/h-6 in Tailwind (1.5rem)
-  const GAP_REM = 0.25; // Corresponds to gap-1 in Tailwind (0.25rem)
-  const EFFECTIVE_CELL_PITCH_REM = CELL_SIZE_REM + GAP_REM; // Distance from start of one cell to start of next in a row/col flow
+  // Define today's date here to be accessible in both useEffect and render
+  const todayRefDate = new Date(2025, 4, 11); // May 11, 2025
 
   useEffect(() => {
-    const endDate = new Date(2025, 4, 10); // May 11, 2025 (Month is 0-indexed)
-    const todayFormatted = formatDate(endDate);
-    const yesterdayDate = new Date(endDate);
-    yesterdayDate.setDate(endDate.getDate() - 1);
+    const numberOfMonthsToDisplay = 10; // Display current and past 9 months (10 total)
+    const newMonthlyData = [];
+
+    for (let i = 0; i < numberOfMonthsToDisplay; i++) {
+      const targetIterationDate = new Date(todayRefDate.getFullYear(), todayRefDate.getMonth() - i, 1);
+      const monthName = targetIterationDate.toLocaleString('default', { month: 'short' });
+      const year = targetIterationDate.getFullYear();
+      
+      const firstDayOfMonth = new Date(targetIterationDate.getFullYear(), targetIterationDate.getMonth(), 1);
+      const lastDayOfMonth = new Date(targetIterationDate.getFullYear(), targetIterationDate.getMonth() + 1, 0);
+      
+      const daysInMonthGrid = [];
+      const startingDayOfWeek = firstDayOfMonth.getDay(); // 0 for Sunday
+      
+      // Add initial padding cells for the first week
+      for (let j = 0; j < startingDayOfWeek; j++) {
+        daysInMonthGrid.push({ type: 'padding', key: `padding-${monthName}-${year}-${j}` });
+      }
+      
+      // Add day cells
+      for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+        const currentDateObject = new Date(targetIterationDate.getFullYear(), targetIterationDate.getMonth(), day);
+        daysInMonthGrid.push({
+          type: 'day',
+          date: currentDateObject,
+          dateString: formatDate(currentDateObject),
+          key: formatDate(currentDateObject)
+        });
+      }
+      
+      newMonthlyData.push({ monthName, year, days: daysInMonthGrid, key: `${year}-${monthName}` });
+    }
+
+    setStreaksData(newMonthlyData.reverse()); // Show past months first, up to current
+
+    // Set activity status
+    const todayFormatted = formatDate(todayRefDate);
+    const yesterdayDate = new Date(todayRefDate);
+    yesterdayDate.setDate(todayRefDate.getDate() - 1);
     const yesterdayFormatted = formatDate(yesterdayDate);
 
     const tempActivityStatus = {};
     tempActivityStatus[todayFormatted] = "today";
     tempActivityStatus[yesterdayFormatted] = "yesterday";
+    // In a real app, you'd fetch user.activityData here and merge/set accordingly
     setActivityStatus(tempActivityStatus);
 
-    const numWeeksToDisplay = 53;
-    const numDaysInGrid = numWeeksToDisplay * 7;
-
-    const startDateForGrid = new Date(endDate);
-    startDateForGrid.setDate(endDate.getDate() - numDaysInGrid + 1);
-    // Adjust startDateForGrid to be a Sunday to make full weeks
-    startDateForGrid.setDate(startDateForGrid.getDate() - startDateForGrid.getDay());
-
-    const days = [];
-    for (let i = 0; i < numDaysInGrid; i++) {
-      const date = new Date(startDateForGrid);
-      date.setDate(startDateForGrid.getDate() + i);
-      days.push(date);
-    }
-    setCalendarDays(days);
-
-    // Generate month labels
-    const uniqueMonths = [];
-    let lastMonthProcessed = -1;
-    let lastWeekIndexForMonthLabel = -10; // Ensure first month label is always added
-
-    days.forEach((dateObj, dayIndex) => {
-      const currentMonth = dateObj.getMonth();
-      const currentWeekIndex = Math.floor(dayIndex / 7);
-
-      if (currentMonth !== lastMonthProcessed) {
-        if (uniqueMonths.length === 0 || currentWeekIndex > lastWeekIndexForMonthLabel + 2) { // Spacing for labels
-          uniqueMonths.push({
-            name: dateObj.toLocaleString('default', { month: 'short' }),
-            // Offset aligns with the start of the week column
-            startOffsetRem: currentWeekIndex * EFFECTIVE_CELL_PITCH_REM,
-          });
-          lastWeekIndexForMonthLabel = currentWeekIndex;
-        }
-        lastMonthProcessed = currentMonth;
-      }
-    });
-    setMonthLabels(uniqueMonths);
-  }, []);
+  }, []); // Runs once on mount
 
   const getDayCellStyle = (dateString) => {
     const status = activityStatus[dateString];
@@ -81,63 +76,54 @@ const Streaks = () => {
     if (status === "yesterday") {
       return "bg-[#8A00FF] hover:bg-[#9B21FF]"; // Darker purple
     }
-    return "bg-slate-700/40 hover:bg-slate-600/50"; // Default for other days
+    // Check if the date is in the future compared to todayRefDate
+    const cellDate = new Date(dateString);
+    if (cellDate > todayRefDate) {
+        return "bg-slate-500/20"; // Different style for future days within the rendered months
+    }
+    return "bg-slate-400/40 hover:bg-slate-300/50"; // Default for other past/current days
   };
 
-  const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const displayEndDate = new Date(2025, 4, 11);
+  const weekDayLabels = ["S", "M", "T", "W", "T", "F", "S"];
 
   return (
-    <div className="bg-gradient-to-br from-black/80 to-black/60 border border-[#B200FF]/30 p-6 rounded-xl shadow-2xl shadow-black/50 backdrop-blur-lg text-white">
-      <h2 className="text-2xl font-bold text-[#B200FF] mb-6 tracking-wide">
-        Yearly Activity Overview
+    <div className="bg-gradient-to-br from-black/80 to-black/60 border border-[#B200FF]/30 p-4 rounded-lg shadow-xl shadow-black/40 backdrop-blur-md text-white w-full mx-auto flex flex-col items-center"> {/* Centered with mx-auto and max-w-screen-md */}
+      <h2 className="text-xl font-bold text-[#B200FF] mb-4 tracking-normal text-center">
+        Activity Overview
       </h2>
-      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-[#B200FF]/40 scrollbar-track-transparent pb-3">
-        {/* Month Labels Container */}
-        <div className="relative h-6 mb-2" style={{ paddingLeft: `calc(${CELL_SIZE_REM}rem + ${GAP_REM * 2}rem)` /* Approx align with start of day grid */ }}>
-          {monthLabels.map((label, idx) => (
-            <div
-              key={idx}
-              className="absolute text-xs text-gray-400"
-              style={{ left: `calc(${label.startOffsetRem}rem)` }}
-            >
-              {label.name}
+      <div className="flex flex-row overflow-x-auto py-2 space-x-4 scrollbar-thin scrollbar-thumb-[#B200FF]/40 scrollbar-track-transparent scrollbar-thumb-rounded-full scrollbar-track-rounded-full">
+        {streaksData.map(monthData => (
+          <div key={monthData.key} className="flex-shrink-0">
+            <h3 className="text-base font-semibold text-center text-purple-300 mb-2">
+              {monthData.monthName} {monthData.year}
+            </h3>
+            <div className="grid grid-cols-7 gap-0.5 mb-1">
+              {weekDayLabels.map(label => (
+                <div key={`${monthData.key}-${label}`} className="w-4 h-4 flex items-center justify-center text-xs text-gray-200 font-medium">
+                  {label}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div className="flex">
-          {/* Weekday Labels (Side) */}
-          <div className="flex flex-col mr-3 space-y-1 items-center shrink-0" style={{ width: `calc(${CELL_SIZE_REM}rem)`}}>
-            {weekDayLabels.map((label, index) => (
-              (index % 2 !== 0) ? // Display Mon, Wed, Fri for brevity
-              <div key={label} className="h-6 flex items-center text-xs text-gray-400">{label.substring(0,1)}</div> :
-              <div key={label} className="h-6"></div> // Empty div for spacing to match day cells
-            ))}
+            <div className="grid grid-cols-7 gap-0.5">
+              {monthData.days.map(dayItem => {
+                if (dayItem.type === 'padding') {
+                  return <div key={dayItem.key} className="w-4 h-4 rounded-sm"></div>;
+                }
+                
+                const cellStyle = getDayCellStyle(dayItem.dateString);
+                
+                return (
+                  <div
+                    key={dayItem.key}
+                    className={`w-4 h-4 rounded-sm transition-all duration-150 ${cellStyle}`}
+                    title={`${dayItem.dateString} - ${activityStatus[dayItem.dateString] || 'No activity'}`}
+                  ></div>
+                );
+              })}
+            </div>
           </div>
-
-          {/* Calendar Grid */}
-          <div className="grid grid-flow-col grid-rows-7 gap-1">
-            {calendarDays.map((dateObj) => {
-              const dateString = formatDate(dateObj);
-              // Cells for dates beyond the "current" display end date are styled differently
-              const isFuturePadding = dateObj > displayEndDate;
-              const cellStyle = isFuturePadding
-                ? "bg-black/30" // Style for future/padding cells
-                : getDayCellStyle(dateString);
-
-              return (
-                <div
-                  key={dateString}
-                  className={`w-6 h-6 rounded-md transition-all duration-150 ${cellStyle}`}
-                  title={isFuturePadding ? formatDate(dateObj) + ' (Future/Padding)' : `${dateString} - ${activityStatus[dateString] || 'No special activity'}`}
-                ></div>
-              );
-            })}
-          </div>
-        </div>
+        ))}
       </div>
-      {/* Legend */}
     </div>
   );
 };
