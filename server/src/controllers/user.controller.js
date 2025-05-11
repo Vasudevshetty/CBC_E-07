@@ -95,11 +95,11 @@ exports.updateLearningType = async (req, res) => {
     const { learningType } = req.body;
 
     // Validate learningType
-    const validLearningTypes = ["visual", "auditory", "kinesthetic"];
+    const validLearningTypes = ["fast", "medium", "slow"];
     if (!validLearningTypes.includes(learningType)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid learning type. Valid types are: visual, auditory, kinesthetic.",
+        message: "Invalid learning type. Valid types are: slow, medium, fast.",
       });
     }
 
