@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { subjects } from "../data/subjects";
+import ReactMarkdown from "react-markdown"; // Import react-markdown
 
 // Redux actions and thunks
 import {
@@ -15,34 +16,6 @@ import {
 // Icons
 import { FiSend } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri"; // Added import for delete icon
-
-// New StreamedText component
-function StreamedText({ text, speed = 30, onAnimationComplete }) {
-  const [displayedText, setDisplayedText] = useState("");
-
-  useEffect(() => {
-    setDisplayedText(""); // Reset if text prop changes
-    if (text) {
-      let index = 0;
-      const intervalId = setInterval(() => {
-        if (index < text.length) {
-          setDisplayedText((prev) => prev + text.charAt(index));
-          index++;
-        } else {
-          clearInterval(intervalId);
-          if (onAnimationComplete) {
-            onAnimationComplete();
-          }
-        }
-      }, speed);
-      return () => clearInterval(intervalId);
-    } else if (onAnimationComplete) {
-      onAnimationComplete(); // Call if text is initially empty or null
-    }
-  }, [text, speed, onAnimationComplete]);
-
-  return <>{displayedText || <>&nbsp;</>}</>; // Use &nbsp; to maintain space if empty
-}
 
 function AiAsst() {
   const { id } = useParams(); // id from URL, might be an existing session
@@ -68,7 +41,6 @@ function AiAsst() {
   const [showCompletions, setShowCompletions] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState(id || null);
   const autoApplySuggestionTimeoutRef = useRef(null); // Ref for auto-apply timeout
-  const [streamingMessageId, setStreamingMessageId] = useState(null); // For streaming AI responses
 
   useEffect(() => {
     if (id && id !== currentSessionId) {
@@ -245,12 +217,6 @@ function AiAsst() {
     const trimmedMessage = message.trim();
     if (!trimmedMessage) return;
 
-    // Store the ID of the last message before sending a new one
-    // This helps identify the new AI response for streaming
-    const lastMessageIdBeforeSend =
-      chatHistory.length > 0 ? chatHistory[chatHistory.length - 1].id : null;
-    const userQueryForStreamCheck = trimmedMessage; // Keep track of the query that expects a streamable response
-
     const userMessage = {
       role: "user",
       content: trimmedMessage,
@@ -300,27 +266,9 @@ function AiAsst() {
             replace: true,
           });
         }
-        // Streaming logic for new AI message
-        if (action.payload.chatHistory && userQueryForStreamCheck) {
-          const newChatHistory = action.payload.chatHistory;
-          const latestMessageInNewHistory =
-            newChatHistory.length > 0
-              ? newChatHistory[newChatHistory.length - 1]
-              : null;
-          if (
-            latestMessageInNewHistory &&
-            latestMessageInNewHistory.role === "assistant" &&
-            latestMessageInNewHistory.id !== lastMessageIdBeforeSend
-          ) {
-            setStreamingMessageId(latestMessageInNewHistory.id);
-          } else {
-            setStreamingMessageId(null);
-          }
-        } else {
-          setStreamingMessageId(null);
-        }
+        // REMOVE Streaming logic block
+        // if (action.payload.chatHistory && userQueryForStreamCheck) { ... }
       } else {
-        setStreamingMessageId(null); // Clear streaming on error
         dispatch(
           addMessageToHistory({
             role: "assistant",
@@ -333,11 +281,6 @@ function AiAsst() {
   };
 
   const handleSuggestionClick = (suggestion) => {
-    // Store the ID of the last message before sending a new one
-    const lastMessageIdBeforeSend =
-      chatHistory.length > 0 ? chatHistory[chatHistory.length - 1].id : null;
-    const userQueryForStreamCheck = suggestion; // Keep track of the query that expects a streamable response
-
     const userMessage = {
       role: "user",
       content: suggestion,
@@ -387,27 +330,9 @@ function AiAsst() {
             replace: true,
           });
         }
-        // Streaming logic for new AI message
-        if (action.payload.chatHistory && userQueryForStreamCheck) {
-          const newChatHistory = action.payload.chatHistory;
-          const latestMessageInNewHistory =
-            newChatHistory.length > 0
-              ? newChatHistory[newChatHistory.length - 1]
-              : null;
-          if (
-            latestMessageInNewHistory &&
-            latestMessageInNewHistory.role === "assistant" &&
-            latestMessageInNewHistory.id !== lastMessageIdBeforeSend
-          ) {
-            setStreamingMessageId(latestMessageInNewHistory.id);
-          } else {
-            setStreamingMessageId(null);
-          }
-        } else {
-          setStreamingMessageId(null);
-        }
+        // REMOVE Streaming logic block
+        // if (action.payload.chatHistory && userQueryForStreamCheck) { ... }
       } else {
-        setStreamingMessageId(null); // Clear streaming on error
         dispatch(
           addMessageToHistory({
             role: "assistant",
@@ -433,7 +358,6 @@ function AiAsst() {
     setMessage("");
     setCompletionText("");
     setShowCompletions(false);
-    setStreamingMessageId(null); // Clear streaming ID on chat clear
     if (autoApplySuggestionTimeoutRef.current) {
       // Clear auto-apply timer
       clearTimeout(autoApplySuggestionTimeoutRef.current);
@@ -520,73 +444,79 @@ function AiAsst() {
             flexDirection: "column",
           }}
         >
-          {chatHistory.map((msg) => (
-            <div
-              key={msg.id} // Changed from key={index} to key={msg.id}
-              className={`flex ${
-                msg.role === "user" ? "justify-end" : "justify-start"
-              } mb-6`}
-            >
-              {msg.role === "assistant" && (
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B200FF]/80 to-[#8000CC]/80 flex items-center justify-center mr-2 mt-1 shadow-md shadow-[#B200FF]/30 flex-shrink-0">
-                  <span className="text-white text-sm font-semibold">AI</span>
-                </div>
-              )}
+          {chatHistory.map((msg) => {
+            // Define the core content element
+            const messageCoreContent = (
               <div
-                className={`max-w-[70%] rounded-lg px-4 py-3 ${
-                  msg.role === "user"
-                    ? "bg-gradient-to-br from-[#B200FF] to-[#9000CC] text-white shadow-lg shadow-[#B200FF]/30 animate-fadeIn"
-                    : "bg-gradient-to-b from-black/90 to-black/70 text-white border border-[#B200FF]/20 backdrop-blur-sm"
+                className={`whitespace-pre-wrap leading-relaxed ${
+                  msg.role === "assistant"
+                    ? "text-gray-100 prose prose-sm prose-invert max-w-none" // Added prose classes for markdown
+                    : "text-white font-medium"
                 }`}
                 style={
                   msg.role === "user"
-                    ? {
-                        boxShadow:
-                          "0 0 20px rgba(178, 0, 255, 0.5), 0 0 35px rgba(178, 0, 255, 0.3)", // Enhanced glow
-                        position: "relative",
-                        transform: "translateZ(0)",
-                        borderRadius: "18px 18px 4px 18px",
-                      }
-                    : {
-                        boxShadow:
-                          "0 0 15px rgba(178, 0, 255, 0.25), 0 0 25px rgba(178, 0, 255, 0.15), 0 2px 10px rgba(0,0,0,0.2)", // Enhanced glow
-                        position: "relative",
-                        borderRadius: "4px 18px 18px 18px",
-                      }
+                    ? { textShadow: "0 0 6px rgba(255, 255, 255, 0.6)" }
+                    : { textShadow: "0 0 6px rgba(230, 200, 255, 0.5)" }
                 }
               >
+                {msg.role === "assistant" ? (
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                ) : (
+                  msg.content
+                )}
+              </div>
+            );
+
+            return (
+              <div
+                key={msg.id}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                } mb-6`}
+              >
+                {msg.role === "assistant" && (
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B200FF]/80 to-[#8000CC]/80 flex items-center justify-center mr-2 mt-1 shadow-md shadow-[#B200FF]/30 flex-shrink-0">
+                    <span className="text-white text-sm font-semibold">AI</span>
+                  </div>
+                )}
+
+                {/* Simplified message bubble rendering */}
                 <div
-                  className={`whitespace-pre-wrap leading-relaxed ${
-                    msg.role === "assistant"
-                      ? "text-gray-100"
-                      : "text-white font-medium"
+                  className={`max-w-[70%] rounded-lg px-4 py-3 ${
+                    msg.role === "user"
+                      ? "bg-gradient-to-br from-[#B200FF] to-[#9000CC] text-white shadow-lg shadow-[#B200FF]/30 animate-fadeIn"
+                      : "bg-gradient-to-b from-black/90 to-black/70 text-white border border-[#B200FF]/20 backdrop-blur-sm"
                   }`}
                   style={
                     msg.role === "user"
-                      ? { textShadow: "0 0 6px rgba(255, 255, 255, 0.6)" } // Text glow for user
-                      : { textShadow: "0 0 6px rgba(230, 200, 255, 0.5)" } // Text glow for AI
+                      ? {
+                          boxShadow:
+                            "0 0 20px rgba(178, 0, 255, 0.5), 0 0 35px rgba(178, 0, 255, 0.3)",
+                          position: "relative",
+                          transform: "translateZ(0)",
+                          borderRadius: "18px 18px 4px 18px",
+                        }
+                      : {
+                          boxShadow:
+                            "0 0 15px rgba(178, 0, 255, 0.25), 0 0 25px rgba(178, 0, 255, 0.15), 0 2px 10px rgba(0,0,0,0.2)",
+                          position: "relative",
+                          borderRadius: "4px 18px 18px 18px",
+                        }
                   }
                 >
-                  {msg.role === "assistant" && msg.id === streamingMessageId ? (
-                    <StreamedText
-                      text={msg.content}
-                      speed={30}
-                      onAnimationComplete={() => setStreamingMessageId(null)}
-                    />
-                  ) : (
-                    msg.content
-                  )}
+                  {messageCoreContent}
                 </div>
+
+                {msg.role === "user" && (
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#B200FF] to-[#9000CC] flex items-center justify-center ml-2 mt-1 shadow-md shadow-[#B200FF]/30 border border-white/10 flex-shrink-0">
+                    <span className="text-white text-sm font-semibold">
+                      {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                    </span>
+                  </div>
+                )}
               </div>
-              {msg.role === "user" && (
-                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#B200FF] to-[#9000CC] flex items-center justify-center ml-2 mt-1 shadow-md shadow-[#B200FF]/30 border border-white/10 flex-shrink-0">
-                  <span className="text-white text-sm font-semibold">
-                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
           {isLoading && (
             <div className="flex justify-start mb-4">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B200FF]/90 to-[#8000CC]/90 flex items-center justify-center mr-2 mt-1 shadow-lg shadow-[#B200FF]/30 flex-shrink-0">
