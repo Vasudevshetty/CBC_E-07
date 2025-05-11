@@ -25,7 +25,7 @@ function Revise() {
   // Get user data from localStorage instead of Redux to simplify
   const user = JSON.parse(localStorage.getItem("user")) || { name: "Student" };
   const dispatch = useDispatch();
-  const { revisionData, loading } = useSelector((state) => state.revision);
+  const { revisionData } = useSelector((state) => state.revision); // Removed 'loading'
 
   const [searchInput, setSearchInput] = useState("");
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -125,7 +125,7 @@ function Revise() {
         clearInterval(loadingInterval); // Ensure interval is cleared
         setIsLoading(false);
         if (loadingText && !loadingText.toLowerCase().includes("failed")) {
-            setLoadingText("");
+          setLoadingText("");
         }
       });
   };
@@ -616,7 +616,8 @@ function Revise() {
             <div className="text-white text-center">
               <div className="text-xl mb-2">{loadingText || "Loading..."}</div>
               <div className="text-sm text-gray-300">
-                Preparing revision notes for "{selectedTopic || searchInput || 'your topic'}"... 
+                Preparing revision notes for "
+                {selectedTopic || searchInput || "your topic"}"...
               </div>
             </div>
           </div>
@@ -631,7 +632,8 @@ function Revise() {
               Print Revision Notes
             </h2>
             <p className="text-sm text-gray-300 mb-4">
-              Your revision notes are ready to be printed. You can also save them as a PDF.
+              Your revision notes are ready to be printed. You can also save
+              them as a PDF.
             </p>
             <div className="flex justify-end space-x-2">
               <button

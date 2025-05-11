@@ -212,9 +212,25 @@ const aiAssistantSlice = createSlice({
         state.messageLoading = true;
         state.messageError = null;
       })
-      .addCase(sendMessage.fulfilled, (state) => {
+      .addCase(sendMessage.fulfilled, (state, action) => {
         state.messageLoading = false;
-        // Don't automatically add to chat history here, will be handled by the component
+        // The component is expected to handle adding the user's message.
+        // Here, we add the AI's response.
+        if (
+          action.payload &&
+          action.payload.response &&
+          action.payload.session_id
+        ) {
+          state.chatHistory.push({
+            id: `ai-${Date.now()}-${Math.random()
+              .toString(36)
+              .substring(2, 9)}`, // Unique ID for AI message
+            role: "assistant", // Changed from sender: "ai"
+            content: action.payload.response, // Changed from text: action.payload.response
+            timestamp: new Date().toISOString(),
+            sessionId: action.payload.session_id, // Session ID from payload
+          });
+        }
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.messageLoading = false;
