@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import toast, { Toaster } from "react-hot-toast";
-import { ClipLoader } from "react-spinners";
 import {
   clearError,
   clearMessage,
@@ -9,6 +7,8 @@ import {
   updatePassword,
   uploadProfileImage,
 } from "../store/slices/authSlice";
+import toast from "react-hot-toast";
+import { ClipLoader } from "react-spinners";
 
 function Profile() {
   const { user, loadingStates, error, success, message } = useSelector(
@@ -174,7 +174,7 @@ function Profile() {
   }
   return (
     <div className="flex flex-col h-full bg-black bg-opacity-20">
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+      {/* <Toaster position="top-right" toastOptions={{ duration: 3000 }} /> */}
 
       {/* Header */}
       <div className="bg-gradient-to-b from-black/95 to-black/80 p-4 border-b border-[#B200FF]/40 backdrop-blur-md shadow-lg shadow-black/40">
@@ -485,7 +485,6 @@ function Profile() {
                         className="mt-1 block w-full px-4 py-3 border border-gray-700 bg-black bg-opacity-70 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-black disabled:bg-opacity-50 text-white"
                       />
                     </div>
-
                   </div>
 
                   {isEditing && (

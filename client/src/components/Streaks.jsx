@@ -20,7 +20,7 @@ const Streaks = () => {
     // This ensures it captures the date at the time the effect runs.
     const todayRefDate = new Date();
 
-    const numberOfMonthsToDisplay = 10; // Display current and past 9 months (10 total)
+    const numberOfMonthsToDisplay = 9; // Display current and past 9 months (10 total)
     const newMonthlyData = [];
 
     for (let i = 0; i < numberOfMonthsToDisplay; i++) {

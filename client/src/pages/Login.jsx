@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { loginUser, clearError, clearMessage } from "../store/slices/authSlice";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import AuthNavbar from "../components/AuthNavbar";
 
@@ -90,7 +90,7 @@ function Login() {
     <>
       <AuthNavbar />
       <div className="bg-[radial-gradient(circle_at_top,_#B200FF,_black)] min-h-screen h-screen w-screen flex flex-col justify-center items-center p-4 overflow-hidden">
-        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+        {/* <Toaster position="top-right" toastOptions={{ duration: 3000 }} /> */}
 
         {/* Decorative Lines */}
         <img

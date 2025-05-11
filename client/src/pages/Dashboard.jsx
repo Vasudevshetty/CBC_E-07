@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import Streaks from "../components/Streaks";
 import { Link } from "react-router-dom";
@@ -116,7 +116,7 @@ function Dashboard() {
         backgroundAttachment: "fixed",
       }}
     >
-      <Toaster position="top-right" />
+      {/* <Toaster position="top-right" /> */}
 
       {/* Header */}
       <div

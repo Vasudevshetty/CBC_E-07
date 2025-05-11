@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux"; // Added
 import { updateLearningType } from "../store/slices/authSlice"; // Added
 import api from "../services/api";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 // Create a Quiz component within the same file for simplicity
 function Quiz({
@@ -102,7 +102,9 @@ function Quiz({
       <div className="md:w-3/5 p-6 sm:p-10 flex flex-col justify-between">
         <div>
           <div className="mb-6">
-            <span className="text-sm text-purple-300">Question {currentQuestionIndex + 1} of {questions.length}</span>
+            <span className="text-sm text-purple-300">
+              Question {currentQuestionIndex + 1} of {questions.length}
+            </span>
             <h2 className="mt-1 text-2xl sm:text-3xl text-white font-semibold">
               {currentQuestion.question}
             </h2>
@@ -177,11 +179,24 @@ function Quiz({
         ) : quizType === "visual" ? (
           <div className="flex flex-col items-center justify-center p-4 text-center">
             <div className="bg-purple-500 p-4 rounded-full mb-4 shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9A2.25 2.25 0 004.5 18.75z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9A2.25 2.25 0 004.5 18.75z"
+                />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-white">Video Knowledge Quiz</h3>
+            <h3 className="text-2xl font-bold text-white">
+              Video Knowledge Quiz
+            </h3>
             <p className="text-slate-300 mt-2">
               Testing your understanding of the video content.
             </p>
@@ -189,11 +204,24 @@ function Quiz({
         ) : quizType === "aptitude" ? (
           <div className="flex flex-col items-center justify-center p-4 text-center">
             <div className="bg-indigo-500 p-4 rounded-full mb-4 shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-white">Aptitude Assessment</h3>
+            <h3 className="text-2xl font-bold text-white">
+              Aptitude Assessment
+            </h3>
             <p className="text-slate-300 mt-2">
               Testing your general problem-solving abilities.
             </p>
@@ -351,7 +379,9 @@ function Assessment() {
 
             {/* Rules Section */}
             <div className="mb-8 p-6 bg-slate-700 bg-opacity-50 rounded-lg">
-              <h2 className="text-xl sm:text-2xl font-semibold mb-4 text-purple-300">Rules to Follow</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold mb-4 text-purple-300">
+                Rules to Follow
+              </h2>
               <ul className="list-disc list-inside space-y-2 text-base sm:text-lg text-slate-200">
                 <li>
                   Ensure a stable internet connection throughout the assessment.
@@ -443,7 +473,9 @@ function Assessment() {
               Assessment Results
             </h1>
             <div className="text-center mb-10">
-              <div className="text-xl sm:text-2xl mb-2 text-purple-300">Your Learning Style is</div>
+              <div className="text-xl sm:text-2xl mb-2 text-purple-300">
+                Your Learning Style is
+              </div>
               <div className="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400 mb-6">
                 {learnerType?.toUpperCase() || "Calculating..."}
               </div>
@@ -513,9 +545,11 @@ function Assessment() {
                   // Ensure handleVideoEnd is called only once and after video has a chance to load
                   // The timeout here is a placeholder for actual video end detection if possible
                   // For robust solution, YouTube IFrame API would be needed
-                  console.log("Video iframe loaded. Setting timeout for handleVideoEnd.");
+                  console.log(
+                    "Video iframe loaded. Setting timeout for handleVideoEnd."
+                  );
                   const videoDurationApproximation = 10000; // Placeholder, ideally get from video metadata
-                  setTimeout(handleVideoEnd, videoDurationApproximation); 
+                  setTimeout(handleVideoEnd, videoDurationApproximation);
                 }}
               ></iframe>
             </div>
@@ -527,27 +561,6 @@ function Assessment() {
       )}
 
       {renderContent()}
-      <Toaster 
-        position="top-center" 
-        toastOptions={{
-          style: {
-            background: '#334155', // slate-700
-            color: '#f1f5f9', // slate-100
-          },
-          success: {
-            iconTheme: {
-              primary: '#a855f7', // purple-500
-              secondary: '#f1f5f9',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444', // red-500
-              secondary: '#f1f5f9',
-            },
-          },
-        }}
-      />
     </div>
   );
 }
