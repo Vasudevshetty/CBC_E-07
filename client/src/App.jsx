@@ -117,7 +117,14 @@ function App() {
               <Route path="/career" element={<CareerPath />} />
               <Route path="/revise" element={<Revise />} />
             </Route>
-            <Route path="/assessment" element={<Assessment />} />
+            <Route
+              path="/assessment"
+              element={
+                <ProtectedRoute>
+                  <Assessment />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Redirect for unknown routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
