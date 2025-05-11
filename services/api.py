@@ -26,8 +26,8 @@ load_dotenv()
 
 api = FastAPI()
 
-groq_api_key1 = os.getenv("GROQ_API_KEY1")
-groq_api_key2 = os.getenv("GROQ_API_KEY2")
+groq_api_key1 = os.getenv("GROQ_API_KEY3")
+groq_api_key2 = os.getenv("GROQ_API_KEY4")
 client = Groq(api_key=groq_api_key1)
 
 api.add_middleware(
@@ -755,32 +755,6 @@ Classification:"""
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred during learner assessment: {str(e)}")
 
 
-@api.post("/assessment_model")
-def assess_learner_type(video_correct: int, aptitude_correct: int):
-    try:
-        features = np.array([[video_correct, aptitude_correct]])
-        prediction_int = random_forest.predict(features)[0]
-        
-        # Convert numpy.int64 to Python int
-        classification_int = int(prediction_int)
-        
-        # Map integer prediction back to string label
-        label_map = {0: "slow", 1: "medium", 2: "fast"}
-        classification_label = label_map.get(classification_int, "unknown") # Default to "unknown" if not in map
-
-        if classification_label == "unknown":
-            # Handle case where prediction is not 0, 1, or 2, though unlikely with a trained classifier
-            print(f"Warning: Unknown classification integer from model: {classification_int}")
-            # You might want to raise an error or return a specific message
-            # For now, we'll return the "unknown" label
-
-        return {"learner_type_assessment": classification_label}
-    except Exception as e:
-        # Log the full error for debugging
-        print(f"Error in /assessment_model: {type(e).__name__} - {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error during prediction: {str(e)}")
 
 @api.post("/create_session")
 def create_new_session(user_id: str = "anonymous"):
