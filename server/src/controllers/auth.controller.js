@@ -23,10 +23,84 @@ const createSendToken = (user, statusCode, res) => {
   // Send token as cookie and in JSON response
   res.status(statusCode).cookie("jwt", token, cookieOptions).json({
     success: true,
-    token,
     user,
   });
 };
+
+// Helper function to update user activity and gamification
+const updateUserActivityAndGamification = async (user) => {
+  const today = new Date();
+  // Normalize today's date to midnight for accurate day-to-day comparison
+  const todayMidnight = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+
+  // Get the user's last login date (if any), normalized to midnight
+  let lastLoginDate = user.lastLogin ? new Date(user.lastLogin) : null;
+  if (lastLoginDate) {
+    lastLoginDate = new Date(
+      lastLoginDate.getFullYear(),
+      lastLoginDate.getMonth(),
+      lastLoginDate.getDate()
+    );
+  }
+
+  // Check if this is the first login of the current day or a new registration
+  if (!lastLoginDate || lastLoginDate.getTime() < todayMidnight.getTime()) {
+    // --- Coin Award Logic ---
+    const dayOfWeek = todayMidnight.getDay(); // Sunday is 0, Saturday is 6
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      // Weekend login
+      user.coins = (user.coins || 0) + 50;
+    } else {
+      // Weekday login
+      user.coins = (user.coins || 0) + 10;
+    }
+    user.lastLogin = new Date(); // Update lastLogin to the current timestamp
+
+    // --- Daily Streak Logic ---
+    let lastStreakLoginDate = user.lastStreakLogin
+      ? new Date(user.lastStreakLogin)
+      : null;
+    if (lastStreakLoginDate) {
+      // Normalize lastStreakLoginDate to midnight for comparison
+      lastStreakLoginDate = new Date(
+        lastStreakLoginDate.getFullYear(),
+        lastStreakLoginDate.getMonth(),
+        lastStreakLoginDate.getDate()
+      );
+    }
+
+    const yesterdayMidnight = new Date(todayMidnight);
+    yesterdayMidnight.setDate(todayMidnight.getDate() - 1); // Get yesterday's date at midnight
+
+    if (
+      lastStreakLoginDate &&
+      lastStreakLoginDate.getTime() === yesterdayMidnight.getTime()
+    ) {
+      // Streak continued from yesterday
+      user.dailyStreak = (user.dailyStreak || 0) + 1;
+    } else {
+      // Streak is broken, or this is the first login/registration to start/restart a streak
+      user.dailyStreak = 1;
+    }
+    // Update lastStreakLogin to the current timestamp, as this login has contributed to the streak
+    user.lastStreakLogin = new Date();
+
+    // --- Record Login Activity for Streaks Calendar ---
+    if (!user.loginActivity) {
+      user.loginActivity = [];
+    }
+    // Add the current login time to the activity list
+    user.loginActivity.push(new Date());
+  }
+  // If the user has already logged in earlier today, their coins and streak status for today
+  // would have been set by that first login. No further changes are made in subsequent logins on the same day.
+  // A missed day will naturally reset the streak to 1 on the next login,
+  // because lastStreakLoginDate will not be equal to yesterdayMidnight.
+}
 
 /**
  * Register new user
@@ -55,12 +129,16 @@ exports.register = async (req, res) => {
     }
 
     // Create user with default profile image
-    const user = await User.create({
+    let user = await User.create({ // Changed to let to allow modification by helper
       name,
       email,
       password,
       // Default profile image will be used from the User model
     });
+
+    // Update activity and gamification for new user
+    await updateUserActivityAndGamification(user);
+    await user.save({ validateBeforeSave: false }); // Save changes made by helper
 
     // Send JWT token
     createSendToken(user, 201, res);
@@ -100,80 +178,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Gamification: Coins and Daily Streak Logic
-    const today = new Date();
-    // Normalize today's date to midnight for accurate day-to-day comparison
-    const todayMidnight = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-
-    // Get the user's last login date (if any), normalized to midnight
-    let lastLoginDate = user.lastLogin ? new Date(user.lastLogin) : null;
-    if (lastLoginDate) {
-      lastLoginDate = new Date(
-        lastLoginDate.getFullYear(),
-        lastLoginDate.getMonth(),
-        lastLoginDate.getDate()
-      );
-    }
-
-    // Check if this is the first login of the current day
-    if (!lastLoginDate || lastLoginDate.getTime() < todayMidnight.getTime()) {
-      // --- Coin Award Logic ---
-      const dayOfWeek = todayMidnight.getDay(); // Sunday is 0, Saturday is 6
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        // Weekend login
-        user.coins = (user.coins || 0) + 50;
-      } else {
-        // Weekday login
-        user.coins = (user.coins || 0) + 10;
-      }
-      user.lastLogin = new Date(); // Update lastLogin to the current timestamp
-
-      // --- Daily Streak Logic ---
-      let lastStreakLoginDate = user.lastStreakLogin
-        ? new Date(user.lastStreakLogin)
-        : null;
-      if (lastStreakLoginDate) {
-        // Normalize lastStreakLoginDate to midnight for comparison
-        lastStreakLoginDate = new Date(
-          lastStreakLoginDate.getFullYear(),
-          lastStreakLoginDate.getMonth(),
-          lastStreakLoginDate.getDate()
-        );
-      }
-
-      const yesterdayMidnight = new Date(todayMidnight);
-      yesterdayMidnight.setDate(todayMidnight.getDate() - 1); // Get yesterday's date at midnight
-
-      if (
-        lastStreakLoginDate &&
-        lastStreakLoginDate.getTime() === yesterdayMidnight.getTime()
-      ) {
-        // Streak continued from yesterday
-        user.dailyStreak = (user.dailyStreak || 0) + 1;
-      } else {
-        // Streak is broken, or this is the first login to start/restart a streak
-        user.dailyStreak = 1;
-      }
-      // Update lastStreakLogin to the current timestamp, as this login has contributed to the streak
-      user.lastStreakLogin = new Date();
-
-      // --- Record Login Activity for Streaks Calendar ---
-      if (!user.loginActivity) {
-        user.loginActivity = [];
-      }
-      // Add the current login time to the activity list
-      // This records the actual time, but the Streaks component will likely only use the date part
-      user.loginActivity.push(new Date());
-    }
-    // If the user has already logged in earlier today, their coins and streak status for today
-    // would have been set by that first login. No further changes are made in subsequent logins on the same day.
-    // A missed day will naturally reset the streak to 1 on the next login,
-    // because lastStreakLoginDate will not be equal to yesterdayMidnight.
-
+    // Update activity and gamification
+    await updateUserActivityAndGamification(user);
     await user.save({ validateBeforeSave: false }); // Save the updated user document with gamification changes
 
     // Send JWT token
