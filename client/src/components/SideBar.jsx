@@ -7,36 +7,34 @@ import {
   LuBrain,
   LuLightbulb,
   LuUser,
-  LuLogOut, // Added for logout
-  LuMenu, // Added for hamburger menu
-  LuX, // Added for close icon
 } from "react-icons/lu"; // Added icons
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../store/slices/authSlice";
 
-function SideBar({ isOpen, setIsOpen }) { // Accept isOpen and setIsOpen as props
+function SideBar() {
+  const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const sidebarRef = useRef(null);
   const touchStartX = useRef(null);
   const links = [
-    { name: "Dashboard", link: "/dashboard", icon: <LuLayoutDashboard size={20} /> },
-    { name: "Career Path", link: "/career", icon: <LuGraduationCap size={20} /> },
-    { name: "Revison Assistant", link: "/revise", icon: <LuBrain size={20} /> },
+    { name: "Dashboard", link: "/dashboard", icon: <LuLayoutDashboard /> },
+    { name: "Career Path", link: "/career", icon: <LuGraduationCap /> },
+    { name: "Revison Assistant", link: "/revise", icon: <LuBrain /> },
     {
       name: "AI Study Assistant",
       link: "/ai-study-assistant",
-      icon: <LuLightbulb size={20} />,
+      icon: <LuLightbulb />,
     },
-    { name: "Profile", link: "/profile", icon: <LuUser size={20} /> },
+    { name: "Profile", link: "/profile", icon: <LuUser /> },
   ];
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    console.log("Logout clicked");
     dispatch(logoutUser());
     navigate("/");
-    if (setIsOpen) setIsOpen(false); // Close sidebar on logout if mobile
   };
 
   // Animation effect when component mounts
@@ -44,111 +42,153 @@ function SideBar({ isOpen, setIsOpen }) { // Accept isOpen and setIsOpen as prop
     setIsVisible(true);
   }, []);
 
-  // Outside click to close on mobile
+  // Outside click to close
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        if (window.innerWidth < 768 && setIsOpen) { // Only for mobile
-          setIsOpen(false);
-        }
+    const handleClickOutside = (e) => {
+      if (
+        isOpen &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target)
+      ) {
+        setIsOpen(false);
       }
     };
-    if (isOpen && window.innerWidth < 768) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen, setIsOpen]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
 
-
-  // Swipe left to close on mobile
+  // Swipe left to close
   const handleTouchStart = (e) => {
-    if (window.innerWidth < 768) { // Only for mobile
-      touchStartX.current = e.touches[0].clientX;
-    }
+    touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchMove = (e) => {
-    if (touchStartX.current === null || window.innerWidth >= 768) {
-      return;
-    }
-    const touchEndX = e.touches[0].clientX;
-    if (touchStartX.current - touchEndX > 50) { // Swipe left
-      if (setIsOpen) setIsOpen(false);
-      touchStartX.current = null;
+    if (touchStartX.current !== null) {
+      const touchEndX = e.touches[0].clientX;
+      if (touchStartX.current - touchEndX > 50) {
+        setIsOpen(false);
+        touchStartX.current = null;
+      }
     }
   };
 
   return (
     <>
-      {/* Overlay for mobile */}
-      {isOpen && window.innerWidth < 768 && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
-          onClick={() => setIsOpen(false)}
-        ></div>
+      {/* Menu icon (absolute on top-left) with glowing effect */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 left-4 z-50 md:hidden bg-opacity-80 bg-gray-900 p-2 rounded-full text-[#B200FF] shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40 hover:scale-110 transition-all duration-300"
+      >
+        {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+      </button>
+
+      {/* Overlay with gradient */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-40 md:hidden" />
       )}
-      <div
+
+      {/* Sidebar with gradient background and animation */}
+      <aside
         ref={sidebarRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
-        className={`fixed top-0 left-0 h-screen bg-gray-900 bg-opacity-80 backdrop-blur-md text-white transition-transform duration-300 ease-in-out z-40 
-                    w-64 md:w-60 lg:w-64 
-                    ${isVisible ? "opacity-100" : "opacity-0"}
-                    ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-                    md:translate-x-0 md:opacity-100`} // Always open on md+
+        className={`fixed top-0 left-0 h-full w-64 bg-[radial-gradient(circle_at_top,_#B200FF33,_#00000099)] backdrop-blur-md text-white shadow-lg shadow-[#B200FF]/20 z-50 transform transition-all duration-500 ease-out border-r border-[#B200FF]/30
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        ${isVisible ? "opacity-100" : "opacity-0"}
+        md:translate-x-0 md:relative md:flex`}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo and close button for mobile */}
-          <div className="flex items-center justify-between p-4 h-16 border-b border-gray-700">
-            <Link to="/" className="text-2xl font-bold text-white" onClick={() => setIsOpen && setIsOpen(false)}>
+        <div className="flex flex-col w-full justify-between h-full">
+          <div className="p-6">
+            <Link
+              to="/"
+              className="text-3xl tracking-wide font-bold flex justify-center items-center text-white mb-8" // Changed tracking
+            >
               <span
                 className="relative"
                 style={{
                   WebkitTextStroke: "1px #B200FF",
-                  textShadow: "0 0 10px rgba(178, 0, 255, 0.5)",
+                  textShadow: "0 0 15px rgba(178, 0, 255, 0.5)",
                 }}
               >
                 StudySyncs
               </span>
             </Link>
-            <button
-              onClick={() => setIsOpen && setIsOpen(false)}
-              className="md:hidden text-gray-300 hover:text-white"
-              aria-label="Close sidebar"
-            >
-              <LuX size={24} />
-            </button>
+
+            {/* Decorative line */}
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#B200FF] to-transparent opacity-50 mb-6"></div>
+
+            <ul className="flex flex-col gap-3 mt-4">
+              {" "}
+              {/* Adjusted gap */}
+              {links.map((link, index) => (
+                <li
+                  key={index}
+                  className={`transition-all duration-300 ease-out delay-${
+                    index * 100
+                  }`}
+                >
+                  <NavLink
+                    to={link.link}
+                    onClick={() => setIsOpen(false)}
+                    className={
+                      ({ isActive }) =>
+                        `flex items-center gap-3 px-4 py-3 rounded-lg font-medium w-full transition-all duration-300 
+                      ${
+                        isActive
+                          ? "bg-[#B200FF] bg-opacity-30 text-white shadow-md shadow-[#B200FF]/20"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white hover:bg-opacity-30"
+                      } text-base tracking-normal relative overflow-hidden` // Changed text size, tracking, added flex, gap
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {/* Glow effect for active links */}
+                        {isActive && (
+                          <span className="absolute inset-0 bg-[#B200FF] opacity-10 blur-md"></span>
+                        )}
+                        <span className="relative z-10 text-lg">
+                          {link.icon}
+                        </span>{" "}
+                        {/* Icon */}
+                        <span className="relative z-10 hover:scale-105 transition-transform duration-300">
+                          {link.name}
+                        </span>
+                      </>
+                    )}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="flex-grow p-4 space-y-2">
-            {links.map((item) => (
-              <Link
-                key={item.name}
-                to={item.link}
-                onClick={() => setIsOpen && setIsOpen(false)} // Close on link click for mobile
-                className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-purple-700 hover:text-white transition-colors duration-200 group"
-              >
-                <span className="group-hover:scale-110 transition-transform">{item.icon}</span>
-                <span className="text-sm font-medium">{item.name}</span>
-              </Link>
-            ))}
-          </nav>
-
-          {/* Logout Button */}
-          <div className="p-4 border-t border-gray-700">
+          <div className="p-6 border-t border-[#B200FF]/30">
             <button
-              onClick={handleLogout}
-              className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-colors duration-200 group"
+              onClick={() => {
+                setIsOpen(false);
+                handleLogout();
+              }}
+              className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#B200FF] to-[#9000CC] hover:from-[#9000CC] hover:to-[#B200FF] text-white rounded-lg w-full justify-center transition-all duration-300 shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40 hover:scale-105 hover:cursor-pointer text-base" // Added gap, text-base
+              title="Logout"
             >
-              <span className="group-hover:scale-110 transition-transform"><LuLogOut size={20} /></span>
-              <span className="text-sm font-medium">Logout</span>
+              {/* Logout icon */}
+              <span className="text-xl">
+                {" "}
+                {/* Increased icon size */}
+                <FaSignOutAlt />
+              </span>
+              {/* Logout text */}
+              <span className="font-medium">Logout</span>{" "}
+              {/* Adjusted font-medium, removed text-sm */}
             </button>
+            <p className="text-center text-xs mt-6 text-gray-400">
+              2025 &copy;{" "}
+              <a href="/" className="text-[#B200FF] hover:underline">
+                StudySyncs
+              </a>
+            </p>
           </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
