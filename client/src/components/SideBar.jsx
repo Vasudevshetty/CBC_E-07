@@ -1,10 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
+import {
+  LuLayoutDashboard,
+  LuGraduationCap,
+  LuBrain,
+  LuLightbulb,
+  LuUser,
+} from "react-icons/lu"; // Added icons
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../store/slices/authSlice";
-
-
 
 function SideBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,11 +17,15 @@ function SideBar() {
   const sidebarRef = useRef(null);
   const touchStartX = useRef(null);
   const links = [
-    { name: "Dashboard", link: "/dashboard" },
-    { name: "Career Path", link: "/career" },
-    { name: "Revison Assistant", link: "/revise" },
-    { name: "AI Study Assistant", link: "/ai-study-assistant" },
-    { name: "Profile", link: "/profile" },
+    { name: "Dashboard", link: "/dashboard", icon: <LuLayoutDashboard /> },
+    { name: "Career Path", link: "/career", icon: <LuGraduationCap /> },
+    { name: "Revison Assistant", link: "/revise", icon: <LuBrain /> },
+    {
+      name: "AI Study Assistant",
+      link: "/ai-study-assistant",
+      icon: <LuLightbulb />,
+    },
+    { name: "Profile", link: "/profile", icon: <LuUser /> },
   ];
 
   const dispatch = useDispatch();
@@ -92,7 +101,7 @@ function SideBar() {
           <div className="p-6">
             <Link
               to="/"
-              className="text-3xl tracking-wider font-bold flex justify-center items-center text-white mb-8"
+              className="text-3xl tracking-wide font-bold flex justify-center items-center text-white mb-8" // Changed tracking
             >
               <span
                 className="relative"
@@ -108,7 +117,9 @@ function SideBar() {
             {/* Decorative line */}
             <div className="h-px w-full bg-gradient-to-r from-transparent via-[#B200FF] to-transparent opacity-50 mb-6"></div>
 
-            <ul className="flex flex-col gap-4 mt-4">
+            <ul className="flex flex-col gap-3 mt-4">
+              {" "}
+              {/* Adjusted gap */}
               {links.map((link, index) => (
                 <li
                   key={index}
@@ -119,13 +130,14 @@ function SideBar() {
                   <NavLink
                     to={link.link}
                     onClick={() => setIsOpen(false)}
-                    className={({ isActive }) =>
-                      `block px-4 py-3 rounded-lg font-medium w-full transition-all duration-300 
+                    className={
+                      ({ isActive }) =>
+                        `flex items-center gap-3 px-4 py-3 rounded-lg font-medium w-full transition-all duration-300 
                       ${
                         isActive
                           ? "bg-[#B200FF] bg-opacity-30 text-white shadow-md shadow-[#B200FF]/20"
                           : "text-gray-300 hover:bg-gray-800 hover:text-white hover:bg-opacity-30"
-                      } text-sm tracking-widest relative overflow-hidden`
+                      } text-base tracking-normal relative overflow-hidden` // Changed text size, tracking, added flex, gap
                     }
                   >
                     {({ isActive }) => (
@@ -134,6 +146,10 @@ function SideBar() {
                         {isActive && (
                           <span className="absolute inset-0 bg-[#B200FF] opacity-10 blur-md"></span>
                         )}
+                        <span className="relative z-10 text-lg">
+                          {link.icon}
+                        </span>{" "}
+                        {/* Icon */}
                         <span className="relative z-10 hover:scale-105 transition-transform duration-300">
                           {link.name}
                         </span>
@@ -151,15 +167,18 @@ function SideBar() {
                 setIsOpen(false);
                 handleLogout();
               }}
-              className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#B200FF] to-[#9000CC] hover:from-[#9000CC] hover:to-[#B200FF] text-white rounded-lg w-full justify-center transition-all duration-300 shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40 hover:scale-105 hover:cursor-pointer"
+              className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#B200FF] to-[#9000CC] hover:from-[#9000CC] hover:to-[#B200FF] text-white rounded-lg w-full justify-center transition-all duration-300 shadow-lg shadow-[#B200FF]/20 hover:shadow-[#B200FF]/40 hover:scale-105 hover:cursor-pointer text-base" // Added gap, text-base
               title="Logout"
             >
               {/* Logout icon */}
-              <span className="text-lg">
+              <span className="text-xl">
+                {" "}
+                {/* Increased icon size */}
                 <FaSignOutAlt />
               </span>
               {/* Logout text */}
-              <span className="text-sm">Logout</span>
+              <span className="font-medium">Logout</span>{" "}
+              {/* Adjusted font-medium, removed text-sm */}
             </button>
             <p className="text-center text-xs mt-6 text-gray-400">
               2025 &copy;{" "}
