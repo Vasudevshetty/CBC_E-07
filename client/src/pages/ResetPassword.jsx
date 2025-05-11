@@ -6,8 +6,9 @@ import {
   clearError,
   clearMessage,
 } from "../store/slices/authSlice";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
+import AuthNavbar from "../components/AuthNavbar";
 
 function ResetPassword() {
   const { token } = useParams();
@@ -169,29 +170,8 @@ function ResetPassword() {
     );
   }
   return (
-    <div className="bg-[radial-gradient(circle_at_top,_#B200FF,_black)] min-h-screen h-screen w-screen flex flex-col justify-center items-center p-4 overflow-hidden">
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-      {/* Decorative Lines */}
-      <img
-        src="/Home/hline.png"
-        alt=""
-        className="absolute top-0 left-0 w-full opacity-15 object-cover"
-      />
-      <img
-        src="/Home/hline.png"
-        alt=""
-        className="absolute bottom-0 left-0 w-full opacity-15 object-cover"
-      />
-      <img
-        src="/Home/vline.png"
-        alt=""
-        className="absolute left-4 md:left-8 lg:left-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
-      />
-      <img
-        src="/Home/vline.png"
-        alt=""
-        className="absolute right-4 md:right-8 lg:right-12 top-0 h-full max-h-[800px] opacity-15 hidden sm:block"
-      />{" "}
+    <>
+      <AuthNavbar />
       <div
         className={`w-full max-w-md sm:max-w-lg md:max-w-xl p-6 md:p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 transition-all duration-1000 ease-out ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -315,7 +295,7 @@ function ResetPassword() {
           </p>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
