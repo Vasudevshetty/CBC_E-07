@@ -22,6 +22,11 @@ router.patch(
   userController.updateProfile
 );
 
+router.patch(
+  "/profile/learning-type",
+  userController.updateLearningType
+);
+
 // Delete user account
 router.delete("/profile", userController.deleteAccount);
 
