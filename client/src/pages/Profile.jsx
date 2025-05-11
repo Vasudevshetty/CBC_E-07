@@ -20,6 +20,7 @@ function Profile() {
     name: "",
     email: "",
     bio: "",
+    qualification: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -43,6 +44,7 @@ function Profile() {
         name: user.name || "",
         email: user.email || "",
         bio: user.bio || "",
+        qualification: user.qualification || "",
       }));
     }
 
@@ -114,8 +116,8 @@ function Profile() {
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
 
-    const { name, bio } = formData;
-    dispatch(updateProfile({ name, bio }));
+    const { name, bio, qualification } = formData;
+    dispatch(updateProfile({ name, bio, qualification }));
   };
 
   const handlePasswordChange = async (e) => {
@@ -464,6 +466,26 @@ function Profile() {
                         className="mt-1 block w-full px-4 py-3 border border-gray-700 bg-black bg-opacity-70 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-black disabled:bg-opacity-50 text-white"
                       ></textarea>
                     </div>
+
+                    <div>
+                      <label
+                        htmlFor="qualification"
+                        className="block text-sm font-medium text-white"
+                      >
+                        Qualification
+                      </label>
+                      <input
+                        type="text"
+                        id="qualification"
+                        name="qualification"
+                        value={formData.qualification}
+                        onChange={handleChange}
+                        placeholder="E.g., B.Tech in CSE, High School Diploma"
+                        disabled={!isEditing || isSaving}
+                        className="mt-1 block w-full px-4 py-3 border border-gray-700 bg-black bg-opacity-70 rounded-md shadow-sm focus:outline-none focus:ring-[#B200FF] focus:border-[#B200FF] disabled:bg-black disabled:bg-opacity-50 text-white"
+                      />
+                    </div>
+
                   </div>
 
                   {isEditing && (
