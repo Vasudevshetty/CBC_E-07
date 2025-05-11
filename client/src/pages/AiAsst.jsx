@@ -42,6 +42,12 @@ function AiAsst() {
   const [currentSessionId, setCurrentSessionId] = useState(id || null);
   const autoApplySuggestionTimeoutRef = useRef(null); // Ref for auto-apply timeout
 
+  // Refs and state for draggable suggestions
+  const suggestionsContainerRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftStart, setScrollLeftStart] = useState(0);
+
   useEffect(() => {
     if (id && id !== currentSessionId) {
       setCurrentSessionId(id);
@@ -375,6 +381,35 @@ function AiAsst() {
     );
   };
 
+  // Event handlers for draggable suggestions
+  const handleMouseDown = (e) => {
+    if (suggestionsContainerRef.current) {
+      setIsDragging(true);
+      setStartX(e.pageX - suggestionsContainerRef.current.offsetLeft);
+      setScrollLeftStart(suggestionsContainerRef.current.scrollLeft);
+      suggestionsContainerRef.current.style.cursor = "grabbing";
+      suggestionsContainerRef.current.style.userSelect = "none"; // Prevent text selection while dragging
+    }
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      if (suggestionsContainerRef.current) {
+        suggestionsContainerRef.current.style.cursor = "grab";
+        suggestionsContainerRef.current.style.removeProperty("user-select");
+      }
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !suggestionsContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - suggestionsContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // The *2 makes it feel a bit more responsive
+    suggestionsContainerRef.current.scrollLeft = scrollLeftStart - walk;
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden">
       {/* Main Content Area - Adjusted width to full */}
@@ -599,7 +634,14 @@ function AiAsst() {
                 </span>
               </div>
             </div>
-            <div className="flex overflow-x-auto space-x-2 pb-3 scrollbar-thin scrollbar-thumb-[#B200FF]/50 scrollbar-track-transparent">
+            <div
+              ref={suggestionsContainerRef}
+              className="flex space-x-2 pb-3 overflow-x-hidden cursor-grab active:cursor-grabbing" // Removed overflow-x-auto and scrollbar classes, added overflow-x-hidden and cursor styles
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeaveOrUp}
+              onMouseUp={handleMouseLeaveOrUp}
+              onMouseMove={handleMouseMove}
+            >
               {recommendationsLoading ? (
                 <div className="px-3 py-1.5 text-sm bg-black/80 text-gray-400 rounded-md border border-[#B200FF]/30">
                   Loading suggestions...
