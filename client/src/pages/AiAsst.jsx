@@ -1,174 +1,162 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { subjects, subjectColorMap } from "../data/subjects";
+import { subjects } from "../data/subjects";
 
 // Redux actions and thunks
 import {
   sendMessage,
-  getSessions,
-  createSession,
-  deleteSession,
   getRecommendations,
   getAutocompleteSuggestions,
-  // setCurrentSession, // Not currently used but might be needed in future
-  // setChatHistory,    // Not currently used but might be needed in future
   addMessageToHistory,
   clearChatHistory,
-  updateSessions,
 } from "../store/slices/aiAssistantSlice";
 
 // Icons
-import { FiPlus, FiChevronRight, FiChevronLeft, FiSend } from "react-icons/fi";
-import { RiDeleteBin6Line } from "react-icons/ri";
+import { FiSend } from "react-icons/fi";
+import { RiDeleteBin6Line } from "react-icons/ri"; // Added import for delete icon
 
 function AiAsst() {
-  const { id } = useParams();
+  const { id } = useParams(); // id from URL, might be an existing session
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const {
-    sessions,
-    sessionsLoading,
     chatHistory,
-    // Use messageLoading in loading indicators
     messageLoading,
     recommendations,
     recommendationsLoading,
     autocompleteSuggestions,
-    // Use autocompleteLoading in loading indicators
     autocompleteLoading,
   } = useSelector((state) => state.aiAssistant);
 
-  // Refs
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  // Local states
   const [message, setMessage] = useState("");
   const [selectedSubject, setSelectedSubject] = useState(subjects[0].id);
-  const [isSidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("");
   const [completionText, setCompletionText] = useState("");
   const [showCompletions, setShowCompletions] = useState(false);
-  // Load sessions on component mount
+  const [currentSessionId, setCurrentSessionId] = useState(id || null);
+  const autoApplySuggestionTimeoutRef = useRef(null); // Ref for auto-apply timeout
+
   useEffect(() => {
-    dispatch(getSessions());
-  }, [dispatch]);
+    if (id && id !== currentSessionId) {
+      setCurrentSessionId(id);
+    }
+  }, [id, currentSessionId]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const createNewSession = useCallback(() => {
-    // Create a temporary session ID to return immediately
-    const tempSessionId = `session-${Date.now()}`;
+  const getSubjectName = useCallback((subjectId) => {
+    const subject = subjects.find((s) => s.id === subjectId);
+    return subject ? subject.name : "General";
+  }, []); // subjects is from import, so it's stable.
 
-    // Create a new temporary session object
-    const newSession = {
-      id: tempSessionId,
-      name: `New Study Session`,
-      lastUpdated: new Date().toISOString(),
-      subject: selectedSubject,
-    };
+  const acceptCompletion = useCallback(() => {
+    // Wrapped in useCallback
+    if (completionText) {
+      setMessage((prevMessage) => prevMessage + completionText);
+      setCompletionText("");
+      setShowCompletions(false);
+      if (inputRef.current) {
+        // Ensure inputRef.current is not null
+        inputRef.current.focus();
+      }
+      if (autoApplySuggestionTimeoutRef.current) {
+        // Clear auto-apply timer
+        clearTimeout(autoApplySuggestionTimeoutRef.current);
+        autoApplySuggestionTimeoutRef.current = null;
+      }
+    }
+  }, [completionText]); // Added completionText as dependency
 
-    // Update sessions in Redux with temporary session
-    dispatch(updateSessions([newSession, ...(sessions || [])]));
-
-    // Clear and initialize chat history
-    dispatch(clearChatHistory());
-    dispatch(
-      addMessageToHistory({
-        role: "assistant",
-        content: `Hello ${
-          user?.name || "there"
-        }! I'm your AI study assistant for ${getSubjectName(
-          selectedSubject
-        )}. How can I help you today?`,
-      })
-    );
-
-    // Also call the API to create a session and update when response is received
-    dispatch(createSession(user?._id || "anonymous"))
-      .then((action) => {
-        if (action.payload && !action.error) {
-          const apiSessionId = action.payload.id || action.payload.session_id;
-
-          // Update the URL if needed
-          if (apiSessionId && apiSessionId !== tempSessionId) {
-            navigate(`/ai-study-assistant/${apiSessionId}`, { replace: true });
+  // Session initialization and chat history loading
+  useEffect(() => {
+    if (currentSessionId) {
+      // Check if chat history is empty or belongs to a different session
+      if (
+        !chatHistory ||
+        chatHistory.length === 0 ||
+        (chatHistory.length > 0 &&
+          (!chatHistory[0].sessionId ||
+            chatHistory[0].sessionId !== currentSessionId))
+      ) {
+        dispatch(clearChatHistory()); // Clear previous session's chat
+        dispatch(
+          sendMessage({
+            sessionId: currentSessionId,
+            userQuery: "",
+            subject: selectedSubject,
+          })
+        ).then((action) => {
+          if (action.payload && action.payload.subject) {
+            setSelectedSubject(action.payload.subject);
           }
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to create new session:", err);
-        // We already have a temporary session, so no further action needed
-      });
-
-    return tempSessionId;
-  });
-
-  // Handle session initialization
-  useEffect(() => {
-    // Skip if sessions aren't loaded yet
-    if (sessionsLoading || !sessions || sessions.length === 0) return;
-
-    if (id) {
-      const session = sessions.find((s) => s.id === id);
-      if (session) {
-        // Set subject from existing session
-        setSelectedSubject(session.subject || subjects[0].id);
-
-        // Fetch chat history if not loaded
-        if (!chatHistory || chatHistory.length === 0) {
-          dispatch(
-            sendMessage({
-              sessionId: id,
-              userQuery: "", // Empty query to just get history
-              subject: session.subject || subjects[0].id,
-            })
-          );
-        }
-      } else {
-        // If session not found, create a new one
-        const newSessionId = createNewSession();
-        navigate(`/ai-study-assistant/${newSessionId}`);
+          // If history is empty after "send message" (which fetches history)
+          // then add a welcome message.
+          if (
+            action.payload &&
+            action.payload.chatHistory &&
+            action.payload.chatHistory.length === 0
+          ) {
+            dispatch(
+              addMessageToHistory({
+                role: "assistant",
+                content: `Welcome back to your session on ${getSubjectName(
+                  selectedSubject
+                )}! Ask me anything.`,
+                sessionId: currentSessionId,
+              })
+            );
+          }
+        });
       }
     } else {
-      // No ID in URL, create new session
-      const newSessionId = createNewSession();
-      navigate(`/ai-study-assistant/${newSessionId}`);
+      // No active session, clear any existing chat history and add welcome message
+      dispatch(clearChatHistory());
+      dispatch(
+        addMessageToHistory({
+          role: "assistant",
+          content: `Hello ${
+            user?.name || "there"
+          }! I'm your AI study assistant for ${getSubjectName(
+            selectedSubject
+          )}. How can I help you today?`,
+        })
+      );
     }
-  }, [
-    id,
-    sessions,
-    sessionsLoading,
-    navigate,
-    dispatch,
-    chatHistory,
-    createNewSession,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSessionId, dispatch, user?.name, getSubjectName]);
 
   useEffect(() => {
-    // Scroll to bottom when chat history updates
     scrollToBottom();
   }, [chatHistory]);
 
-  // Load recommendations when subject changes
   useEffect(() => {
     if (selectedSubject) {
       dispatch(getRecommendations({ subject: selectedSubject }));
     }
   }, [selectedSubject, dispatch]);
 
-  // Auto-completion effect for text input with debouncing
   useEffect(() => {
     if (!message) {
       setCompletionText("");
       setShowCompletions(false);
+      if (autoApplySuggestionTimeoutRef.current) {
+        // Clear auto-apply timer
+        clearTimeout(autoApplySuggestionTimeoutRef.current);
+        autoApplySuggestionTimeoutRef.current = null;
+      }
       return;
     }
 
-    // Create debounced function
+    // Clear previous auto-apply timer when message changes
+    if (autoApplySuggestionTimeoutRef.current) {
+      clearTimeout(autoApplySuggestionTimeoutRef.current);
+      autoApplySuggestionTimeoutRef.current = null;
+    }
+
     const debounceTimeout = setTimeout(() => {
-      // Only get suggestions if user has typed enough characters
       if (message.length > 3) {
         dispatch(
           getAutocompleteSuggestions({
@@ -177,19 +165,27 @@ function AiAsst() {
           })
         );
       }
-    }, 500); // 500ms delay
+    }, 1500); // Increased debounce time to 1500ms
 
-    // Use any available autocomplete suggestions
     if (autocompleteSuggestions && autocompleteSuggestions.length > 0) {
       const userText = message.toLowerCase();
-      // Find a suggestion that starts with the user's text
       const matchingSuggestion = autocompleteSuggestions.find((suggestion) =>
         suggestion.toLowerCase().startsWith(userText)
       );
 
       if (matchingSuggestion) {
-        setCompletionText(matchingSuggestion.substring(userText.length));
+        const remainingCompletion = matchingSuggestion.substring(
+          userText.length
+        );
+        setCompletionText(remainingCompletion);
         setShowCompletions(true);
+
+        // Set up auto-apply timer if there's a completion
+        if (remainingCompletion) {
+          autoApplySuggestionTimeoutRef.current = setTimeout(() => {
+            acceptCompletion();
+          }, 2000); // Auto-apply after 2 seconds of pause
+        }
       } else {
         setCompletionText("");
         setShowCompletions(false);
@@ -199,27 +195,42 @@ function AiAsst() {
       setShowCompletions(false);
     }
 
-    // Cleanup timeout on component unmount or when dependencies change
-    return () => clearTimeout(debounceTimeout);
-  }, [message, autocompleteSuggestions, dispatch, selectedSubject]);
+    return () => {
+      clearTimeout(debounceTimeout);
+      if (autoApplySuggestionTimeoutRef.current) {
+        // Clear auto-apply timer on cleanup
+        clearTimeout(autoApplySuggestionTimeoutRef.current);
+        autoApplySuggestionTimeoutRef.current = null;
+      }
+    };
+  }, [
+    message,
+    autocompleteSuggestions,
+    dispatch,
+    selectedSubject,
+    acceptCompletion,
+  ]); // Added acceptCompletion to dependencies
 
-  // Message sending handler
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmedMessage = message.trim();
+    if (!trimmedMessage) return;
 
-    if (!trimmedMessage || !id) return;
-
-    // Add user message to chat locally
-    const userMessage = { role: "user", content: trimmedMessage };
+    const userMessage = {
+      role: "user",
+      content: trimmedMessage,
+      sessionId: currentSessionId,
+    };
     dispatch(addMessageToHistory(userMessage));
-
-    // Clear input field
     setMessage("");
     setCompletionText("");
     setShowCompletions(false);
+    if (autoApplySuggestionTimeoutRef.current) {
+      // Clear auto-apply timer
+      clearTimeout(autoApplySuggestionTimeoutRef.current);
+      autoApplySuggestionTimeoutRef.current = null;
+    }
 
-    // Set loading state with steps
     const loadingSteps = [
       "Analyzing question...",
       "Searching knowledge base...",
@@ -227,16 +238,16 @@ function AiAsst() {
     ];
     let stepIndex = 0;
     setIsLoading(true);
+    setLoadingText(loadingSteps[stepIndex]);
 
     const loadingInterval = setInterval(() => {
-      setLoadingText(loadingSteps[stepIndex]);
       stepIndex = (stepIndex + 1) % loadingSteps.length;
+      setLoadingText(loadingSteps[stepIndex]);
     }, 800);
 
-    // Send message to API
     dispatch(
       sendMessage({
-        sessionId: id,
+        sessionId: currentSessionId,
         userQuery: trimmedMessage,
         subject: selectedSubject,
       })
@@ -244,76 +255,44 @@ function AiAsst() {
       clearInterval(loadingInterval);
       setIsLoading(false);
       setLoadingText("");
-
-      if (!action.error) {
-        // Add AI response to chat
-        const aiResponse = {
-          role: "assistant",
-          content: action.payload.response,
-        };
-        dispatch(addMessageToHistory(aiResponse));
-
-        // Update session's lastUpdated time
-        const updatedSessions = sessions.map((session) =>
-          session.id === id
-            ? { ...session, lastUpdated: new Date().toISOString() }
-            : session
+      if (!action.error && action.payload) {
+        if (
+          action.payload.sessionId &&
+          action.payload.sessionId !== currentSessionId
+        ) {
+          setCurrentSessionId(action.payload.sessionId);
+          navigate(`/ai-study-assistant/${action.payload.sessionId}`, {
+            replace: true,
+          });
+        }
+      } else {
+        dispatch(
+          addMessageToHistory({
+            role: "assistant",
+            content: "Sorry, I encountered an error. Please try again.",
+            sessionId: currentSessionId,
+          })
         );
-        dispatch(updateSessions(updatedSessions));
       }
     });
   };
-  const updateSessionLastUpdated = (sessionId) => {
-    const updatedSessions = sessions.map((session) =>
-      session.id === sessionId
-        ? { ...session, lastUpdated: new Date().toISOString() }
-        : session
-    );
-    dispatch(updateSessions(updatedSessions));
-  };
-  const handleDeleteSession = (sessionId, e) => {
-    e.stopPropagation();
 
-    // Delete the session via API
-    dispatch(deleteSession({ userId: user?._id || "anonymous", session_id: sessionId }))
-      .then(() => {
-        // If current session is deleted, create a new one
-        if (id === sessionId) {
-          const newSessionId = createNewSession();
-          navigate(`/ai-study-assistant/${newSessionId}`);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to delete session:", err);
-        // Fallback to local session deletion
-        const updatedSessions = sessions.filter(
-          (session) => session.id !== sessionId
-        );
-        dispatch(updateSessions(updatedSessions));
-
-        if (id === sessionId) {
-          const newSessionId = createNewSession();
-          navigate(`/ai-study-assistant/${newSessionId}`);
-        }
-      });
-  };
-
-  const handleNewSession = () => {
-    const newSessionId = createNewSession();
-    navigate(`/ai-study-assistant/${newSessionId}`);
-  };
-
-  const handleSessionClick = (sessionId) => {
-    navigate(`/ai-study-assistant/${sessionId}`);
-  };
   const handleSuggestionClick = (suggestion) => {
-    if (!id) return;
-
-    // Add user message to chat locally
-    const userMessage = { role: "user", content: suggestion };
+    const userMessage = {
+      role: "user",
+      content: suggestion,
+      sessionId: currentSessionId,
+    };
     dispatch(addMessageToHistory(userMessage));
+    setMessage("");
+    setCompletionText("");
+    setShowCompletions(false);
+    if (autoApplySuggestionTimeoutRef.current) {
+      // Clear auto-apply timer
+      clearTimeout(autoApplySuggestionTimeoutRef.current);
+      autoApplySuggestionTimeoutRef.current = null;
+    }
 
-    // Set loading state with steps
     const loadingSteps = [
       "Analyzing question...",
       "Searching knowledge base...",
@@ -321,16 +300,16 @@ function AiAsst() {
     ];
     let stepIndex = 0;
     setIsLoading(true);
+    setLoadingText(loadingSteps[stepIndex]);
 
     const loadingInterval = setInterval(() => {
-      setLoadingText(loadingSteps[stepIndex]);
       stepIndex = (stepIndex + 1) % loadingSteps.length;
+      setLoadingText(loadingSteps[stepIndex]);
     }, 800);
 
-    // Send message to API
     dispatch(
       sendMessage({
-        sessionId: id,
+        sessionId: currentSessionId,
         userQuery: suggestion,
         subject: selectedSubject,
       })
@@ -338,201 +317,81 @@ function AiAsst() {
       clearInterval(loadingInterval);
       setIsLoading(false);
       setLoadingText("");
-
-      if (!action.error) {
-        // Add AI response to chat
-        const aiResponse = {
-          role: "assistant",
-          content: action.payload.response,
-        };
-        dispatch(addMessageToHistory(aiResponse));
-
-        // Update session's lastUpdated time
-        updateSessionLastUpdated(id);
+      if (!action.error && action.payload) {
+        if (
+          action.payload.sessionId &&
+          action.payload.sessionId !== currentSessionId
+        ) {
+          setCurrentSessionId(action.payload.sessionId);
+          navigate(`/ai-study-assistant/${action.payload.sessionId}`, {
+            replace: true,
+          });
+        }
+      } else {
+        dispatch(
+          addMessageToHistory({
+            role: "assistant",
+            content: "Sorry, I encountered an error processing your request.",
+            sessionId: currentSessionId,
+          })
+        );
       }
     });
   };
+
   const handleSubjectChange = (e) => {
     const newSubject = e.target.value;
     setSelectedSubject(newSubject);
-
-    // Update session's subject if we have an active session
-    if (id && sessions) {
-      const updatedSessions = sessions.map((session) =>
-        session.id === id ? { ...session, subject: newSubject } : session
-      );
-      dispatch(updateSessions(updatedSessions));
-    }
-  };
-
-  const acceptCompletion = () => {
-    if (completionText) {
-      const words = message.trim().split(" ");
-      const firstWord = words[0].toLowerCase();
-      setMessage(firstWord + completionText);
-      setCompletionText("");
-      setShowCompletions(false);
-      inputRef.current.focus();
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getSubjectName = (subjectId) => {
-    const subject = subjects.find((s) => s.id === subjectId);
-    return subject ? subject.name : "General";
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const handleClearChat = () => {
+    dispatch(clearChatHistory());
+    setMessage("");
+    setCompletionText("");
+    setShowCompletions(false);
+    if (autoApplySuggestionTimeoutRef.current) {
+      // Clear auto-apply timer
+      clearTimeout(autoApplySuggestionTimeoutRef.current);
+      autoApplySuggestionTimeoutRef.current = null;
+    }
+    setCurrentSessionId(null);
+    navigate("/ai-study-assistant", { replace: true });
+    dispatch(
+      addMessageToHistory({
+        role: "assistant",
+        content: `Chat cleared. Hello ${
+          user?.name || "there"
+        }! How can I help you with ${getSubjectName(selectedSubject)}?`,
+      })
+    );
+  };
+
   return (
     <div className="flex h-full w-full overflow-hidden">
-      {/* Sidebar */}
+      {/* Main Content Area - Adjusted width to full */}
       <div
-        className={`h-full bg-black bg-opacity-70 flex flex-col border-r border-[#B200FF]/20 backdrop-blur-md transition-all duration-300 ${
-          isSidebarCollapsed ? "w-16" : "w-64"
-        }`}
-        onMouseEnter={() => setSidebarCollapsed(false)}
-        onMouseLeave={() => setSidebarCollapsed(true)}
-        style={{
-          boxShadow: "4px 0 20px rgba(0, 0, 0, 0.5)",
-        }}
-      >
-        {/* New Chat Button - aligned with header (72px height) */}
-        <div
-          className="p-4 border-b border-[#B200FF]/20"
-          style={{ height: "10%", display: "flex", alignItems: "center" }}
-        >
-          <button
-            onClick={handleNewSession}
-            className="flex items-center justify-center w-full bg-gradient-to-r from-[#B200FF] to-[#9000CC] hover:from-[#A000E6] hover:to-[#7000B5] text-white rounded-md py-2 px-3 transition-all duration-300 shadow-md shadow-[#B200FF]/30 group"
-          >
-            <FiPlus className="text-lg group-hover:scale-110 transition-transform" />
-            {!isSidebarCollapsed && (
-              <span className="ml-2 font-medium">New Session</span>
-            )}
-          </button>
-        </div>{" "}
-        {/* Sessions List */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#B200FF]/50 scrollbar-track-transparent">
-          {sessionsLoading ? (
-            <div className="flex justify-center items-center h-20 text-gray-400">
-              Loading sessions...
-            </div>
-          ) : sessions && sessions.length > 0 ? (
-            sessions.map((session) => (
-              <div
-                key={session.id}
-                onClick={() => handleSessionClick(session.id)}
-                className={`flex items-center justify-between p-3 cursor-pointer transition hover:bg-black hover:bg-opacity-20 ${
-                  id === session.id
-                    ? "bg-black bg-opacity-30 border-l-2 border-[#B200FF]"
-                    : ""
-                }`}
-              >
-                <div className="flex items-center overflow-hidden">
-                  {/* Subject color indicator */}
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        subjectColorMap[session.subject] || "bg-gray-400"
-                      } shadow-md shadow-[#B200FF]/30 ring-1 ring-white/20`}
-                      style={{
-                        animation:
-                          id === session.id ? "pulse 2s infinite" : "none",
-                        boxShadow:
-                          id === session.id
-                            ? "0 0 5px 2px rgba(178, 0, 255, 0.3)"
-                            : "",
-                      }}
-                    ></div>
-                  </div>
-
-                  {!isSidebarCollapsed && (
-                    <div className="ml-3 truncate">
-                      <div className="text-white truncate text-sm">
-                        {session.name}
-                      </div>
-                      <div className="text-gray-400 text-xs">
-                        {formatDate(session.lastUpdated)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {!isSidebarCollapsed && (
-                  <button
-                    onClick={(e) => handleDeleteSession(session.id, e)}
-                    className="text-gray-400 hover:text-red-500 transition"
-                  >
-                    <RiDeleteBin6Line />
-                  </button>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="flex justify-center items-center h-20 text-gray-400">
-              No sessions found
-            </div>
-          )}
-        </div>
-        {/* Sidebar Toggle - aligned with input bar (145px height) */}
-        <div
-          className="p-3 border-t border-[#B200FF]/20"
-          style={{
-            height: "25%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <button
-            onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
-            className="flex items-center justify-center w-full text-gray-400 hover:text-[#B200FF] transition-all duration-300 hover:bg-black/30 py-1.5 rounded"
-          >
-            {isSidebarCollapsed ? (
-              <div className="flex items-center">
-                <FiChevronRight className="animate-pulse" />
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <FiChevronLeft />
-                <span className="text-xs ml-1">Collapse</span>
-              </div>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div
-        className="flex-1 flex flex-col bg-black bg-opacity-20"
+        className="flex-1 flex flex-col bg-black bg-opacity-20 w-full"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='%23b200ff' fill-opacity='0.03'%3E%3Cpath d='M0 0h40v40H0V0zm20 20c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z'/%3E%3C/g%3E%3C/svg%3E\")",
           backgroundAttachment: "fixed",
         }}
       >
-        {" "}
-        {/* Header - 72px height */}
+        {/* Header */}
         <div
           className="bg-gradient-to-b from-black/95 to-black/80 p-4 border-b border-[#B200FF]/40 backdrop-blur-md shadow-lg shadow-black/40"
           style={{
             height: "10%",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
           }}
         >
-          <div className="flex justify-between items-center w-full">
+          <div className="flex items-center">
             <div>
               <h2 className="font-medium text-white text-lg flex items-center">
                 <span
@@ -549,15 +408,25 @@ function AiAsst() {
                 Your personalized learning companion
               </p>
             </div>
-            <div className="text-xs font-medium bg-gradient-to-r from-[#B200FF]/20 to-[#8000CC]/20 px-4 py-1.5 rounded-full border border-[#B200FF]/40 backdrop-blur-md shadow-inner shadow-[#B200FF]/5">
+          </div>
+          <div className="flex items-center">
+            <div className="text-xs font-medium bg-gradient-to-r from-[#B200FF]/20 to-[#8000CC]/20 px-4 py-1.5 rounded-full border border-[#B200FF]/40 backdrop-blur-md shadow-inner shadow-[#B200FF]/5 mr-4">
               <span className="mr-1 text-[#B200FF]">Subject:</span>
               <span className="text-white font-semibold">
                 {getSubjectName(selectedSubject)}
               </span>
             </div>
+            <button
+              onClick={handleClearChat}
+              className="text-gray-300 hover:text-red-500 p-2 rounded-md transition-all duration-300 focus:outline-none"
+              title="Clear Chat" // Added title for accessibility
+            >
+              <RiDeleteBin6Line size={24} />{" "}
+              {/* Icon instead of text, adjusted size */}
+            </button>
           </div>
         </div>
-        {/* Messages Area - Flex-grow */}
+        {/* Messages Area */}
         <div
           className="h-[65%] overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[#B200FF]/40 scrollbar-track-transparent"
           style={{
@@ -570,20 +439,18 @@ function AiAsst() {
             flexDirection: "column",
           }}
         >
-          {" "}
-          {chatHistory.map((msg, index) => (
+          {chatHistory.map((msg) => (
             <div
-              key={index}
+              key={msg.id} // Changed from key={index} to key={msg.id}
               className={`flex ${
                 msg.role === "user" ? "justify-end" : "justify-start"
               } mb-6`}
             >
-              {" "}
               {msg.role === "assistant" && (
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B200FF]/80 to-[#8000CC]/80 flex items-center justify-center mr-2 mt-1 shadow-md shadow-[#B200FF]/30">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B200FF]/80 to-[#8000CC]/80 flex items-center justify-center mr-2 mt-1 shadow-md shadow-[#B200FF]/30 flex-shrink-0">
                   <span className="text-white text-sm font-semibold">AI</span>
                 </div>
-              )}{" "}
+              )}
               <div
                 className={`max-w-[70%] rounded-lg px-4 py-3 ${
                   msg.role === "user"
@@ -595,7 +462,7 @@ function AiAsst() {
                     ? {
                         boxShadow: "0 0 15px rgba(178, 0, 255, 0.4)",
                         position: "relative",
-                        transform: "translateZ(0)", // Hardware acceleration
+                        transform: "translateZ(0)",
                         borderRadius: "18px 18px 4px 18px",
                       }
                     : {
@@ -614,20 +481,19 @@ function AiAsst() {
                 >
                   {msg.content}
                 </div>
-              </div>{" "}
+              </div>
               {msg.role === "user" && (
-                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#B200FF] to-[#9000CC] flex items-center justify-center ml-2 mt-1 shadow-md shadow-[#B200FF]/30 border border-white/10">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#B200FF] to-[#9000CC] flex items-center justify-center ml-2 mt-1 shadow-md shadow-[#B200FF]/30 border border-white/10 flex-shrink-0">
                   <span className="text-white text-sm font-semibold">
                     {user?.name?.charAt(0)?.toUpperCase() || "U"}
                   </span>
                 </div>
               )}
             </div>
-          ))}{" "}
-          {/* Loading indicator */}
+          ))}
           {isLoading && (
             <div className="flex justify-start mb-4">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B200FF]/90 to-[#8000CC]/90 flex items-center justify-center mr-2 mt-1 shadow-lg shadow-[#B200FF]/30">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B200FF]/90 to-[#8000CC]/90 flex items-center justify-center mr-2 mt-1 shadow-lg shadow-[#B200FF]/30 flex-shrink-0">
                 <span className="text-white text-sm font-semibold">AI</span>
               </div>
               <div className="max-w-[70%] rounded-lg px-4 py-3 bg-gradient-to-b from-black/90 to-black/70 border border-[#B200FF]/30 backdrop-blur-sm shadow-md">
@@ -661,15 +527,15 @@ function AiAsst() {
                 </div>
               </div>
             </div>
-          )}{" "}
+          )}
           <div ref={messagesEndRef} /> {/* Scroll anchor */}
         </div>
-        {/* Input Area - 145px height */}
+        {/* Input Area */}
         <div
           className="border-t border-[#B200FF]/30 bg-gradient-to-t from-black to-black/80 backdrop-blur-md shadow-lg shadow-black/40"
           style={{ height: "25%", display: "flex", flexDirection: "column" }}
         >
-          {/* Suggestions */}{" "}
+          {/* Suggestions */}
           <div
             className="px-4 pt-3"
             style={{
@@ -678,7 +544,6 @@ function AiAsst() {
               borderTop: "1px solid rgba(178, 0, 255, 0.15)",
             }}
           >
-            {/* Add loading indicator for recommendations */}
             {recommendationsLoading && (
               <div className="flex items-center mb-2 text-gray-400">
                 <div className="w-2 h-2 bg-[#B200FF] rounded-full animate-pulse mr-1"></div>
@@ -707,7 +572,7 @@ function AiAsst() {
                   Suggested questions
                 </span>
               </div>
-            </div>{" "}
+            </div>
             <div className="flex overflow-x-auto space-x-2 pb-3 scrollbar-thin scrollbar-thumb-[#B200FF]/50 scrollbar-track-transparent">
               {recommendationsLoading ? (
                 <div className="px-3 py-1.5 text-sm bg-black/80 text-gray-400 rounded-md border border-[#B200FF]/30">
@@ -718,7 +583,7 @@ function AiAsst() {
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="px-3 py-1.5 text-sm bg-gradient-to-r from-black/80 to-[#B200FF]/10 text-gray-200 rounded-md border border-[#B200FF]/30 hover:border-[#B200FF]/70 hover:text-white hover:shadow-lg hover:shadow-[#B200FF]/30 transition-all duration-300 whitespace-nowrap transform hover:translate-y-[-1px]"
+                    className="px-3 py-1.5 text-sm bg-gradient-to-r from-black/80 to-[#B200FF]/10 text-gray-200 rounded-md border border-[#B200FF]/30 hover:border-[#B200FF]/70 hover:text-white hover:shadow-lg hover:shadow-[#B200FF]/30 transition-all duration-300 whitespace-nowrap" // Removed transform hover:translate-y-[-1px]
                     style={{
                       boxShadow: "0 2px 4px rgba(178, 0, 255, 0.1)",
                     }}
@@ -732,15 +597,16 @@ function AiAsst() {
                 </div>
               )}
             </div>
-          </div>{" "}
+          </div>
           {/* Message Input */}
           <div className="p-4 bg-gradient-to-b from-[#B200FF]/10 to-black/90">
-            <form onSubmit={handleSubmit} className="flex items-start gap-2">
-              {/* Subject dropdown */}{" "}
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+              {" "}
+              {/* Changed items-start to items-center */}
               <select
                 value={selectedSubject}
                 onChange={handleSubjectChange}
-                className="bg-gradient-to-b from-black/90 to-[#190023]/90 text-white border border-[#B200FF]/50 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B200FF]/80 min-w-[120px] transition-all duration-300 hover:border-[#B200FF]/70 font-medium cursor-pointer"
+                className="h-12 bg-gradient-to-b from-black/90 to-[#190023]/90 text-white border border-[#B200FF]/50 rounded-md px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B200FF]/80 min-w-[120px] transition-all duration-300 hover:border-[#B200FF]/70 font-medium cursor-pointer" // Added h-12, changed py-2.5 to py-3
                 style={{
                   boxShadow:
                     "0 0 15px rgba(178, 0, 255, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.8)",
@@ -756,9 +622,7 @@ function AiAsst() {
                   </option>
                 ))}
               </select>
-              {/* Input with auto-completion */}
               <div className="flex-1 relative">
-                {" "}
                 <input
                   ref={inputRef}
                   type="text"
@@ -771,7 +635,7 @@ function AiAsst() {
                     }
                   }}
                   placeholder="Ask any question..."
-                  className="w-full border bg-black/90 border-[#B200FF]/50 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#B200FF]/80 text-white transition-all duration-300 hover:border-[#B200FF]/70 placeholder-gray-400/70 font-medium"
+                  className="h-12 w-full border bg-black/90 border-[#B200FF]/50 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#B200FF]/80 text-white transition-all duration-300 hover:border-[#B200FF]/70 placeholder-gray-400/70 font-medium" // Added h-12
                   style={{
                     boxShadow:
                       "0 0 15px rgba(178, 0, 255, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.8)",
@@ -779,7 +643,7 @@ function AiAsst() {
                       "linear-gradient(to bottom right, rgba(25,0,30,0.9) 0%, rgba(0,0,0,0.95) 100%)",
                     letterSpacing: "0.01em",
                   }}
-                />{" "}
+                />
                 {autocompleteLoading && message.length > 3 ? (
                   <span className="absolute right-3 top-[10px] text-xs text-gray-400 pointer-events-none bg-black bg-opacity-70 px-2 py-0.5 rounded flex items-center">
                     <div className="w-1.5 h-1.5 bg-[#B200FF] rounded-full animate-pulse mr-1"></div>
@@ -795,9 +659,9 @@ function AiAsst() {
                 ) : (
                   showCompletions && (
                     <>
-                      <span className="absolute left-[8px] top-[10px] text-gray-500 pointer-events-none">
-                        {message}
-                        <span className="text-gray-500">{completionText}</span>
+                      <span className="absolute left-[16px] top-[13px] text-gray-500 pointer-events-none pr-10">
+                        <span className="opacity-0">{message}</span>
+                        <span>{completionText}</span>
                       </span>
                       <span className="absolute right-3 top-[10px] text-xs text-gray-500 pointer-events-none bg-black bg-opacity-70 px-1.5 py-0.5 rounded">
                         Tab ↹
@@ -805,7 +669,7 @@ function AiAsst() {
                     </>
                   )
                 )}
-              </div>{" "}
+              </div>
               <button
                 type="submit"
                 disabled={isLoading || messageLoading}
@@ -838,7 +702,7 @@ function AiAsst() {
                 ) : (
                   <FiSend className="text-lg relative z-10 group-hover:scale-125 transition-transform" />
                 )}
-                <span className="absolute inset-0 bg-gradient-to-r from-[#B200FF]/0 via-white/20 to-[#B200FF]/0 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>{" "}
+                <span className="absolute inset-0 bg-gradient-to-r from-[#B200FF]/0 via-white/20 to-[#B200FF]/0 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
               </button>
             </form>
           </div>
@@ -847,7 +711,5 @@ function AiAsst() {
     </div>
   );
 }
-
-// We're using the imported subjectColorMap from "../data/subjects"
 
 export default AiAsst;

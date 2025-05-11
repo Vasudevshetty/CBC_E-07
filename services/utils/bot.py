@@ -14,7 +14,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.environ['HF_TOKEN'] = os.getenv('HF_TOKEN')
 
 def get_model():
-    groq_api_key1 = os.getenv("GROQ_API_KEY1")
+    groq_api_key1 = os.getenv("GROQ_API_KEY4")
     model = ChatGroq(groq_api_key=groq_api_key1, model_name="llama-3.3-70b-versatile")
     embeddings = HuggingFaceEmbeddings(model_name='all-MiniLM-L6-v2')
     return model, embeddings
