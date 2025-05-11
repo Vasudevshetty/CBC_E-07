@@ -4,8 +4,13 @@ import api from "../services/api";
 import toast, { Toaster } from "react-hot-toast";
 
 // Create a Quiz component within the same file for simplicity
-function Quiz({ questions, onComplete, quizType }) {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+function Quiz({
+  questions,
+  onComplete,
+  quizType,
+  currentQuestionIndex,
+  setCurrentQuestionIndex,
+}) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [timeLeft, setTimeLeft] = useState(15);
@@ -30,17 +35,28 @@ function Quiz({ questions, onComplete, quizType }) {
       }
 
       setTimeout(() => {
-        if (isLastQuestion) {
+        if (currentQuestionIndex >= 4) {
+          setCurrentQuestionIndex(0); // Reset to 0 if index exceeds 4
+        } else if (isLastQuestion) {
           onComplete(answers);
         } else {
-          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
         }
       }, 1000);
     };
-  }, [currentQuestionIndex, isLastQuestion, answers, onComplete]);
+  }, [
+    currentQuestionIndex,
+    isLastQuestion,
+    answers,
+    onComplete,
+    setCurrentQuestionIndex,
+  ]);
 
   useEffect(() => {
-    setTimeLeft(15);
+    // Restart time only for new questions, not when an option is selected
+    if (answers[currentQuestionIndex] === null) {
+      setTimeLeft(15);
+    }
     setSelectedOption(answers[currentQuestionIndex]);
   }, [currentQuestionIndex, answers]);
 
@@ -64,7 +80,7 @@ function Quiz({ questions, onComplete, quizType }) {
   };
 
   const handleNextQuestion = () => {
-    setCurrentQuestionIndex(currentQuestionIndex + 1);
+    setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
   };
 
   const handleSubmit = () => {
@@ -224,6 +240,8 @@ function Assessment() {
   const [aptitudeQuestions, setAptitudeQuestions] = useState([]);
   const [videoAnswers, setVideoAnswers] = useState([]);
   const [learnerType, setLearnerType] = useState(null);
+  const resetIndexRef = useRef(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   useEffect(() => {
     setSelectedVideo(video.url);
@@ -263,8 +281,14 @@ function Assessment() {
     try {
       // Fetch aptitude questions
       const response = await api.get("/services/aptitude");
+      setCurrentQuestionIndex(0);
       setAptitudeQuestions(response.data.questions);
       setCurrentPhase("aptitudeQuiz");
+
+      // Reset the question index for aptitude quiz
+      if (resetIndexRef.current) {
+        resetIndexRef.current();
+      }
     } catch (error) {
       console.error("Error fetching aptitude questions:", error);
       toast.error("Failed to fetch aptitude questions");
@@ -274,6 +298,7 @@ function Assessment() {
   };
 
   const handleAptitudeAnswersSubmit = async (answers) => {
+    console.log("Submitting aptitude answers:", answers); // Debugging log
     setLoading(true);
 
     try {
@@ -288,18 +313,23 @@ function Assessment() {
         if (answers[i] === q.correct_answer) aptitudeCorrect++;
       });
 
-      // Submit assessment results
-      const response = await api.post("/services/assessment", {
-        video_correct: videoCorrect,
-        aptitude_correct: aptitudeCorrect,
-      });
+      console.log("Video correct answers:", videoCorrect); // Debugging log
+      console.log("Aptitude correct answers:", aptitudeCorrect); // Debugging log
 
-      setLearnerType(response.data.learner_type_assessment);
-      console.log(
-        "Learner Type Assessment:",
-        response.data.learner_type_assessment
+      // Submit assessment results
+      const response = await api.post(
+        "/services/assessment",
+        {},
+        {
+          params: {
+            video_correct: videoCorrect,
+            aptitude_correct: aptitudeCorrect,
+          },
+        }
       );
 
+      console.log("Assessment submission response:", response.data); // Debugging log
+      setLearnerType(response.data.learner_type_assessment);
       setCurrentPhase("results");
     } catch (error) {
       console.error("Error submitting assessment:", error);
@@ -387,6 +417,8 @@ function Assessment() {
             questions={videoQuestions}
             onComplete={handleVideoAnswersSubmit}
             quizType="visual"
+            currentQuestionIndex={currentQuestionIndex}
+            setCurrentQuestionIndex={setCurrentQuestionIndex}
           />
         );
 
@@ -396,6 +428,9 @@ function Assessment() {
             questions={aptitudeQuestions}
             onComplete={handleAptitudeAnswersSubmit}
             quizType="aptitude"
+            onResetIndex={(reset) => (resetIndexRef.current = reset)}
+            currentQuestionIndex={currentQuestionIndex}
+            setCurrentQuestionIndex={setCurrentQuestionIndex}
           />
         );
 
