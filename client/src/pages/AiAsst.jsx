@@ -275,7 +275,9 @@ function AiAsst() {
     e.stopPropagation();
 
     // Delete the session via API
-    dispatch(deleteSession({ userId: user?._id || "anonymous", session_id: sessionId }))
+    dispatch(
+      deleteSession({ userId: user?._id || "anonymous", session_id: sessionId })
+    )
       .then(() => {
         // If current session is deleted, create a new one
         if (id === sessionId) {
@@ -514,7 +516,9 @@ function AiAsst() {
 
       {/* Main Content Area */}
       <div
-        className="flex-1 flex flex-col bg-black bg-opacity-20"
+        className={`flex-1 flex flex-col bg-black bg-opacity-20 ${
+          isSidebarCollapsed ? "w-[calc(100%_-_16rem)]" : "w-[calc(100%_-_64rem)]"
+        }`}
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='%23b200ff' fill-opacity='0.03'%3E%3Cpath d='M0 0h40v40H0V0zm20 20c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z'/%3E%3C/g%3E%3C/svg%3E\")",
