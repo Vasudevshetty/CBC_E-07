@@ -52,6 +52,20 @@ const userSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    coins: {
+      type: Number,
+      default: 0,
+    },
+    lastLogin: {
+      type: Date,
+    },
+    dailyStreak: {
+      type: Number,
+      default: 0,
+    },
+    lastStreakLogin: {
+      type: Date,
+    },
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
