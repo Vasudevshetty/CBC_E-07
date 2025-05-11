@@ -4,6 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import Streaks from "../components/Streaks";
 import { Link } from "react-router-dom";
+import "../utils/animations.css"; // Import the animations
 
 function CircularProgress({ percentage }) {
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
@@ -146,6 +147,31 @@ function Dashboard() {
             </p>
           </div>
         </div>
+        {/* Gamification Stats in Header */}
+        <div className="flex items-center space-x-6 mr-4">
+          {/* Coins Display */}
+          <div
+            className="flex items-center text-white"
+            title={`Coins: ${user?.coins || 0}`}
+          >
+            <span className="text-yellow-400 mr-1 text-2xl transition-transform duration-200 hover:scale-125 cursor-default animate-coin-rotate">
+              🪙
+            </span>
+            <span className="font-semibold text-lg">{user?.coins || 0}</span>
+          </div>
+          {/* Streak Display */}
+          <div
+            className="flex items-center text-white"
+            title={`Streak: ${user?.dailyStreak || 0} Days`}
+          >
+            <span className="text-orange-400 mr-1 text-2xl cursor-default animate-fire-wave">
+              🔥
+            </span>
+            <span className="font-semibold text-lg">
+              {user?.dailyStreak || 0}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Banner Section */}
@@ -219,7 +245,6 @@ function Dashboard() {
                     to={item.link}
                     className="flex items-start space-x-4 group"
                   >
-                    <span className="text-3xl mt-1">{item.icon}</span>
                     <div>
                       <h3 className="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors duration-300">
                         <span className="font-bold text-purple-400">
