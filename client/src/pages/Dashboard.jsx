@@ -212,14 +212,14 @@ function Dashboard() {
                   type: "New Course",
                   title: "Introduction to Quantum Computing",
                   description: "Jump into a new learning adventure.",
-                  link: "/courses/quantum-computing",
+                  link: "/ai-study-assistant/quantum-computing",
                   icon: "🌌",
                 },
                 {
                   type: "Popular Workshop",
                   title: "Mastering Python for Data Science",
                   description: "Join this in-demand workshop.",
-                  link: "/workshops/python-data-science",
+                  link: "/ai-study-assitant/python-data-science",
                   icon: "🐍",
                 },
                 {
