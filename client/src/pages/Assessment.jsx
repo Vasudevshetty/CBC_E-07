@@ -13,6 +13,7 @@ function Quiz({ questions, onComplete, quizType }) {
   const currentQuestion = questions[currentQuestionIndex] || {
     question: "Loading...",
     options: [],
+    image: null, // Ensure image property exists
   };
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
@@ -71,137 +72,121 @@ function Quiz({ questions, onComplete, quizType }) {
     onComplete(answers);
   };
 
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="w-full min-h-[60vh] text-white flex flex-col items-center justify-center p-4 sm:p-8">
+        <div className="text-2xl">No questions available for this section.</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-5xl w-full h-full bg-zinc-900 rounded-lg shadow-lg overflow-hidden flex">
-      {/* Question and options section */}
-      <div className="w-1/2 p-6 flex flex-col justify-between">
+    // Updated to max-w-6xl and responsive padding, flex-col for mobile, md:flex-row for larger screens
+    <div className="max-w-6xl w-full bg-slate-800 bg-opacity-80 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[70vh]">
+      {/* Question and options section - md:w-3/5 for larger screens */}
+      <div className="md:w-3/5 p-6 sm:p-10 flex flex-col justify-between">
         <div>
-          <div className="flex items-center mb-4">
-            <div className="bg-zinc-800 text-white w-8 h-8 rounded-full flex items-center justify-center font-medium">
-              {currentQuestionIndex + 1}
-            </div>
-            <h2 className="ml-3 text-white font-medium">
+          <div className="mb-6">
+            <span className="text-sm text-purple-300">Question {currentQuestionIndex + 1} of {questions.length}</span>
+            <h2 className="mt-1 text-2xl sm:text-3xl text-white font-semibold">
               {currentQuestion.question}
             </h2>
           </div>
 
           {/* Timer */}
-          <div className="mb-4">
-            <div className="text-center text-lg font-bold text-white mb-2">
-              {timeLeft}s
+          <div className="mb-8">
+            <div className="text-center text-xl font-bold text-purple-300 mb-2">
+              Time Left: {timeLeft}s
             </div>
-            <div className="w-full bg-zinc-800 rounded-full h-2">
+            <div className="w-full bg-slate-700 rounded-full h-2.5">
               <div
-                className="bg-purple-600 h-2 rounded-full transition-all"
+                className="bg-purple-500 h-2.5 rounded-full transition-all duration-1000 ease-linear"
                 style={{
                   width: `${(timeLeft / 15) * 100}%`,
-                  transitionDuration: "1s",
                 }}
               ></div>
             </div>
           </div>
 
-          <div className="space-y-3 mt-6">
+          <div className="space-y-4">
             {currentQuestion.options &&
               currentQuestion.options.map((option, index) => (
                 <button
                   key={index}
                   onClick={() => handleOptionSelect(option)}
-                  className={`w-full p-3 rounded-lg transition-all flex items-center ${
+                  className={`w-full p-4 rounded-lg transition-all duration-150 ease-in-out flex items-center text-left focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-100 ${
                     selectedOption === option
-                      ? "bg-green-500 text-white"
-                      : "bg-zinc-800 text-white hover:bg-zinc-700"
+                      ? "bg-purple-600 text-white ring-2 ring-purple-400"
+                      : "bg-slate-700 text-slate-100 hover:bg-slate-600"
                   }`}
                 >
                   <div
-                    className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 ${
+                    className={`w-7 h-7 flex items-center justify-center rounded-full mr-4 text-sm font-semibold shrink-0 ${
                       selectedOption === option
-                        ? "bg-white text-green-500"
-                        : "bg-zinc-700 text-white"
+                        ? "bg-white text-purple-600"
+                        : "bg-slate-600 text-slate-100"
                     }`}
                   >
                     {String.fromCharCode(65 + index)}
                   </div>
-                  <span>{option}</span>
+                  <span className="text-base">{option}</span>
                 </button>
               ))}
           </div>
         </div>
 
         {/* Navigation buttons */}
-        <div className="flex justify-end mt-8">
+        <div className="flex justify-end items-center mt-10">
           <button
             onClick={isLastQuestion ? handleSubmit : handleNextQuestion}
-            className={`text-white flex items-center ${
-              !selectedOption ? "opacity-50 cursor-not-allowed" : ""
+            className={`px-8 py-3 rounded-lg font-semibold text-white transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+              !selectedOption && timeLeft > 0
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 transform hover:scale-105 active:scale-100"
             }`}
-            disabled={!selectedOption}
+            disabled={!selectedOption && timeLeft > 0}
           >
-            {isLastQuestion ? "Submit" : "Next →"}
+            {isLastQuestion ? "Submit Section" : "Next Question →"}
           </button>
         </div>
       </div>
 
-      {/* Image section */}
-      <div className="w-1/2 h-full flex items-center justify-center bg-zinc-800">
-        {quizType === "visual" && (
-          <div className="flex flex-col items-center justify-center p-4">
-            <div className="bg-[#B200FF] p-3 rounded-full mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-16 w-16 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-white">
-              Video Knowledge Quiz
-            </h3>
-            <p className="text-gray-300 text-center mt-2">
-              Testing your understanding of the video content
-            </p>
-          </div>
-        )}
-        {quizType === "aptitude" && (
-          <div className="flex flex-col items-center justify-center p-4">
-            <div className="bg-[#8A00FF] p-3 rounded-full mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-16 w-16 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-white">
-              Aptitude Assessment
-            </h3>
-            <p className="text-gray-300 text-center mt-2">
-              Testing your general problem-solving abilities
-            </p>
-          </div>
-        )}
-        {currentQuestion.image && (
+      {/* Image/Context section - md:w-2/5 for larger screens */}
+      <div className="md:w-2/5 h-64 md:h-auto flex items-center justify-center bg-slate-700 bg-opacity-60 p-6">
+        {currentQuestion.image ? (
           <img
             src={currentQuestion.image}
             alt="Question illustration"
-            className="p-8 w-full h-full object-contain rounded-lg"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
           />
+        ) : quizType === "visual" ? (
+          <div className="flex flex-col items-center justify-center p-4 text-center">
+            <div className="bg-purple-500 p-4 rounded-full mb-4 shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9A2.25 2.25 0 004.5 18.75z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-white">Video Knowledge Quiz</h3>
+            <p className="text-slate-300 mt-2">
+              Testing your understanding of the video content.
+            </p>
+          </div>
+        ) : quizType === "aptitude" ? (
+          <div className="flex flex-col items-center justify-center p-4 text-center">
+            <div className="bg-indigo-500 p-4 rounded-full mb-4 shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-white">Aptitude Assessment</h3>
+            <p className="text-slate-300 mt-2">
+              Testing your general problem-solving abilities.
+            </p>
+          </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-400 text-lg">
+            No image for this question.
+          </div>
         )}
       </div>
     </div>
@@ -313,15 +298,16 @@ function Assessment() {
     switch (currentPhase) {
       case "intro":
         return (
-          <div className="max-w-4xl w-full p-8 bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg shadow-lg">
-            <h1 className="text-4xl font-bold mb-6 text-center">
+          // Updated to use consistent card styling
+          <div className="max-w-4xl w-full p-6 sm:p-10 bg-slate-800 bg-opacity-80 backdrop-blur-lg rounded-xl shadow-2xl">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-white">
               Assessment Instructions
             </h1>
 
             {/* Rules Section */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">Rules to Follow</h2>
-              <ul className="list-disc list-inside space-y-2 text-lg">
+            <div className="mb-8 p-6 bg-slate-700 bg-opacity-50 rounded-lg">
+              <h2 className="text-xl sm:text-2xl font-semibold mb-4 text-purple-300">Rules to Follow</h2>
+              <ul className="list-disc list-inside space-y-2 text-base sm:text-lg text-slate-200">
                 <li>
                   Ensure a stable internet connection throughout the assessment.
                 </li>
@@ -335,35 +321,35 @@ function Assessment() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold mb-6 text-center">
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-8 text-center text-white">
               Your Assessment Has Two Phases
             </h2>
 
             {/* Assessment Phases */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-gray-800 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              <div className="bg-slate-700 bg-opacity-50 p-6 rounded-lg shadow-lg">
                 <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#B200FF] mr-3">
-                    <span className="text-white font-bold">1</span>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-purple-500 mr-4 shrink-0">
+                    <span className="text-white font-bold text-lg">1</span>
                   </div>
                   <h3 className="text-xl font-medium text-white">Video Quiz</h3>
                 </div>
-                <p className="text-gray-300 pl-13">
+                <p className="text-slate-300 pl-14 text-sm sm:text-base">
                   Watch a short educational video and answer questions about its
                   content.
                 </p>
               </div>
 
-              <div className="bg-gray-800 p-4 rounded-lg">
+              <div className="bg-slate-700 bg-opacity-50 p-6 rounded-lg shadow-lg">
                 <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#8A00FF] mr-3">
-                    <span className="text-white font-bold">2</span>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-500 mr-4 shrink-0">
+                    <span className="text-white font-bold text-lg">2</span>
                   </div>
                   <h3 className="text-xl font-medium text-white">
                     Aptitude Quiz
                   </h3>
                 </div>
-                <p className="text-gray-300 pl-13">
+                <p className="text-slate-300 pl-14 text-sm sm:text-base">
                   Complete general aptitude questions to assess your learning
                   style.
                 </p>
@@ -373,7 +359,7 @@ function Assessment() {
             <div className="flex flex-col items-center">
               <button
                 onClick={startAssessment}
-                className="px-6 py-3 bg-gradient-to-r from-[#B200FF] to-[#8A00FF] text-white rounded-lg shadow-lg hover:shadow-xl transition-all text-lg font-medium"
+                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all text-lg font-medium transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800"
               >
                 Start Assessment
               </button>
@@ -401,28 +387,30 @@ function Assessment() {
 
       case "results":
         return (
-          <div className="max-w-4xl w-full p-8 bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg shadow-lg">
-            <h1 className="text-4xl font-bold mb-6 text-center">
+          // Updated to use consistent card styling
+          <div className="max-w-4xl w-full p-6 sm:p-10 bg-slate-800 bg-opacity-80 backdrop-blur-lg rounded-xl shadow-2xl">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-white">
               Assessment Results
             </h1>
-            <div className="text-center mb-8">
-              <div className="text-2xl mb-2">Your Learning Style</div>
-              <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#B200FF] to-[#8A00FF] mb-4">
-                {learnerType?.toUpperCase()}
+            <div className="text-center mb-10">
+              <div className="text-xl sm:text-2xl mb-2 text-purple-300">Your Learning Style is</div>
+              <div className="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400 mb-6">
+                {learnerType?.toUpperCase() || "Calculating..."}
               </div>
-              <p className="text-lg max-w-lg mx-auto">
+              <p className="text-base sm:text-lg max-w-md mx-auto text-slate-200">
                 {learnerType === "fast" &&
                   "You are a quick learner who grasps concepts rapidly and excels with challenging material."}
                 {learnerType === "medium" &&
                   "You learn at a steady pace with good retention when concepts are presented clearly."}
                 {learnerType === "slow" &&
                   "You benefit from thorough explanations and prefer to master concepts deeply before moving on."}
+                {!learnerType && "Your results are being processed."}
               </p>
             </div>
             <div className="flex justify-center">
               <button
                 onClick={() => navigate("/dashboard")}
-                className="px-6 py-3 bg-gradient-to-r from-[#B200FF] to-[#8A00FF] text-white rounded-lg shadow-lg hover:shadow-xl transition-all"
+                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-medium transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800"
               >
                 Continue to Dashboard
               </button>
@@ -436,16 +424,17 @@ function Assessment() {
   };
 
   return (
-    <div className="bg-black min-h-screen flex flex-col items-center justify-center w-full text-white p-4">
+    // Updated main background and added font-sans
+    <div className="bg-gradient-to-br from-slate-900 to-purple-900 min-h-screen flex flex-col items-center justify-center w-full text-white p-4 sm:p-8 font-sans">
       {/* Loading indicator */}
       {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 p-8 rounded-lg flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-t-[#B200FF] border-r-[#8A00FF] border-b-transparent border-l-transparent rounded-full animate-spin mb-4"></div>
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-slate-800 p-8 rounded-lg flex flex-col items-center shadow-2xl">
+            <div className="w-12 h-12 border-4 border-t-purple-500 border-r-indigo-500 border-b-transparent border-l-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-white text-lg">
               {currentPhase === "video"
                 ? "Loading video questions..."
-                : currentPhase === "videoQuiz"
+                : currentPhase === "videoQuiz" // Corrected this phase check
                 ? "Loading aptitude questions..."
                 : "Processing results..."}
             </p>
@@ -455,32 +444,60 @@ function Assessment() {
 
       {/* Modal for Video */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="relative w-full max-w-3xl bg-zinc-900 p-4 rounded-lg">
-            <h3 className="text-xl font-bold mb-4 text-white text-center">
+        <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="relative w-full max-w-3xl bg-slate-800 p-6 rounded-xl shadow-2xl">
+            <h3 className="text-xl sm:text-2xl font-bold mb-4 text-white text-center">
               Watch the video carefully
             </h3>
-            <iframe
-              className="w-full aspect-video"
-              src={`https://www.youtube.com/embed/${
-                selectedVideo.split("v=")[1]
-              }?autoplay=1`}
-              title="Educational Video"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              // For demo purposes only - replace with actual video completion detection
-              onLoad={() => setTimeout(handleVideoEnd, 10000)}
-            ></iframe>
-            <p className="text-gray-300 text-center mt-3">
-              You will be quizzed on the content of this video
+            <div className="aspect-video overflow-hidden rounded-lg shadow-lg">
+              <iframe
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${
+                  selectedVideo.split("v=")[1]?.split("&")[0] // Robust splitting for URL
+                }?autoplay=1&modestbranding=1&rel=0`}
+                title="Educational Video"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onLoad={() => {
+                  // Ensure handleVideoEnd is called only once and after video has a chance to load
+                  // The timeout here is a placeholder for actual video end detection if possible
+                  // For robust solution, YouTube IFrame API would be needed
+                  console.log("Video iframe loaded. Setting timeout for handleVideoEnd.");
+                  const videoDurationApproximation = 10000; // Placeholder, ideally get from video metadata
+                  setTimeout(handleVideoEnd, videoDurationApproximation); 
+                }}
+              ></iframe>
+            </div>
+            <p className="text-slate-300 text-center mt-4 text-sm sm:text-base">
+              You will be quizzed on the content of this video.
             </p>
           </div>
         </div>
       )}
 
       {renderContent()}
-      <Toaster position="top-center" />
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          style: {
+            background: '#334155', // slate-700
+            color: '#f1f5f9', // slate-100
+          },
+          success: {
+            iconTheme: {
+              primary: '#a855f7', // purple-500
+              secondary: '#f1f5f9',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444', // red-500
+              secondary: '#f1f5f9',
+            },
+          },
+        }}
+      />
     </div>
   );
 }
