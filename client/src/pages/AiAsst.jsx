@@ -257,6 +257,7 @@ function AiAsst() {
         sessionId: currentSessionId,
         userQuery: trimmedMessage,
         subject: selectedSubject,
+        learnerType: user?.learningType,
       })
     ).then((action) => {
       clearInterval(loadingInterval);

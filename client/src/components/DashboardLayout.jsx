@@ -1,9 +1,11 @@
 import SideBar from "./SideBar";
 import { Outlet } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 function DashboardLayout() {
   const [isVisible, setIsVisible] = useState(false);
+
 
   useEffect(() => {
     setIsVisible(true);

@@ -22,7 +22,15 @@ function Navbar() {
       {/* Left Side: StudySyncs Icon */}
       <div>
         <Link to="/" className="text-2xl font-bold text-white">
-          StudySyncs
+          <span
+            className="relative"
+            style={{
+              WebkitTextStroke: "1px #B200FF",
+              textShadow: "0 0 15px rgba(178, 0, 255, 0.5)",
+            }}
+          >
+            StudySyncs
+          </span>
         </Link>
       </div>
       {/* Right Side */}
