@@ -173,29 +173,6 @@ function Dashboard() {
           <Streaks />
         </div>
 
-<<<<<<< HEAD
-        {/* Progress Section */}
-        <div className="flex-1 bg-gradient-to-r from-gray-800 to-gray-900 border border-[#B200FF]/20 rounded-xl p-6 shadow-lg">
-          <h2 className="text-2xl font-bold text-[#B200FF] mb-4">
-            Your Progress
-          </h2>
-          <div className="flex flex-col items-center space-y-6">
-            <div className="flex justify-evenly w-full">
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  Learner Type
-                </h3>
-                <p className="text-gray-300 mt-2">
-                  {user?.learnerType || "Not determined yet"}
-                </p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  Days Streak
-                </h3>
-                <p className="text-gray-300 mt-2">15 Days</p>
-              </div>
-=======
         {/* Quick Actions and Progress Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Quick Actions Section */}
@@ -251,7 +228,6 @@ function Dashboard() {
                   </div>
                 </Link>
               ))}
->>>>>>> 5959c5953d3cd0186a203979d047d87aedbb7065
             </div>
           </div>
 
