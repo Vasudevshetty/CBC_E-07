@@ -141,14 +141,15 @@ function Dashboard() {
               </span>
             </h1>
             <p className="text-sm text-gray-300 ml-8 animate-float">
-              Welcome back, {user?.name || "Student"}! Here&apos;s your learning journey.
+              Welcome back, {user?.name || "Student"}! Here&apos;s your learning
+              journey.
             </p>
           </div>
         </div>
       </div>
 
       {/* Banner Section */}
-      <div className="bg-[#B200FF]/10 backdrop-blur-lg border border-[#B200FF]/30 shadow-lg shadow-[#B200FF]/40 text-white p-6 rounded-xl my-6 mx-6 transition-all duration-300 hover:shadow-[#B200FF]/60">
+      <div className="bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg shadow-black/20 text-white p-6 rounded-xl my-6 mx-6 transition-all duration-300 hover:shadow-purple-500/30">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-3xl font-bold">Ready for a Challenge?</h2>
@@ -166,7 +167,7 @@ function Dashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-[#B200FF]/40 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-[#B200FF]/40 scrollbar-track-transparent">
         {/* Streaks Section */}
         <div className="mb-6">
           <Streaks />
@@ -175,8 +176,8 @@ function Dashboard() {
         {/* Quick Actions and Progress Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Quick Actions Section */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-black/80 to-black/60 border border-teal-500/50 p-6 rounded-xl shadow-2xl shadow-black/50 backdrop-blur-lg">
-            <h2 className="text-2xl font-bold text-teal-400 mb-6 tracking-wide">
+          <div className="lg:col-span-2 bg-gradient-to-br from-black/80 to-black/60 border border-indigo-500/50 p-6 rounded-xl shadow-2xl shadow-black/50 backdrop-blur-lg">
+            <h2 className="text-2xl font-bold text-indigo-400 mb-6 tracking-wide">
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -184,14 +185,14 @@ function Dashboard() {
                 {
                   title: "Explore Career Paths",
                   description: "Discover and plan your future career.",
-                  link: "/career-path",
-                  icon: "🎓", // Placeholder icon
+                  link: "/career",
+                  icon: "🎓",
                 },
                 {
                   title: "Take a Quiz",
                   description: "Test your knowledge with various quizzes.",
-                  link: "/quiz",
-                  icon: "❓", // Placeholder icon
+                  link: "/assessment",
+                  icon: "❓",
                 },
                 {
                   title: "Revise Concepts",
@@ -209,7 +210,7 @@ function Dashboard() {
                 <Link
                   key={action.title}
                   to={action.link}
-                  className="bg-gradient-to-r from-teal-600/80 to-cyan-500/70 text-white p-4 rounded-lg shadow-lg hover:shadow-teal-500/40 transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between"
+                  className="bg-gradient-to-r from-indigo-500/80 to-purple-500/70 text-white p-4 rounded-lg shadow-lg hover:shadow-indigo-500/40 transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center mb-2">
@@ -221,7 +222,7 @@ function Dashboard() {
                     </p>
                   </div>
                   <div className="mt-3 text-right">
-                    <span className="text-sm font-medium bg-white text-teal-600 px-3 py-1 rounded-md hover:bg-gray-200 transition-colors duration-300">
+                    <span className="text-sm font-medium bg-white text-indigo-600 px-3 py-1 rounded-md hover:bg-gray-200 transition-colors duration-300">
                       Go
                     </span>
                   </div>
@@ -235,7 +236,7 @@ function Dashboard() {
             <h2 className="text-2xl font-bold text-[#B200FF] mb-6 tracking-wide">
               Your Progress
             </h2>
-            <div className="flex flex-col items-center space-y-8">
+            <div className="flex flex-col items-center space-y-6">
               <CircularProgress percentage={progress} />
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-white">
@@ -245,12 +246,20 @@ function Dashboard() {
               </div>
               <div className="w-full space-y-4">
                 <div className="flex justify-between items-center bg-black/50 p-3 rounded-lg">
-                  <h3 className="text-md font-medium text-white">Learner Type</h3>
-                  <p className="text-gray-300 font-semibold bg-gradient-to-r from-[#B200FF]/30 to-[#8A00FF]/30 px-3 py-1 rounded-full text-sm">Consistent Learner</p>
+                  <h3 className="text-md font-medium text-white">
+                    Learner Type
+                  </h3>
+                  <p className="text-gray-300 font-semibold bg-gradient-to-r from-[#B200FF]/30 to-[#8A00FF]/30 px-3 py-1 rounded-full text-sm">
+                    Consistent Learner
+                  </p>
                 </div>
                 <div className="flex justify-between items-center bg-black/50 p-3 rounded-lg">
-                  <h3 className="text-md font-medium text-white">Current Streak</h3>
-                  <p className="text-gray-300 font-semibold bg-gradient-to-r from-[#B200FF]/30 to-[#8A00FF]/30 px-3 py-1 rounded-full text-sm">15 Days</p>
+                  <h3 className="text-md font-medium text-white">
+                    Current Streak
+                  </h3>
+                  <p className="text-gray-300 font-semibold bg-gradient-to-r from-[#B200FF]/30 to-[#8A00FF]/30 px-3 py-1 rounded-full text-sm">
+                    15 Days
+                  </p>
                 </div>
               </div>
             </div>
