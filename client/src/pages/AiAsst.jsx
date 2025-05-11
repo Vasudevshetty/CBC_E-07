@@ -439,9 +439,9 @@ function AiAsst() {
             flexDirection: "column",
           }}
         >
-          {chatHistory.map((msg, index) => (
+          {chatHistory.map((msg) => (
             <div
-              key={index}
+              key={msg.id} // Changed from key={index} to key={msg.id}
               className={`flex ${
                 msg.role === "user" ? "justify-end" : "justify-start"
               } mb-6`}

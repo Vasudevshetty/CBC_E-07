@@ -178,7 +178,14 @@ const aiAssistantSlice = createSlice({
       state.chatHistory = action.payload;
     },
     addMessageToHistory: (state, action) => {
-      state.chatHistory.push(action.payload);
+      // Ensure all messages pushed via this action have a unique id and timestamp
+      state.chatHistory.push({
+        ...action.payload, // Expects { role, content, sessionId (optional) }
+        id:
+          action.payload.id ||
+          `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        timestamp: action.payload.timestamp || new Date().toISOString(),
+      });
     },
     clearChatHistory: (state) => {
       state.chatHistory = [];
@@ -214,22 +221,45 @@ const aiAssistantSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.messageLoading = false;
-        // The component is expected to handle adding the user's message.
-        // Here, we add the AI's response.
+        if (!action.payload) {
+          return; // No payload, nothing to do
+        }
+
+        // Scenario 1: The payload might contain the entire chat history for the session
         if (
-          action.payload &&
-          action.payload.response &&
-          action.payload.session_id
+          Array.isArray(action.payload.chatHistory) &&
+          action.payload.chatHistory.length > 0
         ) {
+          state.chatHistory = action.payload.chatHistory.map((msg) => ({
+            // Ensure consistent message structure from server history
+            id:
+              msg.id ||
+              `server-${msg.timestamp || Date.now()}-${Math.random()
+                .toString(36)
+                .substring(2, 9)}`,
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp || new Date().toISOString(),
+            sessionId: msg.sessionId || action.payload.session_id, // Fallback to payload's session_id
+          }));
+        }
+        // Scenario 2: The payload might contain a new single AI response
+        // This will now also be hit if action.payload.chatHistory is an empty array.
+        else if (action.payload.response && action.payload.session_id) {
           state.chatHistory.push({
             id: `ai-${Date.now()}-${Math.random()
               .toString(36)
-              .substring(2, 9)}`, // Unique ID for AI message
-            role: "assistant", // Changed from sender: "ai"
-            content: action.payload.response, // Changed from text: action.payload.response
+              .substring(2, 9)}`,
+            role: "assistant",
+            content: action.payload.response,
             timestamp: new Date().toISOString(),
-            sessionId: action.payload.session_id, // Session ID from payload
+            sessionId: action.payload.session_id,
           });
+        }
+
+        // Update current session ID if provided in the payload
+        if (action.payload.session_id) {
+          state.currentSession = action.payload.session_id;
         }
       })
       .addCase(sendMessage.rejected, (state, action) => {
