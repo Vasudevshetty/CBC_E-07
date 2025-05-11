@@ -30,10 +30,10 @@ router.patch(
 // Delete user account
 router.delete("/profile", userController.deleteAccount);
 
-// Admin-only routes
-router.use(restrictTo("admin"));
+// // Admin-only routes
+// router.use(restrictTo("admin"));
 
-// Get all users (admin only)
-router.get("/", userController.getAllUsers);
+// // Get all users (admin only)
+// router.get("/", userController.getAllUsers);
 
 module.exports = router;
