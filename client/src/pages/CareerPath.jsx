@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { useSelector, useDispatch } from "react-redux";
-import { careerGoals, qualificationLevels } from "../data/careerPathData";
+import { useLocation, useNavigate } from "react-router-dom"; // Added useLocation and useNavigate
+import { careerGoals } from "../data/careerPathData";
 import "katex/dist/katex.min.css";
 import "../utils/animations.css";
 import {
@@ -20,6 +21,8 @@ function CareerPath() {
   const [resultEmoji, setResultEmoji] = useState(""); // Added
 
   const dispatch = useDispatch();
+  const location = useLocation(); // Added
+  const navigate = useNavigate(); // Added
 
   // Get user from Redux state
   const { user } = useSelector((state) => state.auth);
@@ -56,6 +59,62 @@ function CareerPath() {
   const getRandomEmoji = () => {
     return goalEmojis[Math.floor(Math.random() * goalEmojis.length)];
   };
+
+  // Automatically trigger API call if coming from a featured item
+  useEffect(() => {
+    if (location.state?.featuredItem) {
+      const { title } = location.state.featuredItem;
+      setCustomGoalText(title);
+      setIsCustomGoal(true);
+      setSelectedGoal(""); // Clear any predefined selection
+
+      // Automatically submit or trigger the API call
+      // This replicates part of handleSubmit
+      const goalForApi = title;
+      const emojiForDisplay = getRandomEmoji(); // Use random for custom
+
+      const loadingSteps = [
+        "Analyzing career goals...",
+        "Evaluating your qualifications...",
+        "Preparing personalized suggestions...",
+      ];
+      let stepIndex = 0;
+      setLoadingText(loadingSteps[stepIndex]);
+      const loadingInterval = setInterval(() => {
+        stepIndex = (stepIndex + 1) % loadingSteps.length;
+        setLoadingText(loadingSteps[stepIndex]);
+      }, 800);
+
+      dispatch(
+        getCareerPath({
+          goal: goalForApi,
+          currentQualification: user?.qualification || "Bachelors Degree",
+          learnerType: user.learningType,
+        })
+      )
+        .then(() => {
+          clearInterval(loadingInterval);
+          setLoadingText("");
+          setResultEmoji(emojiForDisplay);
+          setShowResults(true);
+        })
+        .catch((fetchError) => {
+          clearInterval(loadingInterval);
+          setLoadingText("Failed to generate career path. Please try again.");
+          console.error("Error fetching career path:", fetchError);
+        });
+
+      // Clear the state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    location.state,
+    dispatch,
+    navigate,
+    userQualification,
+    user?.learningType,
+  ]);
 
   // Clean up when component unmounts
   useEffect(() => {
@@ -107,7 +166,7 @@ function CareerPath() {
     dispatch(
       getCareerPath({
         goal: goalForApi,
-        currentQualification: getQualificationName(userQualification),
+        currentQualification: user?.qualification || "Bachelors Degree",
         learnerType: user.learningType, // This seems to be a fixed value
       })
     )
@@ -141,14 +200,6 @@ function CareerPath() {
   const getGoalName = (goalId) => {
     const goal = careerGoals.find((g) => g.id === goalId);
     return goal ? goal.name : "Unknown Goal";
-  };
-
-  // Get name of the user's qualification
-  const getQualificationName = (qualificationId) => {
-    const qualification = qualificationLevels.find(
-      (q) => q.id === qualificationId
-    );
-    return qualification ? qualification.name : "Bachelor's Degree";
   };
 
   return (
@@ -191,7 +242,7 @@ function CareerPath() {
                   <p className="text-gray-300">
                     Your qualification:{" "}
                     <span className="text-white font-medium">
-                      {getQualificationName(userQualification)}
+                      {user?.qualification || "Bachelors Degree"}
                     </span>
                   </p>
                 </div>
@@ -389,7 +440,7 @@ function CareerPath() {
                             </svg>
                             <span className="text-white">
                               Qualification:{" "}
-                              {getQualificationName(userQualification)}
+                              {user?.qualification || "Bachelors Degree"}
                             </span>
                           </div>
                         </div>
@@ -604,7 +655,7 @@ function CareerPath() {
                       <span className="text-white font-medium">
                         Career path suggestion
                       </span>{" "}
-                      based on {getQualificationName(userQualification)}{" "}
+                      based on {user?.qualification || "Bachelors Degree"}{" "}
                       qualification
                     </span>
                   </div>{" "}
@@ -701,7 +752,8 @@ function CareerPath() {
                       <p className="text-gray-300">
                         We don&apos;t have specific recommendations for{" "}
                         {getGoalName(selectedGoal)} with{" "}
-                        {getQualificationName(userQualification)} qualification.
+                        {user?.qualification || "Bachelors Degree"}{" "}
+                        qualification.
                       </p>
                     </div>
                     <button
@@ -764,7 +816,8 @@ function CareerPath() {
             <div className="text-white text-center">
               <div className="text-xl mb-2">{loadingText}</div>
               <div className="text-sm text-gray-300">
-                Personalized for your {getQualificationName(userQualification)}{" "}
+                Personalized for your{" "}
+                {user?.qualification || "Bachelors Degree"}
                 qualification
               </div>
             </div>

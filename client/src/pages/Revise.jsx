@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom"; // Added useLocation and useNavigate
 import {
   clearRevisionData,
   getRevisionStrategies,
@@ -23,8 +24,10 @@ const exampleTopics = [
 
 function Revise() {
   // Get user data from localStorage instead of Redux to simplify
-  const {user} = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const location = useLocation(); // Added
+  const navigate = useNavigate(); // Added
   const { revisionData } = useSelector((state) => state.revision); // Removed 'loading'
 
   const [searchInput, setSearchInput] = useState("");
@@ -50,6 +53,53 @@ function Revise() {
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    if (location.state?.featuredItem) {
+      const { title } = location.state.featuredItem;
+      setSearchInput(title);
+      // Automatically trigger search
+      // This replicates part of handleSearch
+      setIsLoading(true);
+      const loadingSteps = [
+        "Finding relevant content...",
+        "Organizing material...",
+        "Preparing revision notes...",
+      ];
+      let stepIndex = 0;
+      setLoadingText(loadingSteps[stepIndex]);
+      const loadingInterval = setInterval(() => {
+        stepIndex = (stepIndex + 1) % loadingSteps.length;
+        setLoadingText(loadingSteps[stepIndex]);
+      }, 800);
+
+      dispatch(
+        getRevisionStrategies({ topic: title, learnerType: user.learningType })
+      )
+        .unwrap()
+        .then(() => {
+          setIsSearching(false);
+        })
+        .catch((err) => {
+          console.error("Error loading revision:", err);
+          setLoadingText("Failed to load revision. Please try again.");
+          setTimeout(() => setLoadingText(""), 3000);
+          setIsSearching(true); // Stay on search page or handle error display
+        })
+        .finally(() => {
+          clearInterval(loadingInterval); // Ensure interval is cleared
+          setIsLoading(false);
+          // Clear loading text only if no error message is currently displayed
+          if (loadingText && !loadingText.toLowerCase().includes("failed")) {
+            setLoadingText("");
+          }
+        });
+
+      // Clear the state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, dispatch, navigate, user?.learningType]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchInput.trim()) return;
@@ -70,7 +120,12 @@ function Revise() {
     }, 800);
 
     // Send request to get revision data
-    dispatch(getRevisionStrategies({ topic: searchInput, learnerType: user.learningType }))
+    dispatch(
+      getRevisionStrategies({
+        topic: searchInput,
+        learnerType: user.learningType,
+      })
+    )
       .unwrap()
       .then(() => {
         setIsSearching(false);
@@ -616,8 +671,8 @@ function Revise() {
             <div className="text-white text-center">
               <div className="text-xl mb-2">{loadingText || "Loading..."}</div>
               <div className="text-sm text-gray-300">
-                Preparing revision notes for "
-                {selectedTopic || searchInput || "your topic"}"...
+                Preparing revision notes for &quot; 
+                {selectedTopic || searchInput || "your topic"}&quot;...
               </div>
             </div>
           </div>

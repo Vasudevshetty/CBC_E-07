@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom"; // Added useLocation
 import { subjects } from "../data/subjects";
 import ReactMarkdown from "react-markdown"; // Import react-markdown
 
@@ -21,6 +21,7 @@ function AiAsst() {
   const { id } = useParams(); // id from URL, might be an existing session
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation(); // Added to get location state
   const { user } = useSelector((state) => state.auth);
   const {
     chatHistory,
@@ -41,6 +42,90 @@ function AiAsst() {
   const [showCompletions, setShowCompletions] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState(id || null);
   const autoApplySuggestionTimeoutRef = useRef(null); // Ref for auto-apply timeout
+
+  // ADDED: Effect to handle featuredItem from location state
+  useEffect(() => {
+    if (location.state?.featuredItem) {
+      const { title, description } = location.state.featuredItem;
+      const initialQuery = `${title} ${description}`;
+
+      // Ensure chat is clear for a new contextual query or use existing session
+      // If there's no currentSessionId, a new one will be created by sendMessage
+      // If there is one, we use it.
+
+      const userMessage = {
+        role: "user",
+        content: initialQuery,
+        sessionId: currentSessionId,
+      };
+      dispatch(addMessageToHistory(userMessage));
+
+      setMessage(""); // Clear any text in input
+      setCompletionText("");
+      setShowCompletions(false);
+      if (autoApplySuggestionTimeoutRef.current) {
+        clearTimeout(autoApplySuggestionTimeoutRef.current);
+        autoApplySuggestionTimeoutRef.current = null;
+      }
+
+      const loadingSteps = [
+        "Analyzing question...",
+        "Searching knowledge base...",
+        "Formulating response...",
+      ];
+      let stepIndex = 0;
+      setIsLoading(true);
+      setLoadingText(loadingSteps[stepIndex]);
+      const loadingInterval = setInterval(() => {
+        stepIndex = (stepIndex + 1) % loadingSteps.length;
+        setLoadingText(loadingSteps[stepIndex]);
+      }, 800);
+
+      dispatch(
+        sendMessage({
+          sessionId: currentSessionId, // Pass currentSessionId, backend handles new session if null
+          userQuery: initialQuery,
+          subject: selectedSubject, // Consider if subject should be derived from featuredItem
+          learnerType: user?.learningType,
+        })
+      ).then((action) => {
+        clearInterval(loadingInterval);
+        setIsLoading(false);
+        setLoadingText("");
+        if (!action.error && action.payload) {
+          if (
+            action.payload.sessionId &&
+            action.payload.sessionId !== currentSessionId
+          ) {
+            setCurrentSessionId(action.payload.sessionId);
+            // Navigate to the new session ID, replacing history if it's a new session from featured item
+            navigate(`/ai-study-assistant/${action.payload.sessionId}`, {
+              replace: true,
+            });
+          }
+        } else {
+          dispatch(
+            addMessageToHistory({
+              role: "assistant",
+              content:
+                "Sorry, I encountered an error processing your request from dashboard. Please try again.",
+              sessionId: currentSessionId,
+            })
+          );
+        }
+      });
+      // Clear the state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    location.state,
+    dispatch,
+    navigate,
+    currentSessionId,
+    selectedSubject,
+    user?.learningType,
+  ]); // Added dependencies that are used inside
 
   // Refs and state for draggable suggestions
   const suggestionsContainerRef = useRef(null);

@@ -212,58 +212,75 @@ function Dashboard() {
                   type: "New Course",
                   title: "Introduction to Quantum Computing",
                   description: "Jump into a new learning adventure.",
-                  link: "/ai-study-assistant/quantum-computing",
+                  link: "/ai-study-assistant/",
                   icon: "🌌",
                 },
                 {
                   type: "Popular Workshop",
                   title: "Mastering Python for Data Science",
                   description: "Join this in-demand workshop.",
-                  link: "/ai-study-assitant/python-data-science",
+                  link: "/ai-study-assistant/", // Corrected typo: assitant -> assistant
                   icon: "🐍",
                 },
                 {
-                  type: "Upcoming Webinar",
-                  title: "The Future of AI in Education",
+                  type: "Future",
+                  title: "The Future of AI",
                   description: "Register now for expert insights.",
-                  link: "/webinars/ai-education-future",
+                  link: "/career/",
                   icon: "💡",
                 },
                 {
                   type: "Challenge",
                   title: "Data Structures Challenge",
                   description: "Test your knowledge on key data structures.",
-                  link: "/challenges/data-structures",
+                  link: "/revise/",
                   icon: "💻",
                 },
-              ].map((item) => (
-                <li
-                  key={item.title}
-                  className="bg-black/30 p-4 rounded-lg shadow-md hover:shadow-purple-500/30 transition-shadow duration-300"
-                >
-                  <Link
-                    to={item.link}
-                    className="flex items-start space-x-4 group"
+              ].map((item) => {
+                let pathnameForLink;
+                if (
+                  item.title === "Introduction to Quantum Computing" ||
+                  item.title === "Mastering Python for Data Science" ||
+                  item.title === "The Future of AI in Education"
+                ) {
+                  pathnameForLink = "/ai-study-assistant";
+                } else if (item.title === "Data Structures Challenge") {
+                  pathnameForLink = "/revise";
+                } else {
+                  // Fallback to original link if no specific mapping is found
+                  // This case should ideally not be hit with the current data set.
+                  pathnameForLink = item.link;
+                }
+
+                return (
+                  <li
+                    key={item.title}
+                    className="bg-black/30 p-4 rounded-lg shadow-md hover:shadow-purple-500/30 transition-shadow duration-300"
                   >
-                    <div>
-                      <h3 className="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors duration-300">
-                        <span className="font-bold text-purple-400">
-                          {item.type}:
-                        </span>{" "}
-                        {item.title}
-                      </h3>
-                      <p className="text-gray-300 text-sm mt-1">
-                        {item.description}
-                      </p>
-                    </div>
-                    <div className="ml-auto self-center">
-                      <span className="text-sm font-medium bg-purple-600/70 text-white px-3 py-1 rounded-md group-hover:bg-purple-500 transition-colors duration-300">
-                        Explore
-                      </span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                    <Link
+                      to={{ pathname: pathnameForLink, state: { query: item.title } }}
+                      className="flex items-start space-x-4 group"
+                    >
+                      <div>
+                        <h3 className="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors duration-300">
+                          <span className="font-bold text-purple-400">
+                            {item.type}:
+                          </span>{" "}
+                          {item.title}
+                        </h3>
+                        <p className="text-gray-300 text-sm mt-1">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="ml-auto self-center">
+                        <span className="text-sm font-medium bg-purple-600/70 text-white px-3 py-1 rounded-md group-hover:bg-purple-500 transition-colors duration-300">
+                          Explore
+                        </span>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
