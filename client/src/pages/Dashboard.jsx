@@ -173,62 +173,73 @@ function Dashboard() {
           <Streaks />
         </div>
 
-        {/* Quick Actions and Progress Section */}
+        {/* Featured Content and Progress Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Quick Actions Section */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-black/80 to-black/60 border border-indigo-500/50 p-6 rounded-xl shadow-2xl shadow-black/50 backdrop-blur-lg">
-            <h2 className="text-2xl font-bold text-indigo-400 mb-6 tracking-wide">
-              Quick Actions
+          {/* Featured Content Section */}
+          <div className="lg:col-span-2 bg-gradient-to-br from-black/80 to-black/60 border border-purple-500/50 p-6 rounded-xl shadow-2xl shadow-black/50 backdrop-blur-lg">
+            <h2 className="text-2xl font-bold text-purple-400 mb-6 tracking-wide">
+              Featured Content
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ul className="space-y-4">
               {[
                 {
-                  title: "Explore Career Paths",
-                  description: "Discover and plan your future career.",
-                  link: "/career",
-                  icon: "🎓",
+                  type: "New Course",
+                  title: "Introduction to Quantum Computing",
+                  description: "Jump into a new learning adventure.",
+                  link: "/courses/quantum-computing",
+                  icon: "🌌",
                 },
                 {
-                  title: "Take a Quiz",
-                  description: "Test your knowledge with various quizzes.",
-                  link: "/assessment",
-                  icon: "❓",
+                  type: "Popular Workshop",
+                  title: "Mastering Python for Data Science",
+                  description: "Join this in-demand workshop.",
+                  link: "/workshops/python-data-science",
+                  icon: "🐍",
                 },
                 {
-                  title: "Revise Concepts",
-                  description: "Refresh your understanding of key topics.",
-                  link: "/revise",
-                  icon: "📚", // Placeholder icon
+                  type: "Upcoming Webinar",
+                  title: "The Future of AI in Education",
+                  description: "Register now for expert insights.",
+                  link: "/webinars/ai-education-future",
+                  icon: "💡",
                 },
                 {
-                  title: "AI Study Assistant",
-                  description: "Get help from your AI learning partner.",
-                  link: "/ai-study-assistant",
-                  icon: "🤖", // Placeholder icon
+                  type: "Challenge",
+                  title: "Data Structures Challenge",
+                  description: "Test your knowledge on key data structures.",
+                  link: "/challenges/data-structures",
+                  icon: "💻",
                 },
-              ].map((action) => (
-                <Link
-                  key={action.title}
-                  to={action.link}
-                  className="bg-gradient-to-r from-indigo-500/80 to-purple-500/70 text-white p-4 rounded-lg shadow-lg hover:shadow-indigo-500/40 transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between"
+              ].map((item) => (
+                <li
+                  key={item.title}
+                  className="bg-black/30 p-4 rounded-lg shadow-md hover:shadow-purple-500/30 transition-shadow duration-300"
                 >
-                  <div>
-                    <div className="flex items-center mb-2">
-                      <span className="text-2xl mr-3">{action.icon}</span>
-                      <h3 className="text-lg font-semibold">{action.title}</h3>
+                  <Link
+                    to={item.link}
+                    className="flex items-start space-x-4 group"
+                  >
+                    <span className="text-3xl mt-1">{item.icon}</span>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors duration-300">
+                        <span className="font-bold text-purple-400">
+                          {item.type}:
+                        </span>{" "}
+                        {item.title}
+                      </h3>
+                      <p className="text-gray-300 text-sm mt-1">
+                        {item.description}
+                      </p>
                     </div>
-                    <p className="text-gray-300 text-sm">
-                      {action.description}
-                    </p>
-                  </div>
-                  <div className="mt-3 text-right">
-                    <span className="text-sm font-medium bg-white text-indigo-600 px-3 py-1 rounded-md hover:bg-gray-200 transition-colors duration-300">
-                      Go
-                    </span>
-                  </div>
-                </Link>
+                    <div className="ml-auto self-center">
+                      <span className="text-sm font-medium bg-purple-600/70 text-white px-3 py-1 rounded-md group-hover:bg-purple-500 transition-colors duration-300">
+                        Explore
+                      </span>
+                    </div>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* Progress Section */}
