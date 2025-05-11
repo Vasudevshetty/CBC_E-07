@@ -74,14 +74,16 @@ export const revisionApi = {
 
 // User API calls
 export const userApi = {
+  getProfile: () => api.get("/api/v1/users/profile"),
   updateProfile: (userData) =>
-    api.patch("/api/v1/user/update-profile", userData),
+    api.patch("/api/v1/users/profile", userData),
   uploadProfileImage: (formData) =>
-    api.post("/api/v1/user/upload-profile-image", formData, {
+    api.patch("/api/v1/users/profile", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   updateLearningType: (learningTypeData) =>
-    api.patch("/api/v1/users/learning-type", learningTypeData),
+    api.patch("/api/v1/users/profile/learning-type", learningTypeData),
+  deleteAccount: () => api.delete("/api/v1/users/profile"),
 };
 
 export default api;
