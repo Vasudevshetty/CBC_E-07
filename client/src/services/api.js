@@ -80,6 +80,8 @@ export const userApi = {
     api.post("/api/v1/user/upload-profile-image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  updateLearningType: (learningTypeData) =>
+    api.patch("/api/v1/users/learning-type", learningTypeData),
 };
 
 export default api;

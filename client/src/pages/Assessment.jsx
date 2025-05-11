@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux"; // Added
+import { updateLearningType } from "../store/slices/authSlice"; // Added
 import api from "../services/api";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -214,6 +216,7 @@ const video = {
 
 function Assessment() {
   const navigate = useNavigate();
+  const dispatch = useDispatch(); // Added
   const [currentPhase, setCurrentPhase] = useState("intro");
   const [showModal, setShowModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState("");
@@ -311,7 +314,22 @@ function Assessment() {
       );
 
       console.log("Assessment submission response:", response.data); // Debugging log
-      setLearnerType(response.data.learner_type_assessment);
+      const newLearnerType = response.data.learner_type_assessment;
+      setLearnerType(newLearnerType);
+
+      // Update learningType in backend and Redux store
+      if (newLearnerType) {
+        dispatch(updateLearningType({ learningType: newLearnerType }))
+          .unwrap()
+          .then(() => {
+            toast.success("Learning type updated successfully!");
+          })
+          .catch((error) => {
+            console.error("Failed to update learning type:", error);
+            toast.error(error.message || "Failed to update learning type.");
+          });
+      }
+
       setCurrentPhase("results");
     } catch (error) {
       console.error("Error submitting assessment:", error);

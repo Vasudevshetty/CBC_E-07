@@ -111,6 +111,18 @@ export const uploadProfileImage = createAsyncThunk(
   }
 );
 
+export const updateLearningType = createAsyncThunk(
+  "auth/updateLearningType",
+  async (learningTypeData, { rejectWithValue }) => {
+    try {
+      const response = await userApi.updateLearningType(learningTypeData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const initialState = {
   user: null,
   isAuthenticated: false,
@@ -124,6 +136,7 @@ const initialState = {
     updateProfile: false,
     updatePassword: false,
     uploadImage: false,
+    updateLearningType: false,
   },
   error: null,
   success: false,
@@ -293,6 +306,25 @@ const authSlice = createSlice({
         state.loadingStates.uploadImage = false;
         state.error =
           action.payload?.message || "Failed to upload profile image";
+      })
+
+      // Update learning type cases
+      .addCase(updateLearningType.pending, (state) => {
+        state.loadingStates.updateLearningType = true;
+        state.error = null;
+      })
+      .addCase(updateLearningType.fulfilled, (state, action) => {
+        state.loadingStates.updateLearningType = false;
+        state.success = true;
+        state.message =
+          action.payload.message || "Learning type updated successfully";
+        if (action.payload.user) {
+          state.user = { ...state.user, ...action.payload.user };
+        }
+      })
+      .addCase(updateLearningType.rejected, (state, action) => {
+        state.loadingStates.updateLearningType = false;
+        state.error = action.payload?.message || "Failed to update learning type";
       });
   },
 });
