@@ -12,9 +12,12 @@ import {
 function CareerPath() {
   // States
   const [selectedGoal, setSelectedGoal] = useState("");
+  const [customGoalText, setCustomGoalText] = useState(""); // Added
+  const [isCustomGoal, setIsCustomGoal] = useState(false); // Added
   const [showResults, setShowResults] = useState(false);
   const [loadingText, setLoadingText] = useState("");
   const [activeTab, setActiveTab] = useState("explore");
+  const [resultEmoji, setResultEmoji] = useState(""); // Added
 
   const dispatch = useDispatch();
 
@@ -29,6 +32,31 @@ function CareerPath() {
   // Determine qualification level based on user profile or default to bachelor's
   const userQualification = user?.qualification || "bachelors";
 
+  // Emojis for random assignment Added
+  const goalEmojis = [
+    "✨",
+    "🚀",
+    "💡",
+    "🎯",
+    "🌟",
+    "🏆",
+    "📈",
+    "🧭",
+    "🛠️",
+    "📚",
+    "🎉",
+    "🧑‍💻",
+    "🧑‍🔬",
+    "🧑‍🎨",
+    "🧑‍🚀",
+    "🧑‍🏫",
+  ];
+
+  // Get a random emoji Added
+  const getRandomEmoji = () => {
+    return goalEmojis[Math.floor(Math.random() * goalEmojis.length)];
+  };
+
   // Clean up when component unmounts
   useEffect(() => {
     return () => {
@@ -40,7 +68,27 @@ function CareerPath() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!selectedGoal) return;
+    let goalForApi;
+    let emojiForDisplay;
+
+    if (isCustomGoal) {
+      if (!customGoalText.trim()) {
+        setLoadingText("Please specify your custom career goal.");
+        // Optionally, you could have a more prominent error display state
+        setTimeout(() => setLoadingText(""), 3000); // Clear message after a few seconds
+        return;
+      }
+      goalForApi = customGoalText;
+      emojiForDisplay = getRandomEmoji();
+    } else {
+      if (!selectedGoal) {
+        setLoadingText("Please select a career goal from the list.");
+        setTimeout(() => setLoadingText(""), 3000);
+        return;
+      }
+      goalForApi = getGoalName(selectedGoal); // getGoalName is for predefined goals
+      emojiForDisplay = getGoalEmoji(selectedGoal); // getGoalEmoji is for predefined goals
+    }
 
     const loadingSteps = [
       "Analyzing career goals...",
@@ -48,30 +96,33 @@ function CareerPath() {
       "Preparing personalized suggestions...",
     ];
     let stepIndex = 0;
+    setLoadingText(loadingSteps[stepIndex]); // Initial loading message
 
     const loadingInterval = setInterval(() => {
-      setLoadingText(loadingSteps[stepIndex]);
       stepIndex = (stepIndex + 1) % loadingSteps.length;
+      setLoadingText(loadingSteps[stepIndex]);
     }, 800);
-
-    // Get career goal name
-    const goalName = getGoalName(selectedGoal);
-
-    // Get qualification name
-    const qualificationName = getQualificationName(userQualification);
 
     // Dispatch the thunk to get the career path
     dispatch(
       getCareerPath({
-        goal: goalName,
-        currentQualification: qualificationName,
-        learnerType: "slow",
+        goal: goalForApi,
+        currentQualification: getQualificationName(userQualification),
+        learnerType: "slow", // This seems to be a fixed value
       })
-    ).then(() => {
-      clearInterval(loadingInterval);
-      setLoadingText("");
-      setShowResults(true);
-    });
+    )
+      .then(() => {
+        clearInterval(loadingInterval);
+        setLoadingText("");
+        setResultEmoji(emojiForDisplay);
+        setShowResults(true);
+      })
+      .catch((fetchError) => {
+        clearInterval(loadingInterval);
+        setLoadingText("Failed to generate career path. Please try again.");
+        console.error("Error fetching career path:", fetchError);
+        // setShowResults(false); // Decide if you want to hide results on error
+      });
   };
 
   // Reset to input form
@@ -80,13 +131,13 @@ function CareerPath() {
     dispatch(clearCareerPath());
   };
 
-  // Get the emoji for the selected goal
+  // Get the emoji for the selected goal - This is for predefined goals
   const getGoalEmoji = (goalId) => {
     const goal = careerGoals.find((g) => g.id === goalId);
-    return goal ? goal.emoji : "🎯";
+    return goal ? goal.emoji : "🎯"; // Default for predefined
   };
 
-  // Get name of the selected goal
+  // Get name of the selected goal - This is for predefined goals
   const getGoalName = (goalId) => {
     const goal = careerGoals.find((g) => g.id === goalId);
     return goal ? goal.name : "Unknown Goal";
@@ -124,7 +175,9 @@ function CareerPath() {
         </div>
       </div>
       {/* Main Content */}
-      <div className="flex-1 flex flex-col p-4 h-[calc(100vh-126px)] overflow-">
+      <div className="flex-1 flex flex-col p-4 h-[calc(100vh-126px)] overflow-y-auto">
+        {" "}
+        {/* Added overflow-y-auto */}
         {!showResults ? (
           <div className="w-full h-full flex">
             {/* Left Panel - Career Selection */}
@@ -143,14 +196,16 @@ function CareerPath() {
                   </p>
                 </div>
 
-                <div className="flex-1 overflow-scroll">
+                <div className="flex-1 overflow-y-auto pr-2">
+                  {" "}
+                  {/* Added overflow-y-auto and padding-right for scrollbar */}
                   <form
                     onSubmit={handleSubmit}
                     className="flex flex-col h-full"
                   >
                     <div className="flex-1">
                       <label
-                        htmlFor="career-goal"
+                        htmlFor="career-goal" // This ID isn't on an input, consider if it's needed or for an input wrapper
                         className="block text-lg font-medium text-white mb-3"
                       >
                         What career path are you interested in? 🎯
@@ -160,9 +215,13 @@ function CareerPath() {
                         {careerGoals.map((goal) => (
                           <div
                             key={goal.id}
-                            onClick={() => setSelectedGoal(goal.id)}
+                            onClick={() => {
+                              setSelectedGoal(goal.id);
+                              setIsCustomGoal(false);
+                              setCustomGoalText("");
+                            }}
                             className={`flex items-center p-4 border ${
-                              selectedGoal === goal.id
+                              selectedGoal === goal.id && !isCustomGoal // Ensure active state only if not custom
                                 ? "border-[#B200FF] bg-[#B200FF]/20"
                                 : "border-gray-700 bg-black bg-opacity-60 hover:border-[#B200FF]/50"
                             } rounded-lg cursor-pointer transition-all duration-200`}
@@ -173,19 +232,68 @@ function CareerPath() {
                             </span>
                           </div>
                         ))}
+                        {/* "Other" option */}
+                        <div
+                          onClick={() => {
+                            setIsCustomGoal(true);
+                            setSelectedGoal(""); // Clear predefined selection
+                          }}
+                          className={`flex items-center p-4 border ${
+                            isCustomGoal
+                              ? "border-[#B200FF] bg-[#B200FF]/20"
+                              : "border-gray-700 bg-black bg-opacity-60 hover:border-[#B200FF]/50"
+                          } rounded-lg cursor-pointer transition-all duration-200 mt-1`}
+                        >
+                          <span className="text-2xl mr-3">➕</span>
+                          <span className="text-white text-lg">
+                            Other (Specify below)
+                          </span>
+                        </div>
+
+                        {/* Conditional input field for custom goal */}
+                        {isCustomGoal && (
+                          <div className="mt-4">
+                            <label
+                              htmlFor="custom-goal-input"
+                              className="block text-sm font-medium text-white mb-1"
+                            >
+                              Specify your career goal:
+                            </label>
+                            <input
+                              type="text"
+                              id="custom-goal-input"
+                              value={customGoalText}
+                              onChange={(e) =>
+                                setCustomGoalText(e.target.value)
+                              }
+                              placeholder="e.g., AI Ethicist, Blockchain Developer"
+                              className="w-full p-2.5 rounded-md bg-black bg-opacity-70 border border-gray-600 text-white focus:border-[#B200FF] focus:ring-1 focus:ring-[#B200FF] placeholder-gray-500"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     <div className="mt-6">
                       <button
                         type="submit"
-                        disabled={!selectedGoal || isLoading}
+                        disabled={
+                          isLoading ||
+                          (!selectedGoal && !isCustomGoal) ||
+                          (isCustomGoal && !customGoalText.trim())
+                        }
                         className="w-full bg-[#B200FF] hover:bg-[#9900DD] text-white font-medium py-3 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isLoading
-                          ? "Loading..."
+                          ? loadingText // Show dynamic loading text
                           : "Get Personalized Career Path"}
                       </button>
+                      {/* Display loading/error messages from handleSubmit directly here if preferred */}
+                      {loadingText && !isLoading && (
+                        <p className="text-center text-purple-300 mt-2">
+                          {loadingText}
+                        </p>
+                      )}
                     </div>
                   </form>
                 </div>
@@ -438,41 +546,19 @@ function CareerPath() {
             </div>
           </div>
         ) : (
-          <div className="w-full h-full flex">
-            {/* Career Path Results */}
-            <div className="w-full bg-black bg-opacity-40 border border-[#B200FF]/20 rounded-lg p-6 flex flex-col h-full">
-              {/* Path Header */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
-                <div className="flex items-center">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-[#B200FF]/20 rounded-full blur-md"></div>
-                    <span className="relative w-16 h-16 rounded-full bg-[#B200FF]/20 border border-[#B200FF]/50 flex items-center justify-center text-3xl mr-4">
-                      {getGoalEmoji(selectedGoal)}
-                    </span>
-                  </div>
-                  <div className="ml-4">
-                    <h2 className="text-2xl font-bold text-white">
-                      {getGoalName(selectedGoal)}
-                    </h2>
-                    <div className="flex items-center text-gray-300 mt-1">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1 text-[#B200FF]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      Based on: {getQualificationName(userQualification)}
-                    </div>
-                  </div>
-                </div>
+          // Results View
+          <div className="w-full max-w-3xl mx-auto bg-black bg-opacity-50 border border-[#B200FF]/30 rounded-lg p-6 shadow-2xl shadow-black/50 animate-fadeIn">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
+              <h2 className="text-3xl font-semibold text-white flex items-center">
+                <span className="text-4xl mr-3">{resultEmoji}</span>{" "}
+                {/* Use resultEmoji state */}
+                {careerPathData?.goal ||
+                  (isCustomGoal
+                    ? customGoalText
+                    : getGoalName(selectedGoal))}{" "}
+                {/* Display the goal name */}
+              </h2>
+              <div className="flex-shrink-0">
                 <button
                   onClick={handleReset}
                   className="bg-transparent hover:bg-gray-800 border border-[#B200FF]/40 rounded-md px-4 py-2 text-white text-sm flex items-center transition-colors duration-200"
@@ -493,15 +579,111 @@ function CareerPath() {
                   </svg>
                   Change Career Path
                 </button>
-              </div>{" "}
-              {/* Career Path Content */}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                {careerPathData && careerPathData.response ? (
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="bg-[#B200FF]/5 rounded-lg py-3 px-4 mb-4 flex items-center">
+              </div>
+            </div>{" "}
+            {/* Career Path Content */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {careerPathData && careerPathData.response ? (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="bg-[#B200FF]/5 rounded-lg py-3 px-4 mb-4 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-[#B200FF]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span className="text-gray-300">
+                      <span className="text-white font-medium">
+                        Career path suggestion
+                      </span>{" "}
+                      based on {getQualificationName(userQualification)}{" "}
+                      qualification
+                    </span>
+                  </div>{" "}
+                  {/* Display markdown content with scrolling */}
+                  <div className="flex-1 pr-4 overflow-hidden">
+                    <div className="prose prose-invert max-w-none h-full overflow-y-auto custom-scrollbar px-1">
+                      <ReactMarkdown
+                        className="text-white"
+                        components={{
+                          h1: (props) => (
+                            <h1
+                              className="text-3xl font-bold mt-0 mb-6 text-[#B200FF] bg-[#B200FF]/5 py-2 px-4 rounded-lg"
+                              {...props}
+                            />
+                          ),
+                          h2: (props) => (
+                            <h2
+                              className="text-2xl font-semibold mt-6 mb-4 text-[#B200FF]/90 border-b border-[#B200FF]/20 pb-2"
+                              {...props}
+                            />
+                          ),
+                          h3: (props) => (
+                            <h3
+                              className="text-xl font-medium mt-5 mb-3 text-[#B200FF]/80 flex items-center"
+                              {...props}
+                            />
+                          ),
+                          h4: (props) => (
+                            <h4
+                              className="text-lg font-medium mt-4 mb-2 text-[#B200FF]/70"
+                              {...props}
+                            />
+                          ),
+                          ul: (props) => (
+                            <ul
+                              className="list-none space-y-3 mb-4"
+                              {...props}
+                            />
+                          ),
+                          ol: (props) => (
+                            <ol
+                              className="list-none space-y-3 mb-4 counter-reset"
+                              {...props}
+                            />
+                          ),
+                          li: (props) => (
+                            <li className="flex items-start bg-[#B200FF]/5 rounded-lg p-3 border border-[#B200FF]/10">
+                              <span className="text-[#B200FF] mr-3 text-xl font-bold">
+                                •
+                              </span>
+                              <span className="pt-0.5">{props.children}</span>
+                            </li>
+                          ),
+                          p: (props) => (
+                            <p
+                              className="mb-4 text-gray-200 leading-relaxed"
+                              {...props}
+                            />
+                          ),
+                          a: (props) => (
+                            <a
+                              className="text-[#B200FF] hover:underline font-medium"
+                              {...props}
+                            />
+                          ),
+                        }}
+                      >
+                        {careerPathData.response}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              ) : error ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center max-w-md">
+                    <div className="bg-red-500/20 border border-red-500/40 rounded-lg p-6 mb-4">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 mr-2 text-[#B200FF]"
+                        className="h-12 w-12 text-red-500/70 mx-auto mb-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -510,152 +692,55 @@ function CareerPath() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                         />
                       </svg>
-                      <span className="text-gray-300">
-                        <span className="text-white font-medium">
-                          Career path suggestion
-                        </span>{" "}
-                        based on {getQualificationName(userQualification)}{" "}
-                        qualification
-                      </span>
-                    </div>{" "}
-                    {/* Display markdown content with scrolling */}
-                    <div className="flex-1 pr-4 overflow-hidden">
-                      <div className="prose prose-invert max-w-none h-full overflow-y-auto custom-scrollbar px-1">
-                        <ReactMarkdown
-                          className="text-white"
-                          components={{
-                            h1: (props) => (
-                              <h1
-                                className="text-3xl font-bold mt-0 mb-6 text-[#B200FF] bg-[#B200FF]/5 py-2 px-4 rounded-lg"
-                                {...props}
-                              />
-                            ),
-                            h2: (props) => (
-                              <h2
-                                className="text-2xl font-semibold mt-6 mb-4 text-[#B200FF]/90 border-b border-[#B200FF]/20 pb-2"
-                                {...props}
-                              />
-                            ),
-                            h3: (props) => (
-                              <h3
-                                className="text-xl font-medium mt-5 mb-3 text-[#B200FF]/80 flex items-center"
-                                {...props}
-                              />
-                            ),
-                            h4: (props) => (
-                              <h4
-                                className="text-lg font-medium mt-4 mb-2 text-[#B200FF]/70"
-                                {...props}
-                              />
-                            ),
-                            ul: (props) => (
-                              <ul
-                                className="list-none space-y-3 mb-4"
-                                {...props}
-                              />
-                            ),
-                            ol: (props) => (
-                              <ol
-                                className="list-none space-y-3 mb-4 counter-reset"
-                                {...props}
-                              />
-                            ),
-                            li: (props) => (
-                              <li className="flex items-start bg-[#B200FF]/5 rounded-lg p-3 border border-[#B200FF]/10">
-                                <span className="text-[#B200FF] mr-3 text-xl font-bold">
-                                  •
-                                </span>
-                                <span className="pt-0.5">{props.children}</span>
-                              </li>
-                            ),
-                            p: (props) => (
-                              <p
-                                className="mb-4 text-gray-200 leading-relaxed"
-                                {...props}
-                              />
-                            ),
-                            a: (props) => (
-                              <a
-                                className="text-[#B200FF] hover:underline font-medium"
-                                {...props}
-                              />
-                            ),
-                          }}
-                        >
-                          {careerPathData.response}
-                        </ReactMarkdown>
-                      </div>
+                      <p className="text-white text-xl mb-3">
+                        Error loading career path data
+                      </p>
+                      <p className="text-gray-300">
+                        We don&apos;t have specific recommendations for{" "}
+                        {getGoalName(selectedGoal)} with{" "}
+                        {getQualificationName(userQualification)} qualification.
+                      </p>
                     </div>
-                  </div>
-                ) : error ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center max-w-md">
-                      <div className="bg-red-500/20 border border-red-500/40 rounded-lg p-6 mb-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-12 w-12 text-red-500/70 mx-auto mb-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                          />
-                        </svg>
-                        <p className="text-white text-xl mb-3">
-                          Error loading career path data
-                        </p>
-                        <p className="text-gray-300">
-                          We don&apos;t have specific recommendations for{" "}
-                          {getGoalName(selectedGoal)} with{" "}
-                          {getQualificationName(userQualification)}{" "}
-                          qualification.
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleReset}
-                        className="bg-[#B200FF] hover:bg-[#9900DD] text-white px-5 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center mx-auto"
+                    <button
+                      onClick={handleReset}
+                      className="bg-[#B200FF] hover:bg-[#9900DD] text-white px-5 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center mx-auto"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-2"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                          />
-                        </svg>
-                        Try Again
-                      </button>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#B200FF]/20 to-[#8000CC]/20 rounded-full flex items-center justify-center mb-4 animate-float">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#B200FF]/40 to-[#8000CC]/40 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse"></div>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="w-16 h-16 bg-gradient-to-br from-[#B200FF]/20 to-[#8000CC]/20 rounded-full flex items-center justify-center mb-4 animate-float">
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#B200FF]/40 to-[#8000CC]/40 rounded-full flex items-center justify-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full animate-pulse"></div>
-                      </div>
-                    </div>
-                    <p className="text-white text-center text-lg animate-glow">
-                      Loading career path data...
-                    </p>
-                    <p className="text-gray-400 text-center mt-2 text-sm">
-                      Preparing your personalized suggestions
-                    </p>
-                  </div>
-                )}
-              </div>
+                  <p className="text-white text-center text-lg animate-glow">
+                    Loading career path data...
+                  </p>
+                  <p className="text-gray-400 text-center mt-2 text-sm">
+                    Preparing your personalized suggestions
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
