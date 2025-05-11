@@ -120,35 +120,30 @@ function Dashboard() {
 
       {/* Header */}
       <div
-        className="bg-gradient-to-b from-black/95 to-black/80 p-4 border-b border-[#B200FF]/40 backdrop-blur-md shadow-lg shadow-black/40"
-        style={{
-          height: "10%", // Adjusted height
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
+        className="bg-gradient-to-b from-black/95 to-black/80 p-4 md:p-6 border-b border-[#B200FF]/40 backdrop-blur-md shadow-lg shadow-black/40 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0"
+        // Removed fixed height, using padding for responsiveness
       >
-        <div className="flex items-center">
-          <div>
-            <h1 className="font-medium text-white text-xl flex items-center">
-              <span
-                className="mr-2 h-6 w-6 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full flex items-center justify-center animate-gradient"
-                style={{ boxShadow: "0 0 15px rgba(178, 0, 255, 0.6)" }}
-              >
-                <span className="h-2.5 w-2.5 bg-white rounded-full animate-pulse"></span>
-              </span>
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
-                Dashboard Overview
-              </span>
-            </h1>
-            <p className="text-sm text-gray-300 ml-8 animate-float">
-              Welcome back, {user?.name || "Student"}! Here&apos;s your learning
-              journey.
-            </p>
-          </div>
+        <div className="flex flex-col items-center md:items-start text-center md:text-left">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white flex items-center">
+            <span
+              className="relative mr-2"
+              style={{
+                WebkitTextStroke: "1px #B200FF",
+                textShadow: "0 0 15px rgba(178, 0, 255, 0.5)",
+              }}
+            >
+              Welcome
+            </span>
+            <span className="text-2xl sm:text-3xl text-gray-300">
+              , {user?.name || "Student"}!
+            </span>
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Let's make today a great learning day.
+          </p>
         </div>
-        {/* Gamification Stats in Header */}
-        <div className="flex items-center space-x-6 mr-4">
+        {/* Gamification Stats in Header - Adjusted for responsiveness */}
+        <div className="flex items-center space-x-4 sm:space-x-6">
           {/* Coins Display */}
           <div
             className="flex items-center text-white"
