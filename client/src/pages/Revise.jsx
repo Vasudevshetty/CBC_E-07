@@ -23,7 +23,7 @@ const exampleTopics = [
 
 function Revise() {
   // Get user data from localStorage instead of Redux to simplify
-  const user = JSON.parse(localStorage.getItem("user")) || { name: "Student" };
+  const {user} = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const { revisionData } = useSelector((state) => state.revision); // Removed 'loading'
 
@@ -70,7 +70,7 @@ function Revise() {
     }, 800);
 
     // Send request to get revision data
-    dispatch(getRevisionStrategies({ topic: searchInput }))
+    dispatch(getRevisionStrategies({ topic: searchInput, learnerType: user.learningType }))
       .unwrap()
       .then(() => {
         setIsSearching(false);

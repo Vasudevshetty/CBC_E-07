@@ -250,7 +250,7 @@ function Dashboard() {
                     Learner Type
                   </h3>
                   <p className="text-gray-300 font-semibold bg-gradient-to-r from-[#B200FF]/30 to-[#8A00FF]/30 px-3 py-1 rounded-full text-sm">
-                    Consistent Learner
+                    {user?.learnerType}
                   </p>
                 </div>
                 <div className="flex justify-between items-center bg-black/50 p-3 rounded-lg">

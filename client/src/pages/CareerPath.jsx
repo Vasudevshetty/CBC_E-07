@@ -108,7 +108,7 @@ function CareerPath() {
       getCareerPath({
         goal: goalForApi,
         currentQualification: getQualificationName(userQualification),
-        learnerType: "slow", // This seems to be a fixed value
+        learnerType: user.learningType, // This seems to be a fixed value
       })
     )
       .then(() => {
