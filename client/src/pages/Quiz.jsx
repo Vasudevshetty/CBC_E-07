@@ -12,9 +12,10 @@ function Quiz({ questions }) {
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
   useEffect(() => {
+    // Reset the timer to 15 seconds for every new question
     setTimeLeft(15);
     setSelectedOption(answers[currentQuestionIndex]);
-  }, [currentQuestionIndex]);
+  }, [currentQuestionIndex, answers]);
 
   useEffect(() => {
     let timer;
@@ -26,7 +27,7 @@ function Quiz({ questions }) {
       handleTimeUp();
     }
     return () => clearTimeout(timer);
-  }, [timeLeft]);
+  }, [timeLeft, handleTimeUp]);
 
   const handleTimeUp = () => {
     if (answers[currentQuestionIndex] === null) {
