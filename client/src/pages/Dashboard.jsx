@@ -91,113 +91,88 @@ function Dashboard() {
         return prev + 1;
       });
     }, 20);
+    return () => clearInterval(interval); // Cleanup interval on component unmount
   }, []);
 
   // Loading state
   if (loadingData) {
     return (
-      <div className="flex justify-center items-center h-96">
+      <div className="flex justify-center items-center h-full bg-black bg-opacity-50">
         <ClipLoader color="#B200FF" size={50} />
+        <p className="ml-4 text-white text-lg">Loading Dashboard...</p>
       </div>
     );
   }
 
   return (
     <div
-      className={`transition-all duration-700 ease-out ${
+      className={`flex-1 flex flex-col bg-black bg-opacity-20 w-full transition-all duration-700 ease-out ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-      } px-8 py-2`}
+      } `}
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='%23b200ff' fill-opacity='0.03'%3E%3Cpath d='M0 0h40v40H0V0zm20 20c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z'/%3E%3C/g%3E%3C/svg%3E\")",
+        backgroundAttachment: "fixed",
+      }}
     >
       <Toaster position="top-right" />
 
-      {/* Welcome Section */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            <span className="typewriter">
-              Welcome back, {user?.name || "Student"}!
-            </span>
-          </h1>
-          <p className="text-gray-300">
-            Here&apos;s an overview of your learning journey
-          </p>
-        </div>
-      </div>
-      <div className="h-60 py-2">
-        <Streaks />
-      </div>
-
-      {/* Your Assessments and Progress Section */}
-      <div className="mt-4 flex flex-wrap gap-6">
-        {/* Assessments List */}
-        <div className="flex-1 max-h-72 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-[#B200FF] scrollbar-track-gray-800 bg-gray-900 p-4 rounded-lg shadow-lg">
-          <h1 className="text-white text-3xl font-semibold tracking-wide mb-4">
-            Your Assessments
-          </h1>
-          <ul className="space-y-4">
-            {[
-              {
-                id: 1,
-                title: "React Basics Quiz",
-                dueDate: "2025-05-12",
-              },
-              {
-                id: 2,
-                title: "JavaScript Fundamentals",
-                dueDate: "2025-05-15",
-              },
-              {
-                id: 3,
-                title: "CSS Grid Mastery",
-                dueDate: "2025-05-20",
-              },
-              {
-                id: 4,
-                title: "Node.js Essentials",
-                dueDate: "2025-05-25",
-              },
-              {
-                id: 5,
-                title: "Express.js API Development",
-                dueDate: "2025-05-30",
-              },
-              {
-                id: 6,
-                title: "MongoDB Basics",
-                dueDate: "2025-06-05",
-              },
-              {
-                id: 7,
-                title: "React Hooks Deep Dive",
-                dueDate: "2025-06-10",
-              },
-              {
-                id: 8,
-                title: "Advanced JavaScript Concepts",
-                dueDate: "2025-06-15",
-              },
-            ].map((assessment) => (
-              <li
-                key={assessment.id}
-                className="flex justify-between items-center bg-gradient-to-r from-[#B200FF] to-[#8A00FF] text-white px-6 py-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+      {/* Header */}
+      <div
+        className="bg-gradient-to-b from-black/95 to-black/80 p-4 border-b border-[#B200FF]/40 backdrop-blur-md shadow-lg shadow-black/40"
+        style={{
+          height: "10%", // Adjusted height
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div className="flex items-center">
+          <div>
+            <h1 className="font-medium text-white text-xl flex items-center">
+              <span
+                className="mr-2 h-6 w-6 bg-gradient-to-br from-[#B200FF] to-[#8000CC] rounded-full flex items-center justify-center animate-gradient"
+                style={{ boxShadow: "0 0 15px rgba(178, 0, 255, 0.6)" }}
               >
-                <div>
-                  <h3 className="text-lg font-bold">{assessment.title}</h3>
-                  <p className="text-gray-300 text-sm">
-                    Due Date: {assessment.dueDate}
-                  </p>
-                </div>
-                <Link
-                  to={`/assessment/${assessment.id}`}
-                  className="bg-white text-[#B200FF] px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors duration-300 hover:cursor-pointer"
-                >
-                  Start
-                </Link>
-              </li>
-            ))}
-          </ul>
+                <span className="h-2.5 w-2.5 bg-white rounded-full animate-pulse"></span>
+              </span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-100">
+                Dashboard Overview
+              </span>
+            </h1>
+            <p className="text-sm text-gray-300 ml-8 animate-float">
+              Welcome back, {user?.name || "Student"}! Here&apos;s your learning journey.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Banner Section */}
+      <div className="bg-[#B200FF]/10 backdrop-blur-lg border border-[#B200FF]/30 shadow-lg shadow-[#B200FF]/40 text-white p-6 rounded-xl my-6 mx-6 transition-all duration-300 hover:shadow-[#B200FF]/60">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold">Ready for a Challenge?</h2>
+            <p className="text-gray-200 mt-2">
+              Head over to the assessments page to test your knowledge.
+            </p>
+          </div>
+          <Link
+            to="/assessment"
+            className="bg-white text-[#B200FF] px-6 py-3 rounded-md text-lg font-medium hover:bg-gray-200 transition-colors duration-300 shadow-md hover:shadow-lg"
+          >
+            Go to Assessments
+          </Link>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-[#B200FF]/40 scrollbar-track-transparent">
+        {/* Streaks Section */}
+        <div className="mb-6">
+          <Streaks />
         </div>
 
+<<<<<<< HEAD
         {/* Progress Section */}
         <div className="flex-1 bg-gradient-to-r from-gray-800 to-gray-900 border border-[#B200FF]/20 rounded-xl p-6 shadow-lg">
           <h2 className="text-2xl font-bold text-[#B200FF] mb-4">
@@ -219,10 +194,89 @@ function Dashboard() {
                 </h3>
                 <p className="text-gray-300 mt-2">15 Days</p>
               </div>
+=======
+        {/* Quick Actions and Progress Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quick Actions Section */}
+          <div className="lg:col-span-2 bg-gradient-to-br from-black/80 to-black/60 border border-teal-500/50 p-6 rounded-xl shadow-2xl shadow-black/50 backdrop-blur-lg">
+            <h2 className="text-2xl font-bold text-teal-400 mb-6 tracking-wide">
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                {
+                  title: "Explore Career Paths",
+                  description: "Discover and plan your future career.",
+                  link: "/career-path",
+                  icon: "🎓", // Placeholder icon
+                },
+                {
+                  title: "Take a Quiz",
+                  description: "Test your knowledge with various quizzes.",
+                  link: "/quiz",
+                  icon: "❓", // Placeholder icon
+                },
+                {
+                  title: "Revise Concepts",
+                  description: "Refresh your understanding of key topics.",
+                  link: "/revise",
+                  icon: "📚", // Placeholder icon
+                },
+                {
+                  title: "AI Study Assistant",
+                  description: "Get help from your AI learning partner.",
+                  link: "/ai-study-assistant",
+                  icon: "🤖", // Placeholder icon
+                },
+              ].map((action) => (
+                <Link
+                  key={action.title}
+                  to={action.link}
+                  className="bg-gradient-to-r from-teal-600/80 to-cyan-500/70 text-white p-4 rounded-lg shadow-lg hover:shadow-teal-500/40 transition-all duration-300 transform hover:scale-[1.02] flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-3">{action.icon}</span>
+                      <h3 className="text-lg font-semibold">{action.title}</h3>
+                    </div>
+                    <p className="text-gray-300 text-sm">
+                      {action.description}
+                    </p>
+                  </div>
+                  <div className="mt-3 text-right">
+                    <span className="text-sm font-medium bg-white text-teal-600 px-3 py-1 rounded-md hover:bg-gray-200 transition-colors duration-300">
+                      Go
+                    </span>
+                  </div>
+                </Link>
+              ))}
+>>>>>>> 5959c5953d3cd0186a203979d047d87aedbb7065
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Progress</h3>
+          </div>
+
+          {/* Progress Section */}
+          <div className="bg-gradient-to-br from-black/80 to-black/60 border border-[#B200FF]/30 p-6 rounded-xl shadow-2xl shadow-black/50 backdrop-blur-lg">
+            <h2 className="text-2xl font-bold text-[#B200FF] mb-6 tracking-wide">
+              Your Progress
+            </h2>
+            <div className="flex flex-col items-center space-y-8">
               <CircularProgress percentage={progress} />
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-white">
+                  Overall Completion
+                </h3>
+                <p className="text-gray-300 mt-1">Keep up the great work!</p>
+              </div>
+              <div className="w-full space-y-4">
+                <div className="flex justify-between items-center bg-black/50 p-3 rounded-lg">
+                  <h3 className="text-md font-medium text-white">Learner Type</h3>
+                  <p className="text-gray-300 font-semibold bg-gradient-to-r from-[#B200FF]/30 to-[#8A00FF]/30 px-3 py-1 rounded-full text-sm">Consistent Learner</p>
+                </div>
+                <div className="flex justify-between items-center bg-black/50 p-3 rounded-lg">
+                  <h3 className="text-md font-medium text-white">Current Streak</h3>
+                  <p className="text-gray-300 font-semibold bg-gradient-to-r from-[#B200FF]/30 to-[#8A00FF]/30 px-3 py-1 rounded-full text-sm">15 Days</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

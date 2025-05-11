@@ -31,10 +31,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "default-profile.jpg",
     },
+    bio: {
+      type: String,
+    },
     role: {
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+    qualification: {
+      type: String,
+    },
+    learningType: {
+      type: String,
+      enum: ["fast", "medium", "slow"],
+      default: "medium",
     },
     active: {
       type: Boolean,

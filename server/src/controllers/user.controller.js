@@ -33,7 +33,7 @@ exports.getProfile = async (req, res) => {
  */
 exports.updateProfile = async (req, res) => {
   try {
-    const allowedFields = ["name", "email"];
+    const allowedFields = ["name", "email", "bio", "qualification"];
     const updateData = {};
 
     // Filter request body to only include allowed fields
@@ -80,6 +80,44 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error updating user profile",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+};
+
+/**
+ * Update user's learning type
+ * @route PATCH /api/v1/users/learning-type
+ * @access Private
+ */
+exports.updateLearningType = async (req, res) => {
+  try {
+    const { learningType } = req.body;
+
+    // Validate learningType
+    const validLearningTypes = ["visual", "auditory", "kinesthetic"];
+    if (!validLearningTypes.includes(learningType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid learning type. Valid types are: visual, auditory, kinesthetic.",
+      });
+    }
+
+    // Update user's learning type
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { learningType },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+        user: updatedUser,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Error updating learning type",
       error: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
   }
