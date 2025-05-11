@@ -99,7 +99,6 @@ exports.login = async (req, res) => {
         message: "Incorrect email or password",
       });
     }
-    console.log(user); // Existing console.log, shows user state before gamification updates for this login
 
     // Gamification: Coins and Daily Streak Logic
     const today = new Date();
@@ -161,6 +160,14 @@ exports.login = async (req, res) => {
       }
       // Update lastStreakLogin to the current timestamp, as this login has contributed to the streak
       user.lastStreakLogin = new Date();
+
+      // --- Record Login Activity for Streaks Calendar ---
+      if (!user.loginActivity) {
+        user.loginActivity = [];
+      }
+      // Add the current login time to the activity list
+      // This records the actual time, but the Streaks component will likely only use the date part
+      user.loginActivity.push(new Date());
     }
     // If the user has already logged in earlier today, their coins and streak status for today
     // would have been set by that first login. No further changes are made in subsequent logins on the same day.
