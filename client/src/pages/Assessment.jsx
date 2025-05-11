@@ -53,12 +53,9 @@ function Quiz({
   ]);
 
   useEffect(() => {
-    // Restart time only for new questions, not when an option is selected
-    if (answers[currentQuestionIndex] === null) {
-      setTimeLeft(15);
-    }
+    setTimeLeft(15);
     setSelectedOption(answers[currentQuestionIndex]);
-  }, [currentQuestionIndex, answers]);
+  }, [currentQuestionIndex, quizType]);
 
   useEffect(() => {
     let timer;
