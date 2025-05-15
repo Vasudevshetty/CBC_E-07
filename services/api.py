@@ -24,7 +24,7 @@ import numpy as np
 
 load_dotenv()
 
-api = FastAPI()
+api = FastAPI(root_path='/services')
 
 groq_api_key1 = os.getenv("GROQ_API_KEY3")
 groq_api_key2 = os.getenv("GROQ_API_KEY4")
